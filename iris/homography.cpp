@@ -47,19 +47,17 @@ ConstrainedFactors GetConstrainedFactors(const HomographyMatrix &homography)
 }
 
 
-Homography::Homography(
-    double chessSquareSize_mm,
-    const tau::Size<double> &sensorSize_pixels)
+Homography::Homography(const HomographySettings &settings)
     :
-    world_(chessSquareSize_mm),
-    normalize_(sensorSize_pixels)
+    world_(settings.squareSize_mm),
+    normalize_(settings.sensorSize_pixels)
 {
 
 }
 
 
 Eigen::Matrix<double, 2, 9>
-Homography::GetHomographyFactors(const ChessIntersection & intersection)
+Homography::GetHomographyFactors(const Intersection & intersection)
 {
     auto world = this->world_(intersection.logical);
     auto sensor = this->normalize_(intersection.pixel);
@@ -90,7 +88,7 @@ Homography::GetHomographyFactors(const ChessIntersection & intersection)
 
 
 Homography::Factors Homography::CombineHomographyFactors(
-    const std::vector<ChessIntersection> &intersections)
+    const std::vector<Intersection> &intersections)
 {
     using Index = Eigen::Index;
     auto intersectionCount = static_cast<Index>(intersections.size());
@@ -162,7 +160,7 @@ SvdSolve(Eigen::MatrixBase<Derived> &factors)
 
 
 HomographyMatrix Homography::GetHomographyMatrix(
-    const std::vector<ChessIntersection> &intersections)
+    const std::vector<Intersection> &intersections)
 {
     auto factors = this->CombineHomographyFactors(intersections);
 
@@ -229,7 +227,6 @@ Homography::Intrinsics Homography::ComputeIntrinsics(
     intrinsics(1, 1) = n.Unscale(intrinsics(1, 1), false);
     intrinsics(0, 2) = n.ToPixel(intrinsics(0, 2), true);
     intrinsics(1, 2) = n.ToPixel(intrinsics(1, 2), false);
-    intrinsics(0, 1) = n.Unscale(intrinsics(0, 1), true);
 
     return intrinsics;
 }

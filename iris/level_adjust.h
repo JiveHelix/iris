@@ -1,20 +1,26 @@
 #pragma once
 
 #include <tau/color_map.h>
+#include <tau/percentile.h>
 
-#include "level_settings.h"
-#include "iris/threadsafe_filter.h"
+#include "iris/image.h"
+#include "iris/level_settings.h"
+#include "iris/node.h"
+#include "iris/mask.h"
 
 
 namespace iris
 {
 
 
-template<typename Value>
+template<typename Value, typename Float>
 class LevelAdjust
 {
 public:
-    static tau::FloatRescale<Value, float> MakeRescale(
+    using Matrix = ImageMatrix<Value>;
+    using Result = Matrix;
+
+    static tau::FloatRescale<Value, Float> MakeRescale(
         Value maximum,
         Value low,
         Value high)
@@ -22,7 +28,15 @@ public:
         low = std::min(high - 1, low);
         assert(low < high);
 
-        return tau::FloatRescale<Value, float>(maximum + 1, low, high);
+        return tau::FloatRescale<Value, Float>(maximum + 1, low, high);
+    }
+
+    LevelAdjust()
+        :
+        enable_(false),
+        rescale_(MakeRescale(255, 0, 255))
+    {
+
     }
 
     LevelAdjust(const LevelSettings<Value> &settings)
@@ -37,12 +51,11 @@ public:
 
     }
 
-    template<typename Derived>
-    std::optional<Derived> Filter(const Eigen::MatrixBase<Derived> &data)
+    std::optional<Result> Filter(const Matrix &data)
     {
         if (!this->enable_)
         {
-            return {};
+            return data;
         }
 
         return this->rescale_(data);
@@ -50,13 +63,72 @@ public:
 
 protected:
     bool enable_;
-    tau::FloatRescale<Value, float> rescale_;
+    tau::FloatRescale<Value, Float> rescale_;
 };
 
 
-template<typename Value>
-using ThreadsafeLevelAdjust =
-    ThreadsafeFilter<LevelGroup<Value>, LevelAdjust<Value>>;
+template<typename SourceNode, typename Value, typename Float>
+class LevelAdjustNode
+    :
+    public Node<SourceNode, LevelAdjust<Value, Float>, LevelControl<Value>>
+{
+public:
+
+    using Control = LevelControl<Value>;
+    using Filter = LevelAdjust<Value, Float>;
+    using Base = Node<SourceNode, Filter, Control>;
+
+    LevelAdjustNode(
+        SourceNode &source,
+        Control control,
+        CancelControl cancel)
+        :
+        Base("LevelAdjust", source, control, cancel),
+        control_(control),
+        detectEndpoint_(
+            this,
+            control.autoDetectSettings,
+            &LevelAdjustNode::AutoDetectSettings)
+    {
+
+    }
+
+    void AutoDetectSettings()
+    {
+        auto input = this->input_.GetResult();
+
+        if (!input)
+        {
+            std::cerr << "Unable to detect levels without input." << std::endl;
+            return;
+        }
+
+        auto filtered = tau::RemoveZeros(*input);
+
+        // The input to this node may be a mask that sets masked values to zero.
+        // Estimate the low and high percentile without considering the zeros.
+        auto values = tau::Percentile(
+            filtered,
+            Eigen::Vector2d(
+                this->settings_.detectMargin,
+                1.0 - this->settings_.detectMargin));
+
+        auto defer = pex::MakeDefer(this->control_);
+        defer.members.range.low.Set(values(0));
+        defer.members.range.high.Set(values(1));
+    }
+
+    using DetectEndpoint =
+        pex::Endpoint<LevelAdjustNode, pex::control::Signal<>>;
+
+    Control control_;
+    DetectEndpoint detectEndpoint_;
+};
+
+
+extern template class LevelAdjust<int32_t, float>;
+extern template class LevelAdjustNode<DefaultMaskNode, int32_t, float>;
+using DefaultLevelAdjustNode = LevelAdjustNode<DefaultMaskNode, int32_t, float>;
 
 
 } // end namespace iris

@@ -4,7 +4,8 @@
 #include <tau/color_maps/turbo.h>
 #include <tau/color_maps/gray.h>
 
-#include "iris/pixels.h"
+#include "iris/image.h"
+#include "draw/pixels.h"
 #include "iris/color_settings.h"
 #include "iris/threadsafe_filter.h"
 
@@ -31,14 +32,14 @@ auto MakeColorMap(const ColorSettings<Value> &colorSettings)
 
     if (colorSettings.turbo)
     {
-        return tau::LimitedColorMap<PixelMatrix, T>(
+        return tau::LimitedColorMap<draw::PixelMatrix, T>(
             tau::turbo::MakeRgb8(count),
             static_cast<T>(low),
             static_cast<T>(high));
     }
     else
     {
-        return tau::LimitedColorMap<PixelMatrix, T>(
+        return tau::LimitedColorMap<draw::PixelMatrix, T>(
             tau::gray::MakeRgb8(count),
             static_cast<T>(low),
             static_cast<T>(high));
@@ -47,9 +48,11 @@ auto MakeColorMap(const ColorSettings<Value> &colorSettings)
 
 
 template<typename Value>
-class Color: public ColorSettings<Value>
+class Color
 {
 public:
+    using Matrix = ImageMatrix<Value>;
+
     Color(const ColorSettings<Value> &colorSettings)
         :
         colorMap_(MakeColorMap<Value>(colorSettings))
@@ -57,22 +60,26 @@ public:
 
     }
 
-    template<typename Data>
-    Pixels Filter(const Eigen::MatrixBase<Data> &data) const
+    draw::Pixels Filter(const Matrix &data) const
     {
-        Pixels result{{}, {data.cols(), data.rows()}};
+        draw::Pixels result{{}, {data.cols(), data.rows()}};
         this->colorMap_(data, &result.data);
 
         return result;
     }
 
 protected:
-    tau::LimitedColorMap<PixelMatrix, Value> colorMap_;
+    tau::LimitedColorMap<draw::PixelMatrix, Value> colorMap_;
 };
 
 
 template<typename Value>
-using ThreadsafeColor = ThreadsafeFilter<ColorGroup<Value>, Color<Value>>;
+using ThreadsafeColor =
+    ThreadsafeFilter<ColorGroup<Value>, Color<Value>>;
+
+
+extern template class Color<int32_t>;
+extern template class ThreadsafeFilter<ColorGroup<int32_t>, Color<int32_t>>;
 
 
 } // end namespace iris

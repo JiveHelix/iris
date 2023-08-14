@@ -7,7 +7,6 @@
 #include <pex/selectors.h>
 #include <pex/range.h>
 #include <tau/eigen.h>
-#include <tau/image.h>
 
 #include "iris/detail/suppression_detail.h"
 
@@ -33,6 +32,20 @@ public:
         columns_(data.cols()),
         threads_()
     {
+        Index maximumThreadCount;
+
+        if constexpr (tau::MatrixTraits<Data>::isColumnMajor)
+        {
+            maximumThreadCount = this->columns_ / windowSize;
+        }
+        else
+        {
+            maximumThreadCount = this->rows_ / windowSize;
+        }
+
+        this->threadCount_ =
+            std::min(static_cast<size_t>(maximumThreadCount), threadCount);
+
         auto chunks = this->MakeChunks_();
 
         if (chunks.at(0).count < windowSize)

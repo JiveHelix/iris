@@ -7,6 +7,7 @@
 #include <wxpex/radio_box.h>
 #include <wxpex/check_box.h>
 #include <wxpex/view.h>
+#include <wxpex/button.h>
 
 #include "iris/gradient_settings.h"
 
@@ -52,27 +53,45 @@ public:
                 iris::DerivativeSize::SizeToString
             >(this->GetPane(), controls.size));
 
-        auto maximumInput = LabeledWidget(
+        auto maximum = LabeledWidget(
             this->GetPane(),
-            "Maximum Input",
-            new View(this->GetPane(), controls.maximumInput));
+            "Maximum",
+            new View(this->GetPane(), controls.maximum));
 
         auto threads = wxpex::LabeledWidget(
             this->GetPane(),
             "Threads",
             new wxpex::Field(this->GetPane(), controls.threads));
 
+        auto percentile = wxpex::LabeledWidget(
+            this->GetPane(),
+            "Percentile",
+            new wxpex::Field(this->GetPane(), controls.percentile));
+
+        auto detect = new wxpex::Button(
+            this->GetPane(),
+            "Detect",
+            controls.autoDetectSettings);
+
         auto sizer = LayoutLabeled(
             layoutOptions,
             enable,
             scale,
             size,
-            maximumInput,
-            threads);
+            maximum,
+            threads,
+            percentile);
 
-        this->ConfigureTopSizer(sizer.release());
+        auto topSizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
+        topSizer->Add(sizer.release(), 0, wxEXPAND | wxBOTTOM, 3);
+        topSizer->Add(detect, 0, wxALIGN_CENTER);
+
+        this->ConfigureTopSizer(std::move(topSizer));
     }
 };
+
+
+extern template class GradientSettingsView<int32_t>;
 
 
 } // end namespace iris

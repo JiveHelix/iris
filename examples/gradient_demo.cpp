@@ -2,7 +2,7 @@
 #include <wxpex/app.h>
 #include <wxpex/file_field.h>
 
-#include <iris/pixels.h>
+#include <draw/pixels.h>
 
 #include <iris/gaussian_settings.h>
 #include <iris/gradient_settings.h>
@@ -46,10 +46,7 @@ struct DemoTemplate
 using DemoGroup = pex::Group<DemoFields, DemoTemplate>;
 using DemoSettings = typename DemoGroup::Plain;
 using DemoModel = typename DemoGroup::Model;
-using DemoControl = typename DemoGroup::template Control<void>;
-
-template<typename Observer>
-using DemoTerminus = typename DemoGroup::template Terminus<Observer>;
+using DemoControl = typename DemoGroup::Control;
 
 
 class DemoMainFrame: public wxFrame
@@ -67,8 +64,6 @@ public:
     {
         this->SetMenuBar(this->shortcuts_->GetMenuBar());
 
-        auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
-
         wxpex::LayoutOptions layoutOptions{};
         layoutOptions.labelFlags = wxALIGN_RIGHT;
 
@@ -83,6 +78,7 @@ public:
 
         auto gaussian = new iris::GaussianSettingsView<InProcess>(
             this,
+            "Gaussian Blur",
             control.gaussian,
             layoutOptions);
 
@@ -102,10 +98,13 @@ public:
 
         color->Expand();
 
-        sizer->Add(fileSelector, 0, wxEXPAND | wxBOTTOM, 5);
-        sizer->Add(gaussian, 1, wxEXPAND | wxBOTTOM, 5);
-        sizer->Add(gradient, 1, wxEXPAND | wxBOTTOM, 5);
-        sizer->Add(color, 1, wxEXPAND | wxBOTTOM, 5);
+        auto sizer = wxpex::LayoutItems(
+            wxpex::verticalItems,
+            fileSelector,
+            gaussian,
+            gradient,
+            color);
+
         auto topSizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
         topSizer->Add(sizer.release(), 1, wxEXPAND | wxALL, 5);
         this->SetSizerAndFit(topSizer.release());
@@ -127,7 +126,10 @@ public:
         :
         observer_(this, UserControl(this->user_)),
         demoModel_(),
-        demoTerminus_(this, this->demoModel_),
+        demoEndpoint_(
+            this,
+            this->demoModel_,
+            &DemoBrain::OnSettings_),
         gaussian_(this->demoModel_.gaussian.Get()),
         gradient_(this->demoModel_.gradient.Get()),
         color_(this->demoModel_.color.Get())
@@ -136,7 +138,6 @@ public:
         this->demoModel_.color.level.SetMaximumValue(8096);
         this->demoModel_.color.level.high.Set(8096);
         this->color_ = Color(this->demoModel_.color.Get());
-        this->demoTerminus_.Connect(&DemoBrain::OnSettings_);
     }
 
     wxpex::Window CreateControlFrame()
@@ -161,28 +162,20 @@ public:
         wxAboutBox(MakeAboutDialogInfo("Gradient Demo"));
     }
 
-    using ProcessMatrix =
-        Eigen::Matrix
-        <
-            InProcess,
-            Eigen::Dynamic,
-            Eigen::Dynamic,
-            Eigen::RowMajor
-        >;
-
-    iris::Pixels MakePixels(const ProcessMatrix &value) const
+    std::shared_ptr<draw::Pixels>
+    MakePixels(const iris::ProcessMatrix &value) const
     {
-        return this->color_.Filter(value);
+        return std::make_shared<draw::Pixels>(this->color_.Filter(value));
     }
 
-    iris::Pixels Process() const
+    std::shared_ptr<draw::Pixels> Process() const
     {
         std::lock_guard lock(this->mutex_);
 
         auto scale =
             static_cast<float>(this->demoModel_.color.level.high.GetMaximum());
 
-        ProcessMatrix processed =
+        iris::ProcessMatrix processed =
             this->png_.GetValue(scale).template cast<InProcess>();
 
         if (this->demoModel_.gaussian.enable)
@@ -197,7 +190,8 @@ public:
 
         // Gradient is enabled.
         auto gradientResult = this->gradient_.Filter(processed);
-        return gradientResult.Colorize<uint8_t>();
+        return std::make_shared<draw::Pixels>(
+            gradientResult.Colorize<uint8_t>());
     }
 
     void Display()
@@ -224,7 +218,7 @@ private:
 private:
     Observer<DemoBrain> observer_;
     DemoModel demoModel_;
-    DemoTerminus<DemoBrain> demoTerminus_;
+    pex::Endpoint<DemoBrain, DemoControl> demoEndpoint_;
     Gaussian gaussian_;
     Gradient gradient_;
     Color color_;

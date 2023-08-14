@@ -5,6 +5,7 @@
 #include <fields/fields.h>
 #include <pex/range.h>
 #include <pex/group.h>
+#include "iris/default.h"
 
 
 namespace iris
@@ -19,7 +20,7 @@ struct GaussianFields
         fields::Field(&T::sigma, "sigma"),
         fields::Field(&T::threshold, "threshold"),
         fields::Field(&T::threads, "threads"),
-        fields::Field(&T::maximumInput, "maximumInput"));
+        fields::Field(&T::maximum, "maximum"));
 
     static constexpr auto fieldsTypeName = "Gaussian";
 };
@@ -40,7 +41,7 @@ struct GaussianTemplate
         T<pex::MakeRange<double, SigmaLow, SigmaHigh>> sigma;
         T<double> threshold;
         T<size_t> threads;
-        T<Value> maximumInput;
+        T<Value> maximum;
 
         static constexpr auto fields = GaussianFields<Template>::fields;
     };
@@ -57,19 +58,19 @@ struct GaussianSettings:
         static constexpr double defaultSigma = 1.0;
         static constexpr double defaultThreshold = 0.01;
         static constexpr size_t defaultThreads = 4;
-        static constexpr Value defaultMaximumInput = 255;
 
         return {{
             true,
             defaultSigma,
             defaultThreshold,
             defaultThreads,
-            defaultMaximumInput}};
+            defaultMaximum}};
     }
 };
 
 
 TEMPLATE_OUTPUT_STREAM(GaussianSettings)
+TEMPLATE_EQUALITY_OPERATORS(GaussianSettings)
 
 
 template<typename Value>
@@ -84,16 +85,22 @@ using GaussianGroup = pex::Group
 template<typename Value>
 using GaussianGroupMaker = pex::MakeGroup<GaussianGroup<Value>>;
 
-
 template<typename Value>
 using GaussianModel = typename GaussianGroup<Value>::Model;
 
 template<typename Value>
-using GaussianControl = typename GaussianGroup<Value>::template Control<void>;
+using GaussianControl = typename GaussianGroup<Value>::Control;
 
-template<typename Value, typename Observer>
-using GaussianTerminus =
-    typename GaussianGroup<Value>::template Terminus<Observer>;
+
+extern template struct GaussianSettings<int32_t>;
 
 
 } // end namespace iris
+
+
+extern template struct pex::Group
+<
+    iris::GaussianFields,
+    iris::GaussianTemplate<int32_t>::template Template,
+    iris::GaussianSettings<int32_t>
+>;

@@ -14,8 +14,10 @@ template<typename T>
 struct CornerFields
 {
     static constexpr auto fields = std::make_tuple(
+        fields::Field(&T::enable, "enable"),
         fields::Field(&T::window, "window"),
-        fields::Field(&T::count, "count"));
+        fields::Field(&T::count, "count"),
+        fields::Field(&T::threads, "threads"));
 };
 
 
@@ -23,13 +25,15 @@ template<template<typename> typename T>
 struct CornerTemplate
 {
     using WindowLow = pex::Limit<3>;
-    using WindowHigh = pex::Limit<32>;
+    using WindowHigh = pex::Limit<64>;
 
     using CountLow = pex::Limit<1>;
     using CountHigh = pex::Limit<4>;
 
-    T<pex::MakeRange<Eigen::Index, WindowLow, WindowHigh>> window;
-    T<pex::MakeRange<Eigen::Index, CountLow, CountHigh>> count;
+    T<bool> enable;
+    T<pex::MakeRange<double, WindowLow, WindowHigh>> window;
+    T<pex::MakeSelect<Eigen::Index>> count;
+    T<size_t> threads;
 
     static constexpr auto fields =
         CornerFields<CornerTemplate>::fields;
@@ -44,15 +48,16 @@ struct CornerSettings
 {
     static CornerSettings Default()
     {
-        static constexpr Eigen::Index defaultWindow = 6;
-        static constexpr Eigen::Index defaultCount = 4;
+        static constexpr Eigen::Index defaultWindow = 50;
+        static constexpr Eigen::Index defaultCount = 2;
+        static constexpr size_t defaultThreads = 4;
 
-        return {{defaultWindow, defaultCount}};
+        return {{true, defaultWindow, defaultCount, defaultThreads}};
     }
 };
 
 
-DECLARE_COMPARISON_OPERATORS(CornerSettings)
+DECLARE_EQUALITY_OPERATORS(CornerSettings)
 
 
 using CornerGroup = pex::Group
@@ -62,12 +67,29 @@ using CornerGroup = pex::Group
         CornerSettings
     >;
 
-using CornerModel = typename CornerGroup::Model;
 
-using CornerControl = typename CornerGroup::Control<void>;
+struct CornerModel: public CornerGroup::Model
+{
+    CornerModel()
+        :
+        CornerGroup::Model()
+    {
+        this->count.SetChoices({2, 4});
+    }
+};
 
-template<typename Observer>
-using CornerTerminus = typename CornerGroup::Terminus<Observer>;
+
+using CornerControl = typename CornerGroup::Control;
+
+using CornerGroupMaker = pex::MakeGroup<CornerGroup, CornerModel>;
 
 
 } // end namespace iris
+
+
+extern template struct pex::Group
+    <
+        iris::CornerFields,
+        iris::CornerTemplate,
+        iris::CornerSettings
+    >;

@@ -16,26 +16,65 @@ target_link_libraries(
     CONAN_PKG::pex
     CONAN_PKG::libpng
     CONAN_PKG::wxpex
+    CONAN_PKG::draw
     CONAN_PKG::fmt
     CONAN_PKG::nlohmann_json)
 
 target_sources(
     iris
     PRIVATE
+    canny.cpp
+    canny_chain.cpp
+    canny_chain_settings.cpp
+    canny_settings.cpp
+    chess/chess_solution.cpp
+    chess/find_point.cpp
+    chess/intersection.cpp
+    chess/line_collector.cpp
+    chess/line_from_points.cpp
+    chess/line_group.cpp
     chess.cpp
+    chess_chain.cpp
+    chess_chain_settings.cpp
+    chess_settings.cpp
+    color.cpp
+    color_settings.cpp
     corner.cpp
+    corners_chain.cpp
+    corners_chain_settings.cpp
+    corner_settings.cpp
+    gaussian_node.cpp
+    gaussian_settings.cpp
+    gradient.cpp
+    gradient_settings.cpp
+    harris_settings.cpp
     homography.cpp
-    png.cpp
-    waveform.cpp
+    homography_settings.cpp
+    hough_settings.cpp
+    level_adjust.cpp
+    level_settings.cpp
+    lines_chain.cpp
+    lines_chain_settings.cpp
+    mask.cpp
+    mask_settings.cpp
+    node.cpp
+    projection_settings.cpp
+    views/canny_settings_view.cpp
+    views/canny_chain_settings_view.cpp
+    views/chess_chain_settings_view.cpp
     views/chess_settings_view.cpp
+    views/chess_shape.cpp
+    views/chess_shape_view.cpp
+    views/corners_chain_settings_view.cpp
     views/corner_settings_view.cpp
-    views/draw_points.cpp
-    views/pixel_info_view.cpp
-    views/pixel_view.cpp
-    views/shape_view.cpp
-    views/view_settings.cpp
-    views/waveform_settings_view.cpp
-    views/waveform_view.cpp)
+    views/gaussian_settings_view.cpp
+    views/gradient_settings_view.cpp
+    views/homography_settings_view.cpp
+    views/level_settings_view.cpp
+    views/lines_chain_settings_view.cpp
+    views/mask_brain.cpp
+    views/mask_settings_view.cpp
+    views/pixel_info_view.cpp)
 
 install(TARGETS iris DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

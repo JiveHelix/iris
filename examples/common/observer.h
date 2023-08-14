@@ -14,29 +14,29 @@ public:
     Observer(Actor *actor, UserControl control)
         :
         actor_(actor),
-        terminus_(this, control),
+        endpoints_(this, control),
         doOpenFile_([this](){this->actor_->OpenFile();}),
         doLayoutWindows_([this](){this->actor_->LayoutWindows();})
     {
-        this->terminus_.openFile.Connect(
+        this->endpoints_.openFile.Connect(
             &Observer::OnOpenFile_);
 
-        this->terminus_.saveSettings.Connect(
+        this->endpoints_.saveSettings.Connect(
             &Observer::OnSaveSettings_);
 
-        this->terminus_.loadSettings.Connect(
+        this->endpoints_.loadSettings.Connect(
             &Observer::OnLoadSettings_);
 
-        this->terminus_.about.Connect(
+        this->endpoints_.about.Connect(
             &Observer::OnAbout_);
 
-        this->terminus_.layoutWindows.Connect(
+        this->endpoints_.layoutWindows.Connect(
             &Observer::OnLayoutWindows_);
 
-        this->terminus_.fileName.Connect(
+        this->endpoints_.fileName.Connect(
             &Observer::OnFileName_);
 
-        this->terminus_.errors.Connect(&Observer::OnErrors_);
+        this->endpoints_.errors.Connect(&Observer::OnErrors_);
     }
 
 private:
@@ -81,7 +81,7 @@ private:
 
 private:
     Actor *actor_;
-    UserTerminus<Observer<Actor>> terminus_;
+    UserEndpoints<Observer<Actor>> endpoints_;
     wxpex::CallAfter doOpenFile_;
     wxpex::CallAfter doLayoutWindows_;
 };

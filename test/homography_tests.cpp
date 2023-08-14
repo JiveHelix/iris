@@ -2,10 +2,10 @@
 #include <jive/equal.h>
 
 #include <tau/literals.h>
+#include <tau/intrinsics.h>
+#include <tau/pose.h>
+#include <tau/projection.h>
 #include <iris/homography.h>
-#include <iris/intrinsics.h>
-#include <iris/pose.h>
-#include <iris/projection.h>
 
 
 static constexpr double tolerance = 1e-4;
@@ -102,18 +102,16 @@ TEST_CASE("Normalized bottomRight", "[homography]")
 }
 
 
-using Intersections = std::vector<iris::ChessIntersection>;
-
-Intersections CreateIntersections(
+iris::Intersections CreateIntersections(
     double x_m,
     double squareSize_mm,
-    const iris::Intrinsics<double> &intrinsics,
-    const iris::Pose<double> &pose)
+    const tau::Intrinsics<double> &intrinsics,
+    const tau::Pose<double> &pose)
 {
-    iris::Projection projection(intrinsics, pose);
+    tau::Projection projection(intrinsics, pose);
 
-    Intersections intersections;
-    iris::ChessIntersection current{};
+    iris::Intersections intersections;
+    iris::Intersection current{};
 
     double squareSize_m = squareSize_mm * 1e-3;
 
@@ -128,12 +126,12 @@ Intersections CreateIntersections(
         {
             current.logical.y = j;
 
-            iris::Vector3<double> world(
+            tau::Vector3<double> world(
                 x_m,
                 startingY - static_cast<double>(i) * squareSize_m,
                 startingZ - static_cast<double>(j) * squareSize_m);
 
-            iris::Vector3<double> sensor = projection.WorldToCamera(world);
+            tau::Vector3<double> sensor = projection.WorldToCamera(world);
             current.pixel.x = sensor(0);
             current.pixel.y = sensor(1);
 
@@ -153,7 +151,7 @@ class SolutionCreator
 public:
     SolutionCreator(
         double squareSize_mm,
-        const iris::Intrinsics<double> &intrinsics)
+        const tau::Intrinsics<double> &intrinsics)
         :
         squareSize_mm_(squareSize_mm),
         intrinsics_(intrinsics)
@@ -172,7 +170,7 @@ public:
         // intersections will be placed.
         // Compute the translation of the camera such that the chess board
         // remains centered in the projected view.
-        iris::Pose<double> pose({x_deg, y_deg, z_deg}, 0_d, 0_d, 0_d);
+        tau::Pose<double> pose({x_deg, y_deg, z_deg}, 0_d, 0_d, 0_d);
 
         // Positive rotation about y makes the camera look down.
         // Raise the camera to keep the intersections in view.
@@ -195,13 +193,13 @@ public:
     }
 
     double squareSize_mm_;
-    iris::Intrinsics<double> intrinsics_;
+    tau::Intrinsics<double> intrinsics_;
 };
 
 
 Solutions CreateSolutions(
     double squareSize_mm,
-    const iris::Intrinsics<double> &intrinsics)
+    const tau::Intrinsics<double> &intrinsics)
 {
     Solutions solutions;
 
@@ -228,7 +226,7 @@ Solutions CreateSolutions(
 
 TEST_CASE("HomographyMatrix round trip", "[homography]")
 {
-    iris::Intrinsics<double> intrinsics{{
+    tau::Intrinsics<double> intrinsics{{
         10_d,
         25_d,
         25_d,
@@ -236,28 +234,29 @@ TEST_CASE("HomographyMatrix round trip", "[homography]")
         1080.0_d / 2.0_d,
         0_d}};
 
-    double squareSize_mm = 25;
-    tau::Size<double> sensorSize_pixels{{1920, 1080}};
+    auto homographySettings = iris::HomographySettings::Default();
 
     auto solution =
-        SolutionCreator(squareSize_mm, intrinsics).CreateSolution(0, 0, 0, 2);
+        SolutionCreator(
+            homographySettings.squareSize_mm,
+            intrinsics).CreateSolution(0, 0, 0, 2);
 
-    auto homography = iris::Homography(squareSize_mm, sensorSize_pixels);
+    auto homography = iris::Homography(homographySettings);
 
     iris::HomographyMatrix homographyMatrix
         = homography.GetHomographyMatrix(solution.intersections);
 
-    auto normalize = iris::Normalize(sensorSize_pixels);
-    auto world = iris::World(squareSize_mm);
+    auto normalize = iris::Normalize(homographySettings.sensorSize_pixels);
+    auto world = iris::World(homographySettings.squareSize_mm);
 
     for (auto &intersection: solution.intersections)
     {
         auto worldPoint = world(intersection.logical);
         auto pixel = normalize(intersection.pixel);
 
-        iris::Vector3<double> pixelH(pixel.x, pixel.y, 1);
-        iris::Vector3<double> worldH(worldPoint.x, worldPoint.y, 1);
-        iris::Vector3<double> projected = homographyMatrix * worldH;
+        tau::Vector3<double> pixelH(pixel.x, pixel.y, 1);
+        tau::Vector3<double> worldH(worldPoint.x, worldPoint.y, 1);
+        tau::Vector3<double> projected = homographyMatrix * worldH;
         projected.array() /= projected(2);
 
         if (!projected.isApprox(pixelH))
@@ -274,7 +273,7 @@ TEST_CASE("HomographyMatrix round trip", "[homography]")
 template<int Options>
 void RunSvdReconstructTest()
 {
-    iris::Intrinsics<double> intrinsics{{
+    tau::Intrinsics<double> intrinsics{{
         10_d,
         25_d,
         25_d,
@@ -335,7 +334,7 @@ void RunSvdReconstructTest()
 template<int Options>
 void RunSvdNullspaceTest()
 {
-    iris::Intrinsics<double> intrinsics{{
+    tau::Intrinsics<double> intrinsics{{
         10_d,
         25_d,
         25_d,
@@ -417,7 +416,7 @@ TEST_CASE("SVD", "[homography]")
 
 TEST_CASE("Solve for intrinsics", "[homography]")
 {
-    iris::Intrinsics<double> intrinsics{{
+    tau::Intrinsics<double> intrinsics{{
         10_d,
         25_d,
         25_d,
@@ -425,11 +424,12 @@ TEST_CASE("Solve for intrinsics", "[homography]")
         1080.0_d / 2.0_d,
         5_d}};
 
-    double squareSize_mm = 25;
-    tau::Size<double> sensorSize_pixels{{1920, 1080}};
+    auto homographySettings = iris::HomographySettings::Default();
 
-    auto solutions = CreateSolutions(squareSize_mm, intrinsics);
-    auto homography = iris::Homography(squareSize_mm, sensorSize_pixels);
+    auto solutions =
+        CreateSolutions(homographySettings.squareSize_mm, intrinsics);
+
+    auto homography = iris::Homography(homographySettings);
 
     iris::Homography::Intrinsics result =
         homography.ComputeIntrinsics(solutions);
@@ -437,6 +437,6 @@ TEST_CASE("Solve for intrinsics", "[homography]")
     std::cout << "Invented:\n" << intrinsics << std::endl;
     std::cout << "\nComputed:\n" << result << std::endl;
 
-    std::cout << iris::Intrinsics<double>::FromArray(10_d, result)
+    std::cout << tau::Intrinsics<double>::FromArray(10_d, result)
         << std::endl;
 }

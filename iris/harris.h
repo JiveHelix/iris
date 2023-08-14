@@ -9,7 +9,8 @@
 #include "iris/gaussian.h"
 #include "iris/harris_settings.h"
 #include "iris/suppression.h"
-#include "iris/pixels.h"
+#include "draw/pixels.h"
+#include "iris/image.h"
 
 
 namespace iris
@@ -20,6 +21,10 @@ template<typename Float>
 class Harris
 {
 public:
+    using Result = ImageMatrix<Float>;
+
+    Harris() = default;
+
     Harris(const HarrisSettings<Float> &settings)
         :
         settings_(settings),
@@ -32,22 +37,20 @@ public:
 
     }
 
-    template<typename Value, typename Data>
-    std::optional<tau::MatrixLike<Float, Data>> Filter(
-        const GradientResult<Value, Data> &gradient)
+    template<typename Value>
+    std::optional<Result> Filter(const GradientResult<Value> &gradient)
     {
         if (!this->settings_.enable)
         {
             return {};
         }
 
-        using FloatData = tau::MatrixLike<Float, Data>;
-        FloatData dx = gradient.dx.template cast<Float>();
-        FloatData dy = gradient.dy.template cast<Float>();
+        Result dx = gradient.dx.template cast<Float>();
+        Result dy = gradient.dy.template cast<Float>();
 
-        FloatData dxSquared = dx.array().square();
-        FloatData dySquared = dy.array().square();
-        FloatData dxdy = dx.array() * dy.array();
+        Result dxSquared = dx.array().square();
+        Result dySquared = dy.array().square();
+        Result dxdy = dx.array() * dy.array();
 
         // Window the gradient data using the gaussian kernel.
         auto threadedDxSquared = ThreadedRowGaussian(
@@ -67,18 +70,18 @@ public:
                 return this->gaussianKernel_.Filter(dxdy);
             });
 
-        FloatData windowedDxSquared = threadedDxSquared.Get();
-        FloatData windowedDySquared = threadedDySquared.Get();
-        FloatData windowedDxDy = threadedDxDy.get();
+        Result windowedDxSquared = threadedDxSquared.Get();
+        Result windowedDySquared = threadedDySquared.Get();
+        Result windowedDxDy = threadedDxDy.get();
 
-        FloatData response =
+        Result response =
             windowedDxSquared.array() * windowedDySquared.array()
             - windowedDxDy.array().square()
             - this->settings_.alpha
                 * (windowedDxSquared.array() + windowedDySquared.array())
                     .square();
 
-        FloatData threshold = this->Threshold(response);
+        Result threshold = this->Threshold(response);
 
         if (this->settings_.suppress)
         {
@@ -91,8 +94,7 @@ public:
         return threshold;
     }
 
-    template<typename Data>
-    Data Threshold(Data response)
+    Result Threshold(const Result &response)
     {
         Float thresholdValue = this->settings_.threshold * response.maxCoeff();
         return (response.array() < thresholdValue).select(0, response);
@@ -105,35 +107,37 @@ private:
 
 
 template<typename Float>
-using ThreadsafeHarris = ThreadsafeFilter<HarrisGroup<Float>, Harris<Float>>;
+using ThreadsafeHarris =
+    ThreadsafeFilter<HarrisGroup<Float>, Harris<Float>>;
 
 
 template<typename Derived>
-Pixels ColorizeHarris(const Eigen::MatrixBase<Derived> &input)
+draw::Pixels ColorizeHarris(const Eigen::MatrixBase<Derived> &input)
 {
+    using Float = typename Derived::Scalar;
+
     static_assert(
-        std::is_floating_point_v<typename Derived::Scalar>,
+        std::is_floating_point_v<Float>,
         "Expected the output of the harris operator to be floating-point");
 
     Derived response = input.derived();
 
     // Scale the maximum value to 1.
-    float maximum = response.maxCoeff();
+    Float maximum = response.maxCoeff();
     response.array() /= maximum;
     response = (response.array() > 0).select(1, response);
 
-    tau::HsvPlanes<float> hsv(response.rows(), response.cols());
+    tau::HsvPlanes<Float> hsv(response.rows(), response.cols());
 
-    tau::GetSaturation(hsv).array() = 1.0f;
-    tau::GetHue(hsv).array() = 120.0f;
+    tau::GetSaturation(hsv).array() = Float(1.0);
+    tau::GetHue(hsv).array() = Float(120.0);
     tau::GetValue(hsv) = response;
 
     auto asRgb = tau::HsvToRgb<uint8_t>(hsv);
 
     return {
         asRgb.template GetInterleaved<Eigen::RowMajor>(),
-        response.rows(),
-        response.cols()};
+        {response.cols(), response.rows()}};
 }
 
 

@@ -20,6 +20,11 @@ void Suppress(
     Eigen::Index windowSize,
     Eigen::MatrixBase<Data> &result)
 {
+    using Eigen::Index;
+
+    Index x;
+    Index y;
+
     if constexpr (tau::MatrixTraits<Data>::isColumnMajor)
     {
         for (Eigen::Index column = 0; column < limitColumn; ++column)
@@ -32,8 +37,9 @@ void Suppress(
                     windowSize,
                     windowSize);
 
-                auto maximum = block.maxCoeff();
-                block = (block.array() < maximum).select(0, block);
+                auto maximum = block.maxCoeff(&y, &x);
+                block.array() = 0;
+                block(y, x) = maximum;
             }
         }
     }
@@ -49,8 +55,9 @@ void Suppress(
                     windowSize,
                     windowSize);
 
-                auto maximum = block.maxCoeff();
-                block = (block.array() < maximum).select(0, block);
+                auto maximum = block.maxCoeff(&y, &x);
+                block.array() = 0;
+                block(y, x) = maximum;
             }
         }
     }
@@ -93,7 +100,11 @@ public:
             limitRow,
             limitColumn,
             windowSize,
-            data.block(rows.index, columns.index, rows.count, columns.count).eval());
+            data.block(
+                rows.index,
+                columns.index,
+                rows.count,
+                columns.count).eval());
     }
 
     Data Get()

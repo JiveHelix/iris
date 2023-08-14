@@ -8,29 +8,27 @@ namespace iris
 ViewSettingsModel::ViewSettingsModel()
     :
     ViewSettingsGroup::Model(),
-    scaleTerminus_(this, this->scale),
+    viewPositionEndpoint_(
+        this,
+        draw::PointControl(this->viewPosition),
+        &ViewSettingsModel::OnViewPosition_),
+    scaleEndpoint_(
+        this,
+        draw::ScaleControl(this->scale)),
+    imageSizeEndpoint_(this, this->imageSize, &ViewSettingsModel::OnImageSize_),
     linkZoomTerminus_(this, this->linkZoom),
-    viewPositionTerminus_(this, this->viewPosition),
-    imageSizeTerminus_(this, this->imageSize),
     resetZoomTerminus_(this, this->resetZoom),
     fitZoomTerminus_(this, this->fitZoom),
     ignoreZoom_(false),
     ignoreViewPosition_(false)
 {
-    this->scaleTerminus_.horizontal.Connect(
+    this->scaleEndpoint_.horizontal.Connect(
         &ViewSettingsModel::OnHorizontalZoom_);
 
-    this->scaleTerminus_.vertical.Connect(
+    this->scaleEndpoint_.vertical.Connect(
         &ViewSettingsModel::OnVerticalZoom_);
 
     this->linkZoomTerminus_.Connect(&ViewSettingsModel::OnLinkZoom_);
-
-    this->viewPositionTerminus_.Connect(
-        &ViewSettingsModel::OnViewPosition_);
-
-    this->imageSizeTerminus_.Connect(
-        &ViewSettingsModel::OnImageSize_);
-
     this->resetZoomTerminus_.Connect(&ViewSettingsModel::ResetZoom);
     this->fitZoomTerminus_.Connect(&ViewSettingsModel::FitZoom);
 
@@ -39,7 +37,7 @@ ViewSettingsModel::ViewSettingsModel()
 
 
 // Compute the coordinates of the unscaled pixel using current zoom.
-Point ViewSettings::GetLogicalPosition(const Point &point) const
+draw::Point ViewSettings::GetLogicalPosition(const draw::Point &point) const
 {
     return (point + this->viewPosition) / this->scale;
 }
@@ -87,7 +85,7 @@ tau::Point2d<double> ViewSettingsModel::ComputeImageCenterPixel() const
 }
 
 
-Point ViewSettingsModel::GetViewPositionFromCenterImagePixel() const
+draw::Point ViewSettingsModel::GetViewPositionFromCenterImagePixel() const
 {
     auto scaledCenterPixel = this->imageCenterPixel_ * this->scale.Get();
 
@@ -103,7 +101,7 @@ Point ViewSettingsModel::GetViewPositionFromCenterImagePixel() const
 
 void ViewSettingsModel::ResetZoom()
 {
-    this->scale.Set(Scale{});
+    this->scale.Set(draw::Scale{});
     this->ResetView_(this->imageSize.Get());
 }
 
@@ -115,7 +113,7 @@ void ViewSettingsModel::FitZoom()
 
     // imageSize_ * fit = viewSize_
     viewSize_ /= imageSize_;
-    auto fit = Scale{viewSize_.height, viewSize_.width};
+    auto fit = draw::Scale{viewSize_.height, viewSize_.width};
 
     auto scaleDeferred =
         pex::Defer<decltype(this->scale)>(this->scale);
@@ -185,7 +183,7 @@ void ViewSettingsModel::OnLinkZoom_(bool isLinked)
 }
 
 
-void ViewSettingsModel::OnViewPosition_(const Point &)
+void ViewSettingsModel::OnViewPosition_(const draw::Point &)
 {
     if (this->ignoreViewPosition_)
     {
@@ -212,7 +210,7 @@ void ViewSettingsModel::ResetView_(const Size &imageSize_)
 }
 
 
-void ViewSettingsModel::SetViewPosition_(const Point &point)
+void ViewSettingsModel::SetViewPosition_(const draw::Point &point)
 {
     // We need to notify observers of the change to view position without
     // calling our own handler `OnViewPosition_`
@@ -229,3 +227,19 @@ void ViewSettingsModel::RecenterView()
 
 
 } // end namespace iris
+
+
+
+template struct pex::Group
+    <
+        iris::ViewFields,
+        iris::ViewTemplate,
+        iris::ViewSettings
+    >;
+
+
+template struct pex::MakeGroup
+    <
+        iris::ViewSettingsGroup,
+        iris::ViewSettingsModel
+    >;

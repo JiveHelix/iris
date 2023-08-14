@@ -64,3 +64,20 @@ TEST_CASE("Row-major threaded suppression", "[suppression]")
     REQUIRE(result(5, 0) == 0.0);
     REQUIRE(result(3, 0) == 42.9);
 }
+
+
+TEST_CASE("Closely-spaced identical values", "[suppression]")
+{
+    using Matrix =
+        Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
+    Matrix m = Matrix::Zero(16, 16);
+    m(7, 7) = 16;
+    m(8, 8) = 16;
+
+    Matrix result = iris::Suppression(2, 8, m);
+
+    // Exactly one of them better be 0.
+    REQUIRE(((result(7, 7) > 0) != (result(8, 8) > 0)));
+}
+

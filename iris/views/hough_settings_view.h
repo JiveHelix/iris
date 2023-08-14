@@ -8,6 +8,7 @@
 #include <wxpex/view.h>
 
 #include "iris/hough_settings.h"
+#include "iris/views/defaults.h"
 
 
 namespace iris
@@ -29,72 +30,61 @@ public:
     {
         using namespace wxpex;
 
+        auto pane = this->GetBorderPane(borderStyle);
+
         auto enable = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Enable",
-            new wxpex::CheckBox(this->GetPane(), "", controls.enable));
+            new wxpex::CheckBox(pane, "", controls.enable));
 
         auto rhoCount = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "rho count",
-            new wxpex::Field(this->GetPane(), controls.rhoCount));
+            new wxpex::Field(pane, controls.rhoCount));
 
         auto thetaCount = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "theta count",
-            new wxpex::Field(this->GetPane(), controls.thetaCount));
+            new wxpex::Field(pane, controls.thetaCount));
 
         auto angleRange = LabeledWidget(
-            this->GetPane(),
+            pane,
             "Angle range",
             new ValueSlider(
-                this->GetPane(),
+                pane,
                 controls.angleRange,
                 controls.angleRange.value));
 
         auto weighted = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Weighted",
-            new wxpex::CheckBox(this->GetPane(), "", controls.weighted));
+            new wxpex::CheckBox(pane, "", controls.weighted));
 
         auto suppress = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Suppress",
-            new wxpex::CheckBox(this->GetPane(), "", controls.suppress));
+            new wxpex::CheckBox(pane, "", controls.suppress));
 
         auto window = LabeledWidget(
-            this->GetPane(),
+            pane,
             "Window",
             new ValueSlider(
-                this->GetPane(),
+                pane,
                 controls.window,
                 controls.window.value));
 
         auto threshold = LabeledWidget(
-            this->GetPane(),
+            pane,
             "Threshold",
             new ValueSlider(
-                this->GetPane(),
+                pane,
                 controls.threshold,
                 controls.threshold.value));
 
-        auto fake = wxpex::LabeledWidget(
-            this->GetPane(),
-            "fake",
-            new wxpex::CheckBox(this->GetPane(), "", controls.fakeLines));
-
-        auto fakeCount = LabeledWidget(
-            this->GetPane(),
-            "fake count",
-            new ValueSlider(
-                this->GetPane(),
-                controls.fakeCount,
-                controls.fakeCount.value));
-
         auto threads = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Threads",
-            new wxpex::Field(this->GetPane(), controls.threads));
+            new wxpex::Field(pane, controls.threads));
 
         auto sizer = LayoutLabeled(
             layoutOptions,
@@ -106,11 +96,9 @@ public:
             suppress,
             window,
             threshold,
-            fake,
-            fakeCount,
             threads);
 
-        this->ConfigureTopSizer(sizer.release());
+        this->ConfigureBorderPane(borderPixels, std::move(sizer));
     }
 };
 

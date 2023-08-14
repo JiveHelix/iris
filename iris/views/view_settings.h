@@ -2,10 +2,11 @@
 
 #include <fields/fields.h>
 #include <pex/group.h>
+#include <pex/endpoint.h>
 
-#include "iris/size.h"
-#include "iris/views/scale.h"
-#include "iris/views/point.h"
+#include <draw/size.h>
+#include <draw/scale.h>
+#include <draw/point.h>
 
 
 namespace iris
@@ -29,10 +30,10 @@ struct ViewFields
 template<template<typename> typename T>
 struct ViewTemplate
 {
-    T<pex::MakeGroup<SizeGroup>> imageSize;
-    T<pex::MakeGroup<SizeGroup>> viewSize;
-    T<pex::MakeGroup<PointGroup>> viewPosition;
-    T<pex::MakeGroup<ScaleGroup>> scale;
+    T<pex::MakeGroup<draw::SizeGroup>> imageSize;
+    T<pex::MakeGroup<draw::SizeGroup>> viewSize;
+    T<pex::MakeGroup<draw::PointGroup>> viewPosition;
+    T<pex::MakeGroup<draw::ScaleGroup>> scale;
     T<bool> linkZoom;
     T<pex::MakeSignal> resetZoom;
     T<pex::MakeSignal> fitZoom;
@@ -49,17 +50,17 @@ struct ViewSettings: public ViewTemplate<pex::Identity>
     static ViewSettings Default()
     {
         return ViewSettings{{
-            Size{{defaultWidth, defaultHeight}},
-            Size{{defaultWidth, defaultHeight}},
-            Point{{0, 0}},
-            Scale(1.0, 1.0),
+            draw::Size{{defaultWidth, defaultHeight}},
+            draw::Size{{defaultWidth, defaultHeight}},
+            draw::Point{{0, 0}},
+            draw::Scale(1.0, 1.0),
             true,
             {},
             {}}};
     }
 
     // Compute the coordinates of an unscaled point using current zoom.
-    Point GetLogicalPosition(const Point &point) const;
+    draw::Point GetLogicalPosition(const draw::Point &point) const;
 };
 
 
@@ -75,10 +76,13 @@ public:
     static constexpr auto observerName = "ViewSettingsModel";
 
 private:
+    using ScaleEndpoint =
+        pex::EndpointGroup<ViewSettingsModel, draw::ScaleControl>;
+
+    pex::Endpoint<ViewSettingsModel, draw::PointControl> viewPositionEndpoint_;
+    ScaleEndpoint scaleEndpoint_;
+    pex::Endpoint<ViewSettingsModel, draw::SizeControl> imageSizeEndpoint_;
     pex::Terminus<ViewSettingsModel, pex::model::Value<bool>> linkZoomTerminus_;
-    PointGroup::Terminus<ViewSettingsModel> viewPositionTerminus_;
-    ScaleGroup::Terminus<ViewSettingsModel> scaleTerminus_;
-    SizeGroup::Terminus<ViewSettingsModel> imageSizeTerminus_;
     pex::Terminus<ViewSettingsModel, pex::model::Signal> resetZoomTerminus_;
     pex::Terminus<ViewSettingsModel, pex::model::Signal> fitZoomTerminus_;
     tau::Point2d<double> imageCenterPixel_;
@@ -92,7 +96,7 @@ public:
 
     tau::Point2d<double> ComputeImageCenterPixel() const;
 
-    Point GetViewPositionFromCenterImagePixel() const;
+    draw::Point GetViewPositionFromCenterImagePixel() const;
 
     void ResetZoom();
 
@@ -101,7 +105,7 @@ public:
     void RecenterView();
 
 private:
-    void SetViewPosition_(const Point &);
+    void SetViewPosition_(const draw::Point &);
 
     void OnHorizontalZoom_(double horizontalZoom);
 
@@ -109,7 +113,7 @@ private:
 
     void OnLinkZoom_(bool isLinked);
 
-    void OnViewPosition_(const Point &);
+    void OnViewPosition_(const draw::Point &);
 
     void OnImageSize_(const Size &);
 
@@ -117,13 +121,26 @@ private:
 };
 
 
-template<typename Observer>
-using ViewSettingsTerminus = typename ViewSettingsGroup::Terminus<Observer>;
-
 using ViewSettingsGroupMaker =
     pex::MakeGroup<ViewSettingsGroup, ViewSettingsModel>;
 
-using ViewSettingsControl = typename ViewSettingsGroup::Control<void>;
+using ViewSettingsControl = typename ViewSettingsGroup::Control;
 
 
 } // end namespace iris
+
+
+
+extern template struct pex::Group
+    <
+        iris::ViewFields,
+        iris::ViewTemplate,
+        iris::ViewSettings
+    >;
+
+
+extern template struct pex::MakeGroup
+    <
+        iris::ViewSettingsGroup,
+        iris::ViewSettingsModel
+    >;

@@ -4,8 +4,7 @@
 #include <wxpex/labeled_widget.h>
 #include <pex/value.h>
 #include <wx/listctrl.h>
-
-#include "iris/views/pixel_view_settings.h"
+#include <draw/views/pixel_view_settings.h>
 
 
 namespace iris
@@ -18,29 +17,28 @@ class PixelValue: public wxStaticText
 public:
     using Values = typename ValuesControl::Type;
 
-    PixelValue(wxWindow *parent, ValuesControl values, PointControl point)
+    PixelValue(wxWindow *parent, ValuesControl values, draw::PointControl point)
         :
         wxStaticText(parent, wxID_ANY, "    "),
-        values_(this, values),
-        point_(this, point)
+        values_(this, values, &PixelValue::OnValues_),
+        point_(this, point, &PixelValue::OnPoint_)
     {
-        this->values_.Connect(&PixelValue::OnValues_);
-        this->point_.Connect(&PixelValue::OnPoint_);
+
     }
 
     void OnValues_(const Values &values)
     {
-        this->Display(values, this->point_.Get());
+        this->Display(values, this->point_.control.Get());
     }
 
-    void OnPoint_(const Point &point)
+    void OnPoint_(const draw::Point &point)
     {
-        this->Display(this->values_.Get(), point);
+        this->Display(this->values_.control.Get(), point);
     }
 
-    void Display(const Values &values, const Point &point)
+    void Display(const Values &values, const draw::Point &point)
     {
-        if (Size(values).Contains(point))
+        if (draw::Size(values).Contains(point))
         {
             this->SetLabelText(std::to_string(values(point.y, point.x)));
             this->Show(true);
@@ -51,8 +49,8 @@ public:
         }
     }
 
-    pex::Terminus<PixelValue, ValuesControl> values_;
-    PointTerminus<PixelValue> point_;
+    pex::EndpointControl<PixelValue, ValuesControl> values_;
+    pex::EndpointControl<PixelValue, draw::PointControl> point_;
 };
 
 
@@ -63,7 +61,7 @@ public:
 
     PixelInfo(
         wxWindow *parent,
-        PointControl point);
+        draw::PointControl point);
 
     template<typename ValuesControl>
     void AddValue(ValuesControl values, const std::string &name)
@@ -74,7 +72,7 @@ public:
         auto value = new PixelValue(
             this,
             values,
-            PointControl(this->point_));
+            this->pointControl_);
 
         auto label = new wxStaticText(this, wxID_ANY, name);
         this->sizer_->Add(label, 0, options.labelFlags);
@@ -82,10 +80,11 @@ public:
         this->GetSizer()->SetSizeHints(this);
     }
 
-    void OnPoint_(const Point &point);
+    void OnPoint_(const draw::Point &point);
 
 private:
-    PointTerminus<PixelInfo> point_;
+    draw::PointControl pointControl_;
+    pex::Endpoint<PixelInfo, draw::PointControl> point_;
 
     wxStaticText *x_;
     wxStaticText *y_;
@@ -100,7 +99,7 @@ public:
 
     PixelInfoView(
         wxWindow *parent,
-        PixelViewControl control,
+        draw::PixelViewControl control,
         const std::string &title);
 
 protected:

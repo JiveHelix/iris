@@ -5,6 +5,7 @@
 #include <string>
 #include <pex/linked_ranges.h>
 #include <fields/fields.h>
+#include <fields/compare.h>
 
 #include "iris/level_settings.h"
 
@@ -59,6 +60,7 @@ struct ColorTemplate
         T<Value> maximum;
 
         static constexpr auto fields = ColorFields<Template>::fields;
+        static constexpr auto fieldsTypeName = "Color";
     };
 };
 
@@ -72,9 +74,13 @@ struct ColorSettings:
         return {{
             true,
             LevelRanges<Value>::Settings::Default(),
-            std::numeric_limits<Value>::max()}};
+            255}};
     }
 };
+
+
+TEMPLATE_EQUALITY_OPERATORS(ColorSettings)
+TEMPLATE_OUTPUT_STREAM(ColorSettings)
 
 
 template<typename Value>
@@ -102,9 +108,10 @@ public:
         this->maximumTerminus_.Connect(&ColorModel::OnMaximum_);
     }
 
-    void OnMaximum_(Value maximumValue)
+private:
+    void OnMaximum_(Value maximum_)
     {
-        this->level.SetMaximumValue(maximumValue);
+        this->level.SetMaximumValue(maximum_);
     }
 
 private:
@@ -113,11 +120,7 @@ private:
 
 
 template<typename Value>
-using ColorControl = typename ColorGroup<Value>::template Control<void>;
-
-
-template<typename Value, typename Observer>
-using ColorTerminus = typename ColorGroup<Value>::template Terminus<Observer>;
+using ColorControl = typename ColorGroup<Value>::Control;
 
 
 template<typename Value>
@@ -125,3 +128,12 @@ using ColorGroupMaker = pex::MakeGroup<ColorGroup<Value>, ColorModel<Value>>;
 
 
 } // end namespace iris
+
+
+
+extern template struct pex::Group
+    <
+        iris::ColorFields,
+        iris::ColorTemplate<int32_t>::template Template,
+        iris::ColorSettings<int32_t>
+    >;

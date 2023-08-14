@@ -5,6 +5,7 @@
 #include <wxpex/labeled_widget.h>
 #include <wxpex/slider.h>
 #include <wxpex/button.h>
+#include <wxpex/check_box.h>
 
 #include "iris/level_settings.h"
 
@@ -30,7 +31,20 @@ public:
         auto detect = new wxpex::Button(
             this->GetPane(),
             "Detect",
-            control.detect);
+            control.autoDetectSettings);
+
+        auto detectMargin = wxpex::LabeledWidget(
+            this->GetPane(),
+            "Detect Margin",
+            new wxpex::ValueSlider(
+                this->GetPane(),
+                control.detectMargin,
+                control.detectMargin.value));
+
+        auto enable = wxpex::LabeledWidget(
+            this->GetPane(),
+            "enable",
+            new wxpex::CheckBox(this->GetPane(), "", control.enable));
 
         auto levelLow = wxpex::LabeledWidget(
             this->GetPane(),
@@ -50,15 +64,20 @@ public:
 
         auto rangeSizer = LayoutLabeled(
             layoutOptions,
+            detectMargin,
+            enable,
             levelLow,
             levelHigh);
 
         auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
         sizer->Add(detect, 0, wxBOTTOM);
         sizer->Add(rangeSizer.release(), 1, wxEXPAND);
-        this->ConfigureTopSizer(sizer.release());
+        this->ConfigureTopSizer(std::move(sizer));
     }
 };
+
+
+extern template class LevelSettingsView<int32_t>;
 
 
 } // end namespace iris

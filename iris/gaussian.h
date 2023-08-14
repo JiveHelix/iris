@@ -12,8 +12,8 @@
 #include <tau/angles.h>
 
 #include "iris/error.h"
+#include "iris/image.h"
 #include "iris/gaussian_settings.h"
-#include "iris/threadsafe_filter.h"
 #include "iris/chunks.h"
 
 
@@ -287,6 +287,8 @@ struct GaussianKernel
     using RowVector = Eigen::RowVectorX<T>;
     using Matrix = Eigen::MatrixX<T>;
 
+    GaussianKernel() = default;
+
     static S GetRadius(S sigma, S threshold)
     {
         // Using the zeroth gaussian to estimate kernel size.
@@ -373,7 +375,9 @@ struct GaussianKernel<T, S, order, std::enable_if_t<std::is_integral_v<T>>>
     using RowVector = Eigen::RowVectorX<T>;
     using Matrix = Eigen::MatrixX<T>;
 
-    GaussianKernel(S sigma_, T maximumInput, S threshold_, size_t threads_)
+    GaussianKernel() = default;
+
+    GaussianKernel(S sigma_, T maximum, S threshold_, size_t threads_)
         :
         sigma(sigma_),
         threshold(threshold_),
@@ -390,7 +394,7 @@ struct GaussianKernel<T, S, order, std::enable_if_t<std::is_integral_v<T>>>
         // Find the maximum scale
         S maximumScale = std::floor(
             static_cast<S>(
-                std::numeric_limits<T>::max() / maximumInput));
+                std::numeric_limits<T>::max() / maximum));
 
         Index startingIndex = 0;
         S scale = 1.0 / normalized.columnKernel(startingIndex);
@@ -427,14 +431,14 @@ struct GaussianKernel<T, S, order, std::enable_if_t<std::is_integral_v<T>>>
 
         // Assert that data will not be lost to overflow.
         assert(
-            std::numeric_limits<T>::max() / this->sum >= maximumInput);
+            std::numeric_limits<T>::max() / this->sum >= maximum);
     }
 
     GaussianKernel(const GaussianSettings<T> &settings)
         :
         GaussianKernel(
             settings.sigma,
-            settings.maximumInput,
+            settings.maximum,
             settings.threshold,
             settings.threads)
     {
@@ -464,13 +468,21 @@ struct GaussianKernel<T, S, order, std::enable_if_t<std::is_integral_v<T>>>
 };
 
 
-template<typename Derived, size_t order, typename S = double>
+template<typename Value, size_t order, typename S = double>
 class Gaussian
 {
 public:
-    using Value = typename Derived::Scalar;
-    using Result = Derived;
+    using Result = ImageMatrix<Value>;
+    using Matrix = Result;
     using Kernel = GaussianKernel<Value, S, order>;
+
+    Gaussian()
+        :
+        isEnabled_(false),
+        kernel_()
+    {
+
+    }
 
     Gaussian(const GaussianSettings<Value> &settings)
         :
@@ -480,19 +492,18 @@ public:
 
     }
 
-    std::optional<Derived> FilterNoExtend(
-        const Eigen::MatrixBase<Derived> &data) const
+    std::optional<Result> FilterNoExtend(const Matrix &data) const
     {
         if (!this->isEnabled_)
         {
             // Pass through the input.
-            data;
+            return data;
         }
 
         return this->kernel_.Filter(data);
     }
 
-    std::optional<Derived> Filter(const Eigen::MatrixBase<Derived> &data) const
+    std::optional<Result> Filter(const Matrix &data) const
     {
         if (!this->isEnabled_)
         {
@@ -516,13 +527,7 @@ private:
 };
 
 
-template<typename Derived, size_t order = 0>
-using ThreadsafeGaussian =
-    ThreadsafeFilter
-    <
-        GaussianGroup<typename Derived::Scalar>,
-        Gaussian<Derived, order>
-    >;
-
+extern template class Gaussian<int32_t, 0, double>;
+using DefaultGaussian = Gaussian<int32_t, 0, double>;
 
 } // end namespace iris

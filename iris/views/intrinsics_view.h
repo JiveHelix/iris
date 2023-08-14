@@ -3,6 +3,7 @@
 
 #include <wxpex/wxshim.h>
 #include <wxpex/labeled_widget.h>
+#include <wxpex/static_box.h>
 #include "iris/projection_settings.h"
 
 
@@ -11,17 +12,18 @@ namespace iris
 
 
 template<typename T>
-class IntrinsicsView: public wxControl
+class IntrinsicsView: public wxpex::StaticBox
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
 
     IntrinsicsView(
         wxWindow *parent,
+        const std::string &name,
         file::IntrinsicsControl<T> controls,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        wxControl(parent, wxID_ANY)
+        wxpex::StaticBox(parent, name)
     {
         using namespace wxpex;
 
@@ -85,16 +87,17 @@ public:
             principalY_pixels,
             skew);
 
-        auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
-        sizer->Add(controlsSizer.release(), 0, wxEXPAND | wxBOTTOM, 3);
-        sizer->Add(fileSelector, 0, wxEXPAND | wxBOTTOM, 3);
+        auto sizer = wxpex::LayoutItems(
+            verticalItems,
+            controlsSizer.release(),
+            fileSelector);
 
         sizer->Add(
             MakeReadWriteButtons(this, control).release(),
             0,
             wxALIGN_CENTER);
 
-        this->SetSizerAndFit(sizer.release());
+        this->ConfigureSizer(std::move(sizer));
     }
 };
 

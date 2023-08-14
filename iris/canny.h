@@ -12,6 +12,7 @@
 #include "iris/canny_settings.h"
 #include "iris/gradient.h"
 #include "iris/chunks.h"
+#include "draw/pixels.h"
 
 
 namespace iris
@@ -29,25 +30,26 @@ struct CannyResult
     Float rangeHigh;
     Float rangeLow;
 
-    template<typename Pixel>
-    tau::RgbPixels<Pixel> Colorize() const
+    draw::Pixels Colorize() const
     {
-        tau::HsvPlanes<float> hsv(this->matrix.rows(), this->matrix.cols());
+        tau::HsvPlanes<Float> hsv(this->matrix.rows(), this->matrix.cols());
 
-        GetSaturation(hsv).array() = 1.0;
+        GetSaturation(hsv).array() = Float(1);
 
-        GetHue(hsv).array() = 120.0;
+        GetHue(hsv).array() = Float(120);
 
         GetHue(hsv).array() = (matrix.array() < this->rangeHigh)
-            .select(300.0, GetHue(hsv).array());
+            .select(300, GetHue(hsv).array());
 
-        GetValue(hsv) = (matrix.array() >= this->rangeHigh).select(1.0, matrix);
+        GetValue(hsv) =
+            (matrix.array() >= this->rangeHigh).select(Float(1), matrix);
+
         GetValue(hsv) =
             (matrix.array() >= this->rangeLow
                 && matrix.array() < this->rangeHigh)
-            .select(static_cast<Float>(0.7), matrix);
+            .select(Float(0.7), matrix);
 
-        auto asRgb = tau::HsvToRgb<Pixel>(hsv);
+        auto asRgb = tau::HsvToRgb<uint8_t>(hsv);
 
         return {
             asRgb.template GetInterleaved<Eigen::RowMajor>(),
@@ -62,6 +64,8 @@ class Canny
 public:
     using Result = CannyResult<Float>;
     using Matrix = typename Result::Matrix;
+
+    Canny() = default;
 
     Canny(const CannySettings<Float> &settings)
         :
@@ -229,9 +233,8 @@ public:
         return solver.result;
     }
 
-    template<typename Value, typename Data>
-    std::optional<Result> Filter(
-        const GradientResult<Value, Data> &gradient) const
+    template<typename Value>
+    std::optional<Result> Filter(const GradientResult<Value> &gradient) const
     {
         if (!this->settings_.enable)
         {
@@ -320,6 +323,10 @@ public:
 private:
     CannySettings<Float> settings_;
 };
+
+
+extern template struct CannyResult<double>;
+extern template class Canny<double>;
 
 
 } // end namespace iris

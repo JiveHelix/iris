@@ -65,7 +65,7 @@ struct SuppressionSettings
 };
 
 
-DECLARE_COMPARISON_OPERATORS(SuppressionSettings)
+DECLARE_EQUALITY_OPERATORS(SuppressionSettings)
 
 
 using SuppressionGroup =
@@ -78,10 +78,7 @@ using SuppressionGroup =
 
 using SuppressionModel = typename SuppressionGroup::Model;
 
-using SuppressionControl = typename SuppressionGroup::Control<void>;
-
-template<typename Observer>
-using SuppressionTerminus = typename SuppressionGroup::Terminus<Observer>;
+using SuppressionControl = typename SuppressionGroup::Control;
 
 
 } // end namespace iris

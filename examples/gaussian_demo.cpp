@@ -2,7 +2,7 @@
 #include <future>
 #include <wxpex/app.h>
 #include <wxpex/file_field.h>
-#include <iris/pixels.h>
+#include <draw/pixels.h>
 #include <iris/gaussian_settings.h>
 #include <iris/views/gaussian_settings_view.h>
 #include <iris/gaussian.h>
@@ -27,8 +27,6 @@ public:
     {
         this->SetMenuBar(this->shortcuts_->GetMenuBar());
 
-        auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
-
         wxpex::LayoutOptions layoutOptions{};
         layoutOptions.labelFlags = wxALIGN_RIGHT;
 
@@ -43,11 +41,14 @@ public:
 
         auto settings = new iris::GaussianSettingsView<Pixel>(
             this,
+            "Gaussian Blur",
             gaussianControl,
             layoutOptions);
 
         settings->Expand();
 
+        auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
+        
         sizer->Add(fileSelector, 0, wxEXPAND | wxBOTTOM, 5);
         sizer->Add(settings, 1, wxEXPAND | wxBOTTOM, 5);
         auto topSizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
@@ -64,17 +65,20 @@ class DemoBrain: public Brain<DemoBrain>
 {
 public:
 
-    using Matrix = typename iris::PlanarRgb<Pixel>::Matrix;
+    using Matrix = typename draw::PlanarRgb<Pixel>::Matrix;
     using Gaussian = iris::Gaussian<Matrix, 0>;
 
     DemoBrain()
         :
         observer_(this, UserControl(this->user_)),
         gaussianModel_(),
-        gaussianTerminus_(this, this->gaussianModel_),
+        gaussianTerminus_(
+            this,
+            iris::GaussianControl<Pixel>(this->gaussianModel_),
+            DemoBrain::OnSettings_),
         gaussian_(this->gaussianModel_.Get())
     {
-        this->gaussianTerminus_.Connect(&DemoBrain::OnSettings_);
+
     }
 
     wxpex::Window CreateControlFrame()
@@ -99,22 +103,23 @@ public:
         wxAboutBox(MakeAboutDialogInfo("Gaussian Demo"));
     }
 
-    static iris::Pixels MakePixels(const iris::PlanarRgb<Pixel> &planarRgb)
+    static std::shared_ptr<draw::Pixels>
+    MakePixels(const draw::PlanarRgb<Pixel> &planarRgb)
     {
-        iris::PlanarRgb<uint8_t> result = planarRgb.template Cast<uint8_t>();
+        draw::PlanarRgb<uint8_t> result = planarRgb.template Cast<uint8_t>();
         auto size = result.GetSize();
 
-        return {
+        return std::make_shared<draw::Pixels>(
             result.GetInterleaved(),
             size.height,
-            size.width};
+            size.width);
     }
 
-    iris::Pixels Process() const
+    std::shared_ptr<draw::Pixels> Process() const
     {
-        iris::PlanarRgb<Pixel> processed;
+        draw::PlanarRgb<Pixel> processed;
         const auto png = this->png_.GetRgbPixels();
-        using Matrix = typename iris::PlanarRgb<Pixel>::Matrix;
+        using Matrix = typename draw::PlanarRgb<Pixel>::Matrix;
 
         auto red = std::async(
             std::launch::async,
@@ -175,7 +180,7 @@ private:
 private:
     Observer<DemoBrain> observer_;
     iris::GaussianModel<Pixel> gaussianModel_;
-    iris::GaussianTerminus<Pixel ,DemoBrain> gaussianTerminus_;
+    pex::Endpoint<DemoBrain, iris::GaussianControl<Pixel>> gaussianEndpoint_;
     Gaussian gaussian_;
 };
 

@@ -3,6 +3,7 @@
 
 #include <fields/fields.h>
 #include <pex/group.h>
+#include <Eigen/Dense>
 
 
 namespace iris
@@ -29,13 +30,13 @@ struct HarrisRanges
     using AlphaHigh = pex::Limit<0, 25, 100>;
 
     using SigmaLow = pex::Limit<0, 25, 100>;
-    using SigmaHigh = pex::Limit<4>;
+    using SigmaHigh = pex::Limit<8>;
 
     using ThresholdLow = pex::Limit<0>;
     using ThresholdHigh = pex::Limit<0, 25, 100>;
 
     using WindowLow = pex::Limit<2>;
-    using WindowHigh = pex::Limit<10>;
+    using WindowHigh = pex::Limit<20>;
 };
 
 
@@ -106,10 +107,10 @@ struct HarrisSettings
 {
     static HarrisSettings Default()
     {
-        static constexpr Float defaultAlpha = static_cast<Float>(0.14);
-        static constexpr Float defaultSigma = static_cast<Float>(1.8);
-        static constexpr Float defaultThreshold = static_cast<Float>(0.04);
-        static constexpr Eigen::Index defaultWindow = 3;
+        static constexpr Float defaultAlpha = static_cast<Float>(0.21);
+        static constexpr Float defaultSigma = static_cast<Float>(6.3);
+        static constexpr Float defaultThreshold = static_cast<Float>(0.14);
+        static constexpr Eigen::Index defaultWindow = 8;
         static constexpr size_t defaultThreads = 4;
 
         return {{
@@ -124,8 +125,7 @@ struct HarrisSettings
 };
 
 
-DECLARE_COMPARISON_OPERATORS(HarrisSettings<float>)
-DECLARE_COMPARISON_OPERATORS(HarrisSettings<double>)
+TEMPLATE_EQUALITY_OPERATORS(HarrisSettings)
 
 
 template<typename Float, typename Ranges = HarrisRanges>
@@ -141,11 +141,27 @@ using HarrisModel = typename HarrisGroup<Float, Ranges>::Model;
 
 template<typename Float, typename Ranges = HarrisRanges>
 using HarrisControl =
-    typename HarrisGroup<Float, Ranges>::template Control<void>;
+    typename HarrisGroup<Float, Ranges>::Control;
 
-template<typename Observer, typename Float, typename Ranges = HarrisRanges>
-using HarrisTerminus =
-    typename HarrisGroup<Float, Ranges>::template Terminus<Observer>;
+
+template<typename Float>
+using HarrisGroupMaker = pex::MakeGroup<HarrisGroup<Float>>;
 
 
 } // end namespace iris
+
+
+
+extern template struct pex::Group
+    <
+        iris::HarrisFields,
+        iris::HarrisTemplate<float, iris::HarrisRanges>::template Template,
+        iris::HarrisSettings<float>
+    >;
+
+extern template struct pex::Group
+    <
+        iris::HarrisFields,
+        iris::HarrisTemplate<double, iris::HarrisRanges>::template Template,
+        iris::HarrisSettings<double>
+    >;

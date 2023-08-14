@@ -6,6 +6,7 @@
 #include "iris/projection_settings.h"
 #include "iris/view/intrinsics_view.h"
 #include "iris/view/pose_view.h"
+#include "irsi/views/defaults.h"
 
 
 namespace iris
@@ -25,22 +26,24 @@ public:
         :
         wxpex::Collapsible(parent, name)
     {
+        auto pane = this->GetBorderPane(borderStyle);
+
         auto intrinsics = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Intrinsics",
-            new IntrinsicsView<T>(this->GetPane(), control.intrinsics));
+            new IntrinsicsView<T>(pane, control.intrinsics));
 
         auto pose = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Pose",
-            new PoseView<T>(this->GetPane(), control.pose));
+            new PoseView<T>(pane, control.pose));
 
-        auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
+        auto sizer = wxpex::LayoutItems(
+            verticalItems,
+            intrinsics.Layout(wxVERTICAL).release(),
+            pose.Layout(wxVERTICAL).release());
 
-        sizer->Add(intrinsics.Layout(wxVERTICAL).release(), 0, wxBOTTOM, 7);
-        sizer->Add(pose.Layout(wxVERTICAL).release());
-
-        this->ConfigureTopSizer(sizer.release());
+        this->ConfigureBorderPane(borderPixels, std::move(sizer));
     }
 };
 

@@ -26,7 +26,7 @@ struct DerivativeSize
     using Select = pex::model::Select<Size>;
 
     using Control =
-        pex::control::Select<void, Select>;
+        pex::control::Select<Select>;
 
     static Index GetSize(Size size)
     {
@@ -127,16 +127,16 @@ struct Differentiate
 
     Differentiate() = default;
 
-    Differentiate(T maximumInput, T scale, DerivativeSize::Size size)
+    Differentiate(T maximum, T scale, DerivativeSize::Size size)
         :
-        maximumInput_(maximumInput),
+        maximum_(maximum),
         scale_{scale},
         size_{DerivativeSize::GetSize(size)},
         horizontal(DerivativeSize::GetKernel<T>(this->size_, this->scale_)),
         vertical(this->horizontal.transpose())
     {
         if (
-            (maximumInput
+            (maximum
                 * DerivativeSize::GetWeight<T>(this->size_))
                 > std::numeric_limits<T>::max())
         {
@@ -158,16 +158,16 @@ struct Differentiate
         auto weight = DerivativeSize::GetWeight<T>(this->size_);
         auto weightedScale = scale * weight;
 
-        if (std::numeric_limits<T>::max() / weightedScale < this->maximumInput_)
+        if (std::numeric_limits<T>::max() / weightedScale < this->maximum_)
         {
-            // maximumInput_ * weightScale > maximum T: overflow
-            weightedScale = std::numeric_limits<T>::max() / this->maximumInput_;
+            // maximum_ * weightScale > maximum T: overflow
+            weightedScale = std::numeric_limits<T>::max() / this->maximum_;
         }
 
         this->scale_ = weightedScale / weight;
 
         // Maximum weight is 7, and the minimum sizeof(T) is 2, and
-        // maximumInput_ has been checked to be low enough.
+        // maximum_ has been checked to be low enough.
         assert(this->scale_ >= 1);
 
         this->horizontal =
@@ -180,7 +180,7 @@ struct Differentiate
 
     T GetMaximum() const
     {
-        return this->maximumInput_
+        return this->maximum_
             * DerivativeSize::GetWeight<T>(this->size_);
     }
 
@@ -207,7 +207,7 @@ struct Differentiate
     }
 
 private:
-    T maximumInput_;
+    T maximum_;
     T scale_;
     Eigen::Index size_;
 

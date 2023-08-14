@@ -24,16 +24,25 @@ namespace iris
 template<typename Float>
 struct HoughResult
 {
+    using Lines = std::vector<tau::Line2d<Float>>;
+
     using Matrix =
         Eigen::Matrix<Float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
     Matrix space;
-    std::vector<tau::Line2d<Float>> lines;
+    Lines lines;
 
     template<typename Value>
-    tau::MatrixLike<Value, Matrix> GetScaledSpace(float maximumValue)
+    tau::MatrixLike<Value, Matrix> GetScaledSpace(Float maximumValue) const
     {
         auto maximum = this->space.maxCoeff();
+
+        if (maximum < Float(1))
+        {
+            return tau::MatrixLike<Value, Matrix>::Zero(
+                this->space.rows(),
+                this->space.cols());
+        }
 
         return (this->space.array() * maximumValue / maximum)
                 .floor().template cast<Value>();
@@ -180,7 +189,7 @@ public:
         Accumulator() = default;
 
         Accumulator(
-                const Size &imageSize,
+                const draw::Size &imageSize,
                 size_t rhoCount,
                 size_t thetaCount,
                 Float angleRange)
@@ -206,8 +215,8 @@ public:
                     this->thetas_.array().cos().eval())),
             space_(
                 Matrix::Zero(
-                    static_cast<Index>(rhoCount),
-                    static_cast<Index>(thetaCount)))
+                    static_cast<Index>(rhoCount + 1),
+                    static_cast<Index>(thetaCount + 1)))
         {
 
         }
@@ -238,7 +247,6 @@ public:
                 * this->sinesAndCosines_.block(0, lowIndex, 2, thetaCount);
 
             assert(rhos.cols() == thetaCount);
-
             assert(rhos.maxCoeff() <= this->maximumRho_);
 
             auto indices = this->ToRhoIndex(rhos);
@@ -291,22 +299,23 @@ public:
         auto ToRhoIndex(const Eigen::MatrixBase<Derived> &rho) const
             -> tau::MatrixLike<Index, Derived>
         {
-            // Shift row values to the positive.
+            // Shift rho values to the positive.
 
             return ((rho.array() + this->maximumRho_) * this->toIndexFactor_)
-                .floor()
+                .round()
                 .template cast<Index>();
         }
 
         Float ToRho(Index index) const
         {
-            return (static_cast<Float>(index) / this->toIndexFactor_) - this->maximumRho_;
+            return (static_cast<Float>(index) / this->toIndexFactor_)
+                - this->maximumRho_;
         }
 
         Index ToThetaIndex(Float theta) const
         {
             return static_cast<Index>(
-                std::floor(
+                std::round(
                     theta * static_cast<Float>(this->thetaCount_ - 1) / 180));
         }
 
@@ -328,99 +337,23 @@ public:
         std::vector<tau::Line2d<Float>> GetLines(Float threshold)
         {
             std::vector<tau::Line2d<Float>> result;
-            using IndexPoint = tau::Point2d<Index>;
-            std::vector<IndexPoint> rhoThetas;
 
-            std::cout << "\nGetLines(" << threshold << ")" << std::endl;
-
-            for (Index row = 0; row < this->space_.rows(); ++row)
+            for (
+                Index rowIndex = 0;
+                rowIndex < this->space_.rows();
+                ++rowIndex)
             {
-                for (Index column = 0; column < this->space_.cols(); ++column)
+                for (
+                    Index columnIndex = 0;
+                    columnIndex < this->space_.cols();
+                    ++columnIndex)
                 {
-                    if (this->space_(row, column) > threshold)
+                    if (this->space_(rowIndex, columnIndex) > threshold)
                     {
-                        rhoThetas.emplace_back(
-                            row,
-                            column);
-
                         result.emplace_back(
-                            this->ToRho(row),
-                            tau::ToDegrees(this->ToTheta(column)));
+                            this->ToRho(rowIndex),
+                            tau::ToDegrees(this->ToTheta(columnIndex)));
                     }
-                }
-            }
-
-            // Shift the lines so they are relative to the image origin.
-            for (auto &line: result)
-            {
-                line.point += this->center_;
-            }
-
-            if (rhoThetas.size() < 2)
-            {
-                return result;
-            }
-
-            std::sort(
-                rhoThetas.begin(),
-                rhoThetas.end());
-
-            auto rhoThetaIndex = std::begin(rhoThetas);
-            auto next = rhoThetaIndex + 1;
-            Index count = 0;
-
-            while (next != std::end(rhoThetas))
-            {
-                std::cout << '\n' << ++count << ": " << *rhoThetaIndex << ": "
-                    << rhoThetaIndex->Distance(*next) << std::endl;
-
-                std::cout
-                    << "rho: " << this->ToRho(rhoThetaIndex->x)
-                    << ", theta: "
-                    << tau::ToDegrees(this->ToTheta(rhoThetaIndex->y))
-                    << ", value: "
-                    << this->space_(rhoThetaIndex->x, rhoThetaIndex->y)
-                    << std::endl;
-
-                ++rhoThetaIndex;
-                ++next;
-            }
-
-            std::cout << '\n' << ++count << ": " << *rhoThetaIndex << std::endl;
-
-            std::cout
-                << "rho: " << this->ToRho(rhoThetaIndex->x)
-                << ", theta: "
-                << tau::ToDegrees(this->ToTheta(rhoThetaIndex->y))
-                << ", value: "
-                << this->space_(rhoThetaIndex->x, rhoThetaIndex->y)
-                << std::endl;
-
-            return result;
-        }
-
-        std::vector<tau::Line2d<Float>>
-        FakeLines(size_t fakeCount)
-        {
-            std::vector<tau::Line2d<Float>> result;
-
-            size_t angleCount = fakeCount / 2;
-
-            Float angleStep = Float(180.0) / static_cast<Float>(angleCount);
-
-            size_t count = 0;
-            std::cout << "fakeCount: " << fakeCount << std::endl;
-            std::cout << "angleCount: " << angleCount << std::endl;
-
-            for (Float rho = -300; rho < 301; rho += 600)
-            {
-                for (size_t i = 0; i < angleCount; ++i)
-                {
-                    Float angle = static_cast<Float>(i) * angleStep;
-                    result.emplace_back(rho, angle);
-
-                    std::cout << ++count << " rho: " << rho
-                        << ", angle: " << angle << std::endl;
                 }
             }
 
@@ -444,6 +377,8 @@ public:
         Matrix sinesAndCosines_;
         Matrix space_;
     };
+
+    Hough() = default;
 
     Hough(const HoughSettings<Float> &settings)
         :
@@ -502,25 +437,14 @@ public:
             maximumRow = std::max(maximumRow, edgePoint.row);
         }
 
-        std::cout << edgePoints.size() << " edge points" << std::endl;
-        std::cout << "maximumColumn: " << maximumColumn << std::endl;
-        std::cout << "maximumRow: " << maximumRow << std::endl;
-
         auto chunks = chunk::MakeChunks(
             this->settings_.threads,
             static_cast<Index>(edgePoints.size()));
 
         std::vector<std::future<Accumulator>> threadResults;
 
-        size_t count = 0;
-
         for (auto &chunk: chunks)
         {
-            std::cout << "thread " << ++count << ": index = "
-                << chunk.index
-                << ", count = " << chunk.count
-                << std::endl;
-
             auto begin = std::begin(edgePoints) + chunk.index;
             auto end = begin + chunk.count;
 
@@ -541,13 +465,6 @@ public:
         }
 
         Result hough{};
-
-        if (this->settings_.fakeLines)
-        {
-            hough.lines = accumulator.FakeLines(this->settings_.fakeCount);
-            hough.space = combined;
-            return hough;
-        }
 
         if (this->settings_.suppress)
         {

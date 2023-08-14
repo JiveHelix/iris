@@ -5,9 +5,11 @@
 #include <wxpex/labeled_widget.h>
 #include <wxpex/slider.h>
 #include <wxpex/radio_box.h>
+#include <wxpex/check_box.h>
 #include <wxpex/view.h>
 
 #include "iris/canny_settings.h"
+#include "iris/views/defaults.h"
 
 
 namespace iris
@@ -29,36 +31,38 @@ public:
     {
         using namespace wxpex;
 
+        auto pane = this->GetBorderPane(borderStyle);
+
         auto enable = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Enable",
-            new wxpex::CheckBox(this->GetPane(), "", controls.enable));
+            new wxpex::CheckBox(pane, "", controls.enable));
 
         auto high = LabeledWidget(
-            this->GetPane(),
+            pane,
             "High",
             new ValueSlider(
-                this->GetPane(),
+                pane,
                 controls.range.high,
                 controls.range.high.value));
 
         auto low = LabeledWidget(
-            this->GetPane(),
+            pane,
             "Low",
             new ValueSlider(
-                this->GetPane(),
+                pane,
                 controls.range.low,
                 controls.range.low.value));
 
         auto depth = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Depth",
-            new wxpex::Field(this->GetPane(), controls.depth));
+            new wxpex::Field(pane, controls.depth));
 
         auto threads = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Threads",
-            new wxpex::Field(this->GetPane(), controls.threads));
+            new wxpex::Field(pane, controls.threads));
 
         auto sizer = LayoutLabeled(
             layoutOptions,
@@ -68,9 +72,12 @@ public:
             threads,
             depth);
 
-        this->ConfigureTopSizer(sizer.release());
+        this->ConfigureBorderPane(borderPixels, std::move(sizer));
     }
 };
+
+
+extern template class CannySettingsView<double>;
 
 
 } // end namespace iris

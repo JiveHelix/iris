@@ -26,7 +26,7 @@ TEST_CASE("Create Harris corner detection class", "[harris]")
     auto differentiate =
         iris::Differentiate<float>(30, 1, iris::DerivativeSize::Size::three);
 
-    auto gradient = iris::Gradient<Matrix>(differentiate);
+    auto gradient = iris::Gradient<float>(differentiate);
     auto settings = iris::HarrisSettings<float>::Default();
     settings.threads = 1;
     auto harris = iris::Harris<float>(settings);

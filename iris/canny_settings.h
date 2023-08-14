@@ -79,6 +79,7 @@ struct CannySettings:
 
 
 TEMPLATE_OUTPUT_STREAM(CannySettings)
+TEMPLATE_EQUALITY_OPERATORS(CannySettings)
 
 
 template<typename Float>
@@ -95,14 +96,51 @@ template<typename Float>
 using CannyModel = typename CannyGroup<Float>::Model;
 
 template<typename Float>
-using CannyControl = typename CannyGroup<Float>::template Control<void>;
-
-template<typename Float, typename Observer>
-using CannyTerminus =
-    typename CannyGroup<Float>::template Terminus<Observer>;
+using CannyControl = typename CannyGroup<Float>::Control;
 
 template<typename Float>
 using CannyGroupMaker = pex::MakeGroup<CannyGroup<Float>>;
 
 
+extern template struct CannySettings<float>;
+extern template struct CannySettings<double>;
+
+
 } // end namespace iris
+
+
+
+extern template struct pex::LinkedRanges
+    <
+        float,
+        iris::CannyLowerBound,
+        iris::CannyLow,
+        iris::CannyUpperBound,
+        iris::CannyHigh
+    >;
+
+
+extern template struct pex::LinkedRanges
+    <
+        double,
+        iris::CannyLowerBound,
+        iris::CannyLow,
+        iris::CannyUpperBound,
+        iris::CannyHigh
+    >;
+
+
+extern template struct pex::Group
+    <
+        iris::CannyFields,
+        iris::CannyTemplate<float>::template Template,
+        iris::CannySettings<float>
+    >;
+
+
+extern template struct pex::Group
+    <
+        iris::CannyFields,
+        iris::CannyTemplate<double>::template Template,
+        iris::CannySettings<double>
+    >;

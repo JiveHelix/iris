@@ -1,4 +1,5 @@
 #include "iris/corner.h"
+#include <algorithm>
 
 
 namespace iris
@@ -9,6 +10,105 @@ namespace detail
 {
 
 
+std::optional<CornerPoint> GetCentroid(size_t count, const Points &points)
+{
+    auto pointsSize = points.size();
+
+    if (pointsSize == 0)
+    {
+        return {};
+    }
+
+    if (pointsSize % 2 != 0)
+    {
+        // Odd number of harris detections are unlikely to be centered
+        // around an intersection.
+        return {};
+    }
+
+    if (count == 4 && pointsSize < 4)
+    {
+        return {};
+    }
+
+    double centroidX = 0;
+    double centroidY = 0;
+    auto pointCount = static_cast<double>(pointsSize);
+
+    for (auto &point: points)
+    {
+        centroidX += point.x;
+        centroidY += point.y;
+    }
+
+    return CornerPoint(
+        centroidX / pointCount,
+        centroidY / pointCount,
+        pointCount);
+}
+
+
+CornerPoints PointGroups::GetCornerPoints() const
+{
+    CornerPoints firstPass;
+
+    for (const auto &entry: this->pointGroupByPoint_)
+    {
+        auto centroid = GetCentroid(this->count_, entry.second);
+
+        if (centroid)
+        {
+            firstPass.push_back(*centroid);
+        }
+    }
+
+    return firstPass;
+#if 0
+    std::map<tau::Point2d<double>, Points> cornerPointsByPoint;
+
+    CornerPoints result;
+
+    auto AddCornerPoint = [&cornerPointsByPoint](const auto &point)
+    {
+        for (auto &entry: cornerPointsByPoint)
+        {
+            if ((point.point - entry.first.point).SquaredSum()
+                    < this->radiusSquared_)
+            {
+                entry.second.push_back(point)
+                return;
+            }
+        }
+
+        cornerPointsByPoint[point].push_back(point);
+    };
+
+    // Second pass
+    for (auto &cornerPoint: firstPass)
+    {
+        AddCornerPoint(cornerPoint);
+    }
+#endif
+
+}
+
+
+void PointGroups::AddPoint_(const tau::Point2d<double> &point)
+{
+    for (auto &entry: this->pointGroupByPoint_)
+    {
+        // Use SquaredSum to avoid many sqrt operations.
+        if ((point - entry.first).SquaredSum() < this->radiusSquared_)
+        {
+            entry.second.push_back(point);
+            return;
+        }
+    }
+
+    this->pointGroupByPoint_[point].push_back(point);
+}
+
+#if 0
 CornerCollector::CornerCollector(size_t windowSize, size_t count)
     :
     windowSize_(windowSize),
@@ -25,82 +125,28 @@ const CornerPoints & CornerCollector::GetCorners()
     return this->corners_;
 }
 
-
-void CornerCollector::CollectFromWindow(
-    tau::ImageMatrixFloat &input,
-    Eigen::Index windowRow,
-    Eigen::Index windowColumn)
-{
-    using Eigen::Index;
-
-    auto MakePoints = [this, &input] (Index row, Index column) -> void
-    {
-        if (input(row, column) != 0)
-        {
-            this->points_.emplace_back(
-                static_cast<double>(column),
-                static_cast<double>(row));
-        }
-    };
-
-    // Iterate over the window at this position.
-    this->points_.clear();
-
-    auto windowSize = static_cast<Index>(this->windowSize_);
-
-    if constexpr (tau::MatrixTraits<tau::ImageMatrixFloat>::isRowMajor)
-    {
-        for (Index row = 0; row < windowSize; ++row)
-        {
-            Index detectionRow = windowRow + row;
-
-            for (Index column = 0; column < windowSize; ++column)
-            {
-                MakePoints(detectionRow, windowColumn + column);
-            }
-        }
-    }
-    else
-    {
-        // Iterate in column-major order.
-        for (Index column = 0; column < windowSize; ++column)
-        {
-            Index detectionColumn = windowColumn + column;
-
-            for (Index row = 0; row < windowSize; ++row)
-            {
-                MakePoints(windowRow + row, detectionColumn);
-            }
-        }
-    }
-
-    if (this->points_.size() < this->count_)
-    {
-        return;
-    }
-
-    double centroidX = 0;
-    double centroidY = 0;
-    auto pointCount = static_cast<double>(this->points_.size());
-
-    for (auto &point: this->points_)
-    {
-        centroidX += point.x;
-        centroidY += point.y;
-
-        // Remove the used points so they do not contribute to other corner
-        // detections.
-        input(static_cast<Index>(point.y), static_cast<Index>(point.x)) = 0;
-    }
-
-    this->corners_.emplace_back(
-        centroidX / pointCount,
-        centroidY / pointCount,
-        pointCount);
-}
-
+#endif
 
 } // end namespace detail
+
+
+std::vector<tau::Point2d<double>> CornerPointsToPoints(
+    const CornerPoints &cornerPoints)
+{
+    std::vector<tau::Point2d<double>> result;
+    result.reserve(cornerPoints.size());
+
+    std::transform(
+        std::begin(cornerPoints),
+        std::end(cornerPoints),
+        std::back_inserter(result),
+        [](const CornerPoint &cornerPoint)
+        {
+            return cornerPoint.point;
+        });
+
+    return result;
+}
 
 
 CornerPoint::CornerPoint(double x, double y, double count_)
@@ -144,100 +190,10 @@ bool CornerPoint::operator==(const CornerPoint &other) const
 }
 
 
-CornerPoints GetPoints(const tau::ImageMatrixFloat &input)
+std::ostream & operator<<(std::ostream &output, const CornerPoint &point)
 {
-    using Eigen::Index;
-
-    CornerPoints points;
-
-    if constexpr (tau::MatrixTraits<tau::ImageMatrixFloat>::isRowMajor)
-    {
-        for (Index row = 0; row < input.rows(); ++row)
-        {
-            for (Index column = 0; column < input.cols(); ++column)
-            {
-                if (input(row, column) != 0)
-                {
-                    points.emplace_back(
-                        static_cast<double>(column),
-                        static_cast<double>(row),
-                        1);
-                }
-            }
-        }
-    }
-    else
-    {
-        // Iterate in column-major order.
-        for (Index column = 0; column < input.cols(); ++column)
-        {
-            for (Index row = 0; row < input.rows(); ++row)
-            {
-                if (input(row, column) != 0)
-                {
-                    points.emplace_back(
-                        static_cast<double>(column),
-                        static_cast<double>(row),
-                        1);
-                }
-            }
-        }
-    }
-
-    return points;
-}
-
-
-Corner::Corner(const CornerSettings &settings)
-    :
-    count_(static_cast<size_t>(settings.count)),
-    windowSize_(settings.window)
-{
-    assert(settings.count < settings.window * settings.window);
-    assert(settings.count > 0);
-}
-
-CornerPoints Corner::Filter(const tau::ImageMatrixFloat &input)
-{
-    using Eigen::Index;
-
-    // Make a modifiable copy of the input points.
-    tau::ImageMatrixFloat points = input.derived();
-
-    Index rowCount = input.rows();
-    Index columnCount = input.cols();
-
-    Index limitRow = rowCount - this->windowSize_ + 1;
-    Index limitColumn = columnCount - this->windowSize_ + 1;
-
-    detail::CornerCollector cornerCollector(
-        static_cast<size_t>(this->windowSize_),
-        this->count_);
-
-    // Move the window.
-    if constexpr (tau::MatrixTraits<tau::ImageMatrixFloat>::isRowMajor)
-    {
-        for (Index row = 0; row < limitRow; ++row)
-        {
-            for (Index column = 0; column < limitColumn; ++column)
-            {
-                cornerCollector.CollectFromWindow(points, row, column);
-            }
-        }
-    }
-    else
-    {
-        // Iterate in column-major order
-        for (Index column = 0; column < limitColumn; ++column)
-        {
-            for (Index row = 0; row < limitRow; ++row)
-            {
-                cornerCollector.CollectFromWindow(points, row, column);
-            }
-        }
-    }
-
-    return cornerCollector.GetCorners();
+    return output << "CornerPoint(point: " << point.point
+        << ", count: " << point.count << ")";
 }
 
 

@@ -9,6 +9,7 @@
 #include <wxpex/view.h>
 
 #include "iris/gaussian_settings.h"
+#include "iris/views/defaults.h"
 
 
 namespace iris
@@ -23,33 +24,36 @@ public:
 
     GaussianSettingsView(
         wxWindow *parent,
+        const std::string &name,
         GaussianControl<Value> controls,
         const LayoutOptions &layoutOptions)
         :
-        wxpex::Collapsible(parent, "Gaussian Blur")
+        wxpex::Collapsible(parent, name)
     {
+        auto pane = this->GetBorderPane(borderStyle);
+
         auto enable = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Enable",
-            new wxpex::CheckBox(this->GetPane(), "", controls.enable));
+            new wxpex::CheckBox(pane, "", controls.enable));
 
         auto sigma = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "sigma",
             new wxpex::ValueSlider(
-                this->GetPane(),
+                pane,
                 controls.sigma,
                 controls.sigma.value));
 
         auto threshold = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "threshold",
-            new wxpex::Field(this->GetPane(), controls.threshold));
+            new wxpex::Field(pane, controls.threshold));
 
         auto threads = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Threads",
-            new wxpex::Field(this->GetPane(), controls.threads));
+            new wxpex::Field(pane, controls.threads));
 
         auto sizer = wxpex::LayoutLabeled(
             layoutOptions,
@@ -58,9 +62,12 @@ public:
             threshold,
             threads);
 
-        this->ConfigureTopSizer(sizer.release());
+        this->ConfigureBorderPane(borderPixels, std::move(sizer));
     }
 };
+
+
+extern template class GaussianSettingsView<int32_t>;
 
 
 } // end namespace iris

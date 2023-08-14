@@ -10,6 +10,53 @@ namespace iris
 {
 
 
+class PointsChessSettingsView: public wxpex::Collapsible
+{
+public:
+    using LayoutOptions = wxpex::LayoutOptions;
+
+    PointsChessSettingsView(
+        wxWindow *parent,
+        PointsChessControl controls,
+        const LayoutOptions &layoutOptions = LayoutOptions{})
+        :
+        wxpex::Collapsible(parent, "Points")
+    {
+        using namespace wxpex;
+
+        auto minimumPointsPerLine = LabeledWidget(
+            this->GetPane(),
+            "minimum points per line",
+            new ValueSlider(
+                this->GetPane(),
+                controls.minimumPointsPerLine,
+                controls.minimumPointsPerLine.value));
+
+        auto maximumPointError = LabeledWidget(
+            this->GetPane(),
+            "maximum point error",
+            new Field(
+                this->GetPane(),
+                controls.maximumPointError));
+
+        auto angleToleranceDegrees = LabeledWidget(
+            this->GetPane(),
+            "angle tolerance (degrees)",
+            new Field(
+                this->GetPane(),
+                controls.angleToleranceDegrees));
+
+        auto sizer = LayoutLabeled(
+            layoutOptions,
+            minimumPointsPerLine,
+            maximumPointError,
+            angleToleranceDegrees);
+
+        this->ConfigureTopSizer(std::move(sizer));
+    }
+};
+
+
 ChessSettingsView::ChessSettingsView(
     wxWindow *parent,
     ChessControl controls,
@@ -18,6 +65,16 @@ ChessSettingsView::ChessSettingsView(
     wxpex::Collapsible(parent, "Chess")
 {
     using namespace wxpex;
+
+    auto enable = wxpex::LabeledWidget(
+        this->GetPane(),
+        "enable",
+        new wxpex::CheckBox(this->GetPane(), "", controls.enable));
+
+    auto usePoints = wxpex::LabeledWidget(
+        this->GetPane(),
+        "usePoints",
+        new wxpex::CheckBox(this->GetPane(), "", controls.usePoints));
 
     auto rows = LabeledWidget(
         this->GetPane(),
@@ -33,34 +90,20 @@ ChessSettingsView::ChessSettingsView(
             this->GetPane(),
             controls.columnCount));
 
-    auto minimumPointsPerLine = LabeledWidget(
+    auto pointsChess = LabeledWidget(
         this->GetPane(),
-        "minimum points per line",
-        new ValueSlider(
+        "",
+        new PointsChessSettingsView(
             this->GetPane(),
-            controls.minimumPointsPerLine,
-            controls.minimumPointsPerLine.value));
-
-    auto maximumPointError = LabeledWidget(
+            controls.pointsChess,
+            layoutOptions));
+        
+    auto minimumSpacing = LabeledWidget(
         this->GetPane(),
-        "maximum point error",
+        "minimum spacing",
         new Field(
             this->GetPane(),
-            controls.maximumPointError));
-
-    auto angleToleranceDegrees = LabeledWidget(
-        this->GetPane(),
-        "angle tolerance (degrees)",
-        new Field(
-            this->GetPane(),
-            controls.angleToleranceDegrees));
-
-    auto lineSeparation = LabeledWidget(
-        this->GetPane(),
-        "line separation",
-        new Field(
-            this->GetPane(),
-            controls.lineSeparation));
+            controls.minimumSpacing));
 
     auto groupOn = wxpex::LabeledWidget(
         this->GetPane(),
@@ -81,12 +124,19 @@ ChessSettingsView::ChessSettingsView(
             this->GetPane(),
             controls.minimumLinesPerGroup));
 
-    auto spacingLimit = LabeledWidget(
+    auto maximumSpacing = LabeledWidget(
         this->GetPane(),
-        "spacing limit",
+        "maximum spacing",
         new Field(
             this->GetPane(),
-            controls.spacingLimit));
+            controls.maximumSpacing));
+
+    auto ratioLimit = LabeledWidget(
+        this->GetPane(),
+        "spacing ratio threshold",
+        new Field(
+            this->GetPane(),
+            controls.ratioLimit));
 
     auto angleFilterLow = wxpex::LabeledWidget(
         this->GetPane(),
@@ -106,20 +156,21 @@ ChessSettingsView::ChessSettingsView(
 
     auto sizer = LayoutLabeled(
         layoutOptions,
+        enable,
+        usePoints,
         rows,
         columns,
-        minimumPointsPerLine,
-        maximumPointError,
-        angleToleranceDegrees,
-        lineSeparation,
+        pointsChess,
+        minimumSpacing,
         groupOn,
         groupSeparationDegrees,
         minimumLinesPerGroup,
-        spacingLimit,
+        maximumSpacing,
+        ratioLimit,
         angleFilterLow,
         angleFilterHigh);
 
-    this->ConfigureTopSizer(sizer.release());
+    this->ConfigureTopSizer(std::move(sizer));
 }
 
 

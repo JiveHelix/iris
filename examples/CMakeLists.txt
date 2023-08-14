@@ -40,10 +40,15 @@ endif ()
 #     common)
 
 
-add_executable(hough_demo hough_demo.cpp)
+add_executable(
+    lines_chain_demo
+    lines_chain_demo/lines_chain_demo.cpp
+    lines_chain_demo/filters.cpp
+    lines_chain_demo/main_frame.cpp
+    lines_chain_demo/demo_settings_view.cpp)
 
 target_link_libraries(
-    hough_demo
+    lines_chain_demo
     PRIVATE
     project_warnings
     project_options
@@ -51,10 +56,23 @@ target_link_libraries(
     common)
 
 
-add_executable(shapes_demo shapes_demo.cpp)
+add_executable(
+    chess_demo
+    chess_demo/chess_demo.cpp
+    chess_demo/demo_brain.cpp
+    chess_demo/demo_brain_process.cpp
+    chess_demo/demo_brain_display_loop.cpp
+    chess_demo/demo_brain_load_png.cpp
+    chess_demo/demo_brain_ctor.cpp
+    chess_demo/demo_brain_create_control_frame.cpp
+    chess_demo/demo_brain_shutdown.cpp
+    chess_demo/demo_brain_display.cpp
+    chess_demo/filters.cpp
+    chess_demo/main_frame.cpp
+    chess_demo/demo_settings_view.cpp)
 
 target_link_libraries(
-    shapes_demo
+    chess_demo
     PRIVATE
     project_warnings
     project_options
@@ -62,15 +80,42 @@ target_link_libraries(
     common)
 
 
-# add_executable(level_adjust_demo level_adjust_demo.cpp)
+add_executable(
+    corners_chain_demo
+    corners_chain_demo/corners_chain_demo.cpp
+    corners_chain_demo/filters.cpp
+    corners_chain_demo/main_frame.cpp
+    corners_chain_demo/demo_settings_view.cpp)
 
-# target_link_libraries(
-#     level_adjust_demo
-#     PRIVATE
-#     project_warnings
-#     project_options
-#     iris
-#     common)
+target_link_libraries(
+    corners_chain_demo
+    PRIVATE
+    project_warnings
+    project_options
+    iris
+    common)
+
+
+add_executable(mask_demo mask_demo.cpp)
+
+target_link_libraries(
+    mask_demo
+    PRIVATE
+    project_warnings
+    project_options
+    iris
+    common)
+
+
+add_executable(level_adjust_demo level_adjust_demo.cpp)
+
+target_link_libraries(
+    level_adjust_demo
+    PRIVATE
+    project_warnings
+    project_options
+    iris
+    common)
 
 
 add_executable(rotation rotation.cpp)
@@ -80,5 +125,4 @@ target_link_libraries(
     PRIVATE
     project_warnings
     project_options
-    iris
-    common)
+    CONAN_PKG::tau)

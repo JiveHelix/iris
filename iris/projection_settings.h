@@ -2,9 +2,11 @@
 
 #include <fields/fields.h>
 #include <jive/scope_flag.h>
+#include <jive/path.h>
 #include <pex/interface.h>
-#include <iris/intrinsics.h>
-#include <iris/pose.h>
+#include <pex/endpoint.h>
+#include <tau/intrinsics.h>
+#include <tau/pose.h>
 
 
 namespace iris
@@ -37,7 +39,7 @@ struct IntrinsicsTemplate
     template<template<typename> typename T>
     struct Template
     {
-        T<pex::MakeGroup<::iris::IntrinsicsGroup<Float>>> settings;
+        T<pex::MakeGroup<tau::IntrinsicsGroup<Float>>> settings;
         T<std::string> fileName;
         T<pex::MakeSignal> read;
         T<pex::MakeSignal> write;
@@ -54,7 +56,7 @@ struct PoseTemplate
     template<template<typename> typename T>
     struct Template
     {
-        T<pex::MakeGroup<::iris::PoseGroup<Float>>> settings;
+        T<pex::MakeGroup<tau::PoseGroup<Float>>> settings;
         T<std::string> fileName;
         T<pex::MakeSignal> read;
         T<pex::MakeSignal> write;
@@ -73,11 +75,7 @@ template<typename T>
 using IntrinsicsSettings = typename IntrinsicsGroup<T>::Plain;
 
 template<typename T>
-using IntrinsicsControl = typename IntrinsicsGroup<T>::template Control<void>;
-
-template<typename T, typename Observer>
-using IntrinsicsTerminus =
-    typename IntrinsicsGroup<T>::template Terminus<Observer>;
+using IntrinsicsControl = typename IntrinsicsGroup<T>::Control;
 
 
 template<typename T>
@@ -87,10 +85,7 @@ template<typename T>
 using PoseSettings = typename PoseGroup<T>::Plain;
 
 template<typename T>
-using PoseControl = typename PoseGroup<T>::template Control<void>;
-
-template<typename T, typename Observer>
-using PoseTerminus = typename PoseGroup<T>::template Terminus<Observer>;
+using PoseControl = typename PoseGroup<T>::Control;
 
 
 } // end namespace file
@@ -131,11 +126,7 @@ template<typename T>
 using ProjectionModel = typename ProjectionGroup<T>::Model;
 
 template<typename T>
-using ProjectionControl = typename ProjectionGroup<T>::template Control<void>;
-
-template<typename T, typename Observer>
-using ProjectionTerminus =
-    typename ProjectionGroup<T>::template Terminus<Observer>;
+using ProjectionControl = typename ProjectionGroup<T>::Control;
 
 
 template<typename T>
@@ -146,7 +137,7 @@ struct StereoProjectionFields
         fields::Field(&T::camera1, "camera1"));
 };
 
-template<typename Float
+template<typename Float>
 struct StereoProjectionTemplate
 {
     template<template<typename> typename T>
@@ -177,35 +168,57 @@ template<typename T>
 struct StereoProjectionModel: public StereoProjectionGroup<T>::Model
 {
 private:
-    using Terminus =
-        pex::Terminus<StereoProjectionModel, pex::model::Value<std::string>>;
+    using IntrinsicsControl = decltype(ProjectionControl<T>::intrinsics);
+    using FileNameControl = decltype(IntrinsicsControl::fileName);
+
+    using FileNameEndpoint =
+        pex::Endpoint<StereoProjectionModel, FileNameControl>;
 
     bool ignore_;
-    Terminus intrinsics0_;
-    Terminus intrinsics1_;
-    Terminus pose0_;
-    Terminus pose1_;
+    FileNameControl intrinsicsControl0_;
+    FileNameControl intrinsicsControl1_;
+    FileNameControl poseControl0_;
+    FileNameControl poseControl1_;
+    FileNameEndpoint intrinsics0_;
+    FileNameEndpoint intrinsics1_;
+    FileNameEndpoint pose0_;
+    FileNameEndpoint pose1_;
 
 public:
     StereoProjectionModel()
         :
         StereoProjectionGroup<T>::Model(),
         ignore_(false),
-        intrinsics0_(this, this->camera0.intrinsics.fileName),
-        intrinsics1_(this, this->camera1.intrinsics.fileName),
-        pose0_(this, this->camera0.pose.fileName),
-        pose1_(this, this->camera1.pose.fileName)
+        intrinsicsControl0_(this->camera0.intrinsics.fileName),
+        intrinsicsControl1_(this->camera1.intrinsics.fileName),
+        poseControl0_(this->camera0.pose.fileName),
+        poseControl1_(this->camera1.pose.fileName),
+        intrinsics0_(
+            this,
+            this->intrinsicsControl0_,
+            &StereoProjectionModel::OnFileName_),
+        intrinsics1_(
+            this,
+            this->intrinsicsControl1_,
+            &StereoProjectionModel::OnFileName_),
+        pose0_(
+            this,
+            this->poseControl0_,
+            &StereoProjectionModel::OnFileName_),
+        pose1_(
+            this,
+            this->poseControl1_,
+            &StereoProjectionModel::OnFileName_)
     {
-        this->intrinsics0_.Connect(&StereoProjectionModel::OnFileName_);
-        this->intrinsics1_.Connect(&StereoProjectionModel::OnFileName_);
-        this->pose0_.Connect(&StereoProjectionModel::OnFileName_);
-        this->pose1_.Connect(&StereoProjectionModel::OnFileName_);
+
     }
 
 private:
-    static void UpdateIfUnset_(Terminus &terminus, const std::string &directory)
+    static void UpdateIfUnset_(
+        FileNameControl &control,
+        const std::string &directory)
     {
-        auto file = jive::path::Base(terminus.Get());
+        auto file = jive::path::Base(control.Get());
 
         if (!file.empty())
         {
@@ -214,7 +227,7 @@ private:
             return;
         }
 
-        terminus.Set(directory);
+        control.Set(directory);
     }
 
     void OnFileName_(const std::string &fileName)
@@ -227,25 +240,75 @@ private:
         auto ignore = jive::ScopeFlag(this->ignore_);
 
         auto directory = jive::path::Directory(fileName) + "/";
-        UpdateIfUnset_(this->intrinsics0_, directory);
-        UpdateIfUnset_(this->intrinsics1_, directory);
-        UpdateIfUnset_(this->pose0_, directory);
-        UpdateIfUnset_(this->pose1_, directory);
+        UpdateIfUnset_(this->intrinsicsControl0_, directory);
+        UpdateIfUnset_(this->intrinsicsControl1_, directory);
+        UpdateIfUnset_(this->poseControl0_, directory);
+        UpdateIfUnset_(this->poseControl1_, directory);
     }
 };
 
 
 template<typename T>
 using StereoProjectionControl =
-    typename StereoProjectionGroup<T>::template Control<void>;
-
-template<typename T, typename Observer>
-using StereoProjectionTerminus =
-    typename StereoProjectionGroup<T>::template Terminus<Observer>;
+    typename StereoProjectionGroup<T>::Control;
 
 template<typename T>
 using StereoProjectionGroupMaker =
     pex::MakeGroup<StereoProjectionGroup<T>, StereoProjectionModel<T>>;
 
 
+extern template struct StereoProjectionModel<float>;
+extern template struct StereoProjectionModel<double>;
+
+
 } // end namespace iris
+
+
+extern template struct pex::Group
+    <
+        iris::file::FileFields,
+        iris::file::IntrinsicsTemplate<float>::template Template
+    >;
+
+extern template struct pex::Group
+    <
+        iris::file::FileFields,
+        iris::file::IntrinsicsTemplate<double>::template Template
+    >;
+
+extern template struct pex::Group
+    <
+        iris::file::FileFields,
+        iris::file::PoseTemplate<float>::template Template
+    >;
+
+extern template struct pex::Group
+    <
+        iris::file::FileFields,
+        iris::file::PoseTemplate<double>::template Template
+    >;
+
+extern template struct pex::Group
+    <
+        iris::ProjectionFields,
+        iris::ProjectionTemplate<float>::template Template
+    >;
+
+extern template struct pex::Group
+    <
+        iris::ProjectionFields,
+        iris::ProjectionTemplate<double>::template Template
+    >;
+
+
+extern template struct pex::Group
+    <
+        iris::StereoProjectionFields,
+        iris::StereoProjectionTemplate<float>::template Template
+    >;
+
+extern template struct pex::Group
+    <
+        iris::StereoProjectionFields,
+        iris::StereoProjectionTemplate<double>::template Template
+    >;

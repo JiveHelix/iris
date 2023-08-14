@@ -12,14 +12,14 @@ namespace iris
 
 PixelInfo::PixelInfo(
     wxWindow *parent,
-    PointControl pointControl)
+    draw::PointControl pointControl)
     :
     wxPanel(parent, wxID_ANY),
-    point_(this, pointControl),
+    pointControl_(pointControl),
+    point_(this, pointControl, &PixelInfo::OnPoint_),
     x_(new wxStaticText(this, wxID_ANY, "    ")),
     y_(new wxStaticText(this, wxID_ANY, "    "))
 {
-    this->point_.Connect(&PixelInfo::OnPoint_);
     this->SetWindowStyle(wxBORDER_SIMPLE);
 
     auto x = wxpex::LabeledWidget(this, "x:", this->x_);
@@ -37,7 +37,7 @@ PixelInfo::PixelInfo(
 }
 
 
-void PixelInfo::OnPoint_(const Point &point)
+void PixelInfo::OnPoint_(const draw::Point &point)
 {
     this->x_->SetLabelText(std::to_string(point.x));
     this->y_->SetLabelText(std::to_string(point.y));
@@ -46,7 +46,7 @@ void PixelInfo::OnPoint_(const Point &point)
 
 PixelInfoView::PixelInfoView(
     wxWindow *parent,
-    PixelViewControl control,
+    draw::PixelViewControl control,
     const std::string &title)
     :
     wxFrame(parent, wxID_ANY, title),

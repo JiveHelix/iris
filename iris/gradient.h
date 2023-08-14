@@ -3,16 +3,22 @@
 #include <future>
 #include <cmath>
 #include <optional>
+#include <pex/endpoint.h>
 #include <tau/eigen.h>
 #include <tau/planar.h>
 #include <tau/color.h>
+#include <tau/percentile.h>
 #include <tau/color_maps/rgb.h>
 
 #include "iris/error.h"
+#include "iris/image.h"
 #include "iris/derivative.h"
+#include "iris/gaussian_node.h"
 #include "iris/gradient_settings.h"
 #include "iris/threadsafe_filter.h"
 #include "iris/chunks.h"
+#include "draw/pixels.h"
+#include "iris/node.h"
 
 
 namespace iris
@@ -29,12 +35,12 @@ struct Phasor
 };
 
 
-template<typename Value, typename Data>
+template<typename Value>
 struct GradientResult
 {
     Value maximum;
-    Data dx;
-    Data dy;
+    ImageMatrix<Value> dx;
+    ImageMatrix<Value> dy;
 
     template<typename Float>
     static Eigen::MatrixX<Float> Magnitude(
@@ -47,6 +53,7 @@ struct GradientResult
             (dx.array().square() + dy.array().square()).sqrt();
 
         // Clamp all magnitudes higher than one.
+        // There shouldn't be, except for rounding errors.
         return (result.array() > 1).select(1, result);
     }
 
@@ -84,8 +91,7 @@ struct GradientResult
         return {Magnitude(dxFloat, dyFloat), phase};
     }
 
-    template<typename Pixel>
-    tau::RgbPixels<Pixel> Colorize() const
+    draw::Pixels Colorize() const
     {
         auto phasor = this->GetPhasor<float>();
 
@@ -98,7 +104,7 @@ struct GradientResult
         GetHue(hsv) = phasor.phase;
         GetValue(hsv) = phasor.magnitude;
 
-        auto asRgb = tau::HsvToRgb<Pixel>(hsv);
+        auto asRgb = tau::HsvToRgb<uint8_t>(hsv);
 
         return {
             asRgb.template GetInterleaved<Eigen::RowMajor>(),
@@ -107,18 +113,19 @@ struct GradientResult
 };
 
 
-template<typename Value, typename Data>
+template<typename Value>
 class AsyncGradientResult
 {
 public:
     using Differentiate_ = Differentiate<Value>;
     using RowVector = typename Differentiate_::RowVector;
     using ColumnVector = typename Differentiate_::ColumnVector;
-    using Result = GradientResult<Value, Data>;
+    using Result = GradientResult<Value>;
+    using Matrix = ImageMatrix<Value>;
 
     AsyncGradientResult(
         const Differentiate<Value> &differentiate,
-        const Eigen::MatrixBase<Data> &data,
+        const Matrix &data,
         size_t threadCount)
         :
         maximum_(differentiate.GetMaximum()),
@@ -140,21 +147,20 @@ public:
 
 private:
     Value maximum_;
-    chunk::RowConvolution<RowVector, Data> rowConvolution_;
-    chunk::ColumnConvolution<ColumnVector, Data> columnConvolution_;
+    chunk::RowConvolution<RowVector, Matrix> rowConvolution_;
+    chunk::ColumnConvolution<ColumnVector, Matrix> columnConvolution_;
 };
 
 
-template<typename Data>
+template<typename Value>
 class Gradient
 {
 public:
-    using Value = typename Data::Scalar;
-
     static constexpr size_t defaultThreads =
         GradientSettings<Value>::defaultThreads;
 
-    using Result = GradientResult<Value, Data>;
+    using Matrix = ImageMatrix<Value>;
+    using Result = GradientResult<Value>;
 
     Gradient() = default;
 
@@ -170,27 +176,22 @@ public:
     Gradient(const GradientSettings<Value> &settings)
         :
         isEnabled_(settings.enable),
-        differentiate_(settings.maximumInput, settings.scale, settings.size),
+        differentiate_(settings.maximum, settings.scale, settings.size),
         threads_(settings.threads)
     {
 
     }
 
-    AsyncGradientResult<Value, Data> FilterAsync(
-        const Eigen::MatrixBase<Data> &data) const
+    AsyncGradientResult<Value> FilterAsync(
+        const Matrix &data) const
     {
-        static_assert(
-            std::is_same_v<Value, typename Data::Scalar>,
-            "Expected Scalar type to match configuration type.");
-
-        return AsyncGradientResult<Value, Data>(
+        return AsyncGradientResult<Value>(
             this->differentiate_,
             data,
             this->threads_);
     }
 
-    std::optional<Result> Filter(
-        const Eigen::MatrixBase<Data> &data) const
+    std::optional<Result> Filter(const Matrix &data) const
     {
         if (!this->isEnabled_)
         {
@@ -208,9 +209,76 @@ private:
 };
 
 
-template<typename Data>
-using ThreadsafeGradient =
-    ThreadsafeFilter<GradientGroup<typename Data::Scalar>, Gradient<Data>>;
+int32_t DetectGradientScale(
+    const GradientResult<int32_t> &result,
+    double percentile);
+
+
+template<typename SourceNode>
+class GradientNode
+    :
+    public Node<SourceNode, Gradient<int32_t>, GradientControl<int32_t>>
+{
+public:
+    using Control = GradientControl<int32_t>;
+    using Filter = Gradient<int32_t>;
+    using Base = Node<SourceNode, Filter, Control>;
+
+    GradientNode(
+        SourceNode &source,
+        Control control,
+        CancelControl cancel)
+        :
+        Base("Gradient", source, control, cancel),
+        control_(control),
+        detectEndpoint_(
+            this,
+            control.autoDetectSettings,
+            &GradientNode::AutoDetectSettings)
+    {
+
+    }
+
+    void AutoDetectSettings()
+    {
+        auto settings = this->control_.Get();
+        settings.scale = 1;
+
+        // Update the filter with our temporary adjustment to the scale.
+        this->OnSettingsChanged(settings);
+        auto filtered = this->GetResult();
+
+        if (!filtered)
+        {
+            std::cerr << "Unable to detect gradient without input."
+                << std::endl;
+
+            this->OnSettingsChanged(this->control_.Get());
+
+            return;
+        }
+
+        auto detected = DetectGradientScale(
+            *filtered,
+            this->control_.percentile.Get());
+
+        this->control_.scale.Set(detected);
+    }
+
+    Control control_;
+
+    using DetectEndpoint =
+        pex::Endpoint<GradientNode, pex::control::Signal<>>;
+
+    DetectEndpoint detectEndpoint_;
+};
+
+
+extern template struct GradientResult<int32_t>;
+extern template class Gradient<int32_t>;
+extern template class GradientNode<DefaultGaussianNode>;
+
+using DefaultGradientNode = GradientNode<DefaultGaussianNode>;
 
 
 } // end namespace iris

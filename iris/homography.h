@@ -4,6 +4,7 @@
 #include <tau/size.h>
 #include <tau/vector2d.h>
 #include "iris/chess.h"
+#include "iris/homography_settings.h"
 
 
 namespace iris
@@ -125,20 +126,18 @@ class Homography
 public:
     using Intrinsics = Eigen::Matrix<double, 3, 3>;
 
-    Homography(
-        double chessSquareSize_mm,
-        const tau::Size<double> &sensorSize_pixels);
+    Homography(const HomographySettings &settings);
 
     Eigen::Matrix<double, 2, 9>
-    GetHomographyFactors(const ChessIntersection & intersection);
+    GetHomographyFactors(const Intersection & intersection);
 
     using Factors = Eigen::Matrix<double, Eigen::Dynamic, 9>;
 
     Factors CombineHomographyFactors(
-        const std::vector<ChessIntersection> &intersections);
+        const std::vector<Intersection> &intersections);
 
     HomographyMatrix GetHomographyMatrix(
-        const std::vector<ChessIntersection> &intersections);
+        const std::vector<Intersection> &intersections);
 
     Intrinsics ComputeIntrinsics(
         const std::vector<ChessSolution> &chessSolutions);
@@ -146,7 +145,6 @@ public:
 private:
     World world_;
     Normalize normalize_;
-    tau::Size<double> sensorSize_pixels_;
 };
 
 

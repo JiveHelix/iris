@@ -7,6 +7,7 @@
 #include <wxpex/check_box.h>
 
 #include "iris/color_settings.h"
+#include "iris/views/defaults.h"
 
 
 namespace iris
@@ -26,26 +27,28 @@ public:
         :
         wxpex::Collapsible(parent, "Color")
     {
+        auto pane = this->GetBorderPane(borderStyle);
+
         auto levelLow = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Low",
             new wxpex::ValueSlider(
-                this->GetPane(),
+                pane,
                 control.level.low,
                 control.level.low.value));
 
         auto levelHigh = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "High",
             new wxpex::ValueSlider(
-                this->GetPane(),
+                pane,
                 control.level.high,
                 control.level.high.value));
 
         auto turboOn = wxpex::LabeledWidget(
-            this->GetPane(),
+            pane,
             "Turbo",
-            new wxpex::CheckBox(this->GetPane(), "", control.turbo));
+            new wxpex::CheckBox(pane, "", control.turbo));
 
         auto sizer = LayoutLabeled(
             layoutOptions,
@@ -53,7 +56,7 @@ public:
             levelHigh,
             turboOn);
 
-        this->ConfigureTopSizer(sizer.release());
+        this->ConfigureBorderPane(borderPixels, std::move(sizer));
     }
 };
 

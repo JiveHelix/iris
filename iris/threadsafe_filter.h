@@ -1,5 +1,8 @@
 #pragma once
+
+
 #include <pex/locks.h>
+#include <pex/endpoint.h>
 
 
 namespace iris
@@ -16,16 +19,16 @@ class ThreadsafeFilter
 {
 public:
     using Settings = typename Group::Plain;
-    using Control = typename Group::template Control<void>;
-    using Terminus = typename Group::template Terminus<ThreadsafeFilter>;
+    using Control = typename Group::Control;
+    using SettingsEndpoint = pex::Endpoint<ThreadsafeFilter, Control>;
 
     ThreadsafeFilter(Control control)
         :
         mutex_(),
-        terminus_(this, control),
+        endpoint_(this, control, &ThreadsafeFilter::OnSettings_),
         filter_(control.Get())
     {
-        this->terminus_.Connect(&ThreadsafeFilter::OnSettings_);
+
     }
 
     // Allows move-construction.
@@ -35,7 +38,7 @@ public:
         :
         ThreadsafeFilter(std::move(other), WriteLock(other.mutex_))
     {
-        this->terminus_.Connect(&ThreadsafeFilter::OnSettings_);
+
     }
 
     template<typename... Inputs>
@@ -45,12 +48,20 @@ public:
         return this->filter_.Filter(std::forward<Inputs>(inputs)...);
     }
 
+    Settings GetSettings() const
+    {
+        return this->endpoint_.GetUpstream().Get();
+    }
+
 private:
     ThreadsafeFilter(ThreadsafeFilter &&other, const WriteLock &)
         :
         mutex_(),
-        terminus_(this, std::move(other.terminus_)),
-        filter_(other.terminus_.Get())
+        endpoint_(
+            this,
+            other.endpoint_.GetUpstream(),
+            &ThreadsafeFilter::OnSettings_),
+        filter_(this->endpoint_.GetUpstream().Get())
     {
 
     }
@@ -63,7 +74,7 @@ private:
 
 private:
     mutable Mutex mutex_;
-    Terminus terminus_;
+    SettingsEndpoint endpoint_;
     Filter_ filter_;
 };
 

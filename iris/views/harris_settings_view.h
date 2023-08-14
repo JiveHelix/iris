@@ -9,6 +9,7 @@
 #include <wxpex/view.h>
 
 #include "iris/harris_settings.h"
+#include "iris/views/defaults.h"
 
 
 namespace iris
@@ -30,53 +31,55 @@ public:
     {
         using namespace wxpex;
 
+        auto pane = this->GetBorderPane(borderStyle);
+
         auto enable = LabeledWidget(
-            this->GetPane(),
+            pane,
             "Enable",
-            new CheckBox(this->GetPane(), "", controls.enable));
+            new CheckBox(pane, "", controls.enable));
 
         auto alpha = LabeledWidget(
-            this->GetPane(),
+            pane,
             "alpha",
             new ValueSlider(
-                this->GetPane(),
+                pane,
                 controls.alpha,
                 controls.alpha.value));
 
         auto sigma = LabeledWidget(
-            this->GetPane(),
+            pane,
             "sigma",
             new ValueSlider(
-                this->GetPane(),
+                pane,
                 controls.sigma,
                 controls.sigma.value));
 
         auto threshold = LabeledWidget(
-            this->GetPane(),
+            pane,
             "threshold",
             new ValueSlider(
-                this->GetPane(),
+                pane,
                 controls.threshold,
                 controls.threshold.value));
 
         auto suppress = LabeledWidget(
-            this->GetPane(),
+            pane,
             "suppress",
-            new CheckBox(this->GetPane(), "", controls.suppress));
+            new CheckBox(pane, "", controls.suppress));
 
         auto window = LabeledWidget(
-            this->GetPane(),
+            pane,
             "window",
             new ValueSlider(
-                this->GetPane(),
+                pane,
                 controls.window,
                 controls.window.value));
 
         auto threads = LabeledWidget(
-            this->GetPane(),
+            pane,
             "threads",
             new Field(
-                this->GetPane(),
+                pane,
                 controls.threads));
 
         auto sizer = LayoutLabeled(
@@ -89,7 +92,7 @@ public:
             window,
             threads);
 
-        this->ConfigureTopSizer(sizer.release());
+        this->ConfigureBorderPane(borderPixels, std::move(sizer));
     }
 };
 

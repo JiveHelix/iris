@@ -3,8 +3,9 @@
 
 #include <fields/core.h>
 #include <pex/group.h>
+#include <pex/endpoint.h>
 #include <wxpex/shortcut.h>
-#include <iris/views/pixel_view_settings.h>
+#include <draw/views/pixel_view_settings.h>
 
 
 template<typename T>
@@ -18,7 +19,7 @@ struct UserFields
         fields::Field(&T::quit, "quit"),
         fields::Field(&T::about, "about"),
         fields::Field(&T::layoutWindows, "layoutWindows"),
-        fields::Field(&T::showDataViewLayout, "showDataViewLayout"),
+        fields::Field(&T::showPixelViewLayout, "showPixelViewLayout"),
         fields::Field(&T::pixelView, "pixelView"),
         fields::Field(&T::errors, "errors"));
 };
@@ -34,18 +35,21 @@ struct UserTemplate
     T<pex::MakeSignal> quit;
     T<pex::MakeSignal> about;
     T<pex::MakeSignal> layoutWindows;
-    T<pex::MakeSignal> showDataViewLayout;
-    T<iris::PixelViewGroupMaker> pixelView;
+    T<pex::MakeSignal> showPixelViewLayout;
+    T<draw::PixelViewGroupMaker> pixelView;
     T<std::string> errors;
+
+    static constexpr auto fields = UserFields<UserTemplate>::fields;
 };
 
 
 using UserGroup = pex::Group<UserFields, UserTemplate>;
-using UserControl = typename UserGroup::Control<void>;
+using UserControl = typename UserGroup::Control;
 using UserModel = typename UserGroup::Model;
 
+
 template<typename Observer>
-using UserTerminus = typename UserGroup::Terminus<Observer>;
+using UserEndpoints = pex::EndpointGroup<Observer, UserControl>;
 
 
 wxpex::ShortcutGroups MakeShortcuts(UserControl userControl);

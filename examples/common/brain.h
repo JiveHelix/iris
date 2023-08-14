@@ -7,8 +7,8 @@ WXSHIM_PUSH_IGNORES
 #include <wx/display.h>
 WXSHIM_POP_IGNORES
 
-#include <iris/views/pixel_view.h>
-#include <iris/png.h>
+#include <draw/png.h>
+#include <draw/views/pixel_view.h>
 #include "user.h"
 #include "display_error.h"
 
@@ -55,9 +55,9 @@ public:
             return;
         }
 
-        if (!this->dataView_)
+        if (!this->pixelView_)
         {
-            this->GetDerived()->CreateDataView_();
+            this->GetDerived()->CreatePixelView_();
 
             // Allow the window to fully initialize before layout continues.
             this->doLayoutWindows_();
@@ -75,35 +75,36 @@ public:
         auto controlFrame = this->controlFrame_.Get();
         controlFrame->Layout();
 
-        auto dataView = this->dataView_.Get();
+        auto pixelView = this->pixelView_.Get();
 
         auto display = wxDisplay(static_cast<unsigned int>(displayIndex));
         auto clientArea = display.GetClientArea();
         auto topLeft = wxpex::ToPoint<int>(clientArea.GetTopLeft());
         auto clientSize = wxpex::ToSize<int>(clientArea.GetSize());
         auto controlFrameSize = wxpex::ToSize<int>(controlFrame->GetSize());
+        controlFrameSize.height = clientSize.height;
         auto remainingWidth = clientSize.width - controlFrameSize.width;
 
         controlFrame->SetPosition(wxpex::ToWxPoint(topLeft));
+        controlFrame->SetSize(wxpex::ToWxSize(controlFrameSize));
         topLeft.x += controlFrameSize.width;
 
-        auto asFrame = dynamic_cast<wxFrame *>(dataView);
+        auto asFrame = dynamic_cast<wxFrame *>(pixelView);
 
         if (asFrame)
         {
             if (asFrame->IsMaximized())
             {
-                std::cout << "DataView came up maximized." << std::endl;
                 asFrame->Maximize(false);
             }
         }
 
-        auto dataViewSize = wxpex::ToSize<int>(dataView->GetSize());
-        dataViewSize.height = clientSize.height;
-        dataViewSize.width = remainingWidth;
+        auto pixelViewSize = wxpex::ToSize<int>(pixelView->GetSize());
+        pixelViewSize.height = clientSize.height;
+        pixelViewSize.width = remainingWidth;
 
-        dataView->SetPosition(wxpex::ToWxPoint(topLeft));
-        dataView->SetSize(wxpex::ToWxSize(dataViewSize));
+        pixelView->SetPosition(wxpex::ToWxPoint(topLeft));
+        pixelView->SetSize(wxpex::ToWxSize(pixelViewSize));
 
         this->GetDerived()->Display();
     }
@@ -112,13 +113,14 @@ public:
     {
         // Open PNG file, and read data into Eigen matrix.
         // Display pixel view.
-        iris::Png<Pixel> png = iris::Png<Pixel>(this->user_.fileName.Get());
+        draw::Png<Pixel> png =
+            draw::Png<Pixel>(this->user_.fileName.Get(), true);
 
         this->GetDerived()->LoadPng(png);
 
-        if (!this->dataView_)
+        if (!this->pixelView_)
         {
-            this->GetDerived()->CreateDataView_();
+            this->GetDerived()->CreatePixelView_();
         }
 
         this->user_.pixelView.viewSettings.imageSize.Set(png.GetSize());
@@ -131,20 +133,20 @@ public:
     void Shutdown()
     {
         this->controlFrame_.Close();
-        this->dataView_.Close();
+        this->pixelView_.Close();
     }
 
 protected:
-    void CreateDataView_()
+    void CreatePixelView_()
     {
-        this->dataView_ = {
-            new iris::PixelView(
+        this->pixelView_ = {
+            new draw::PixelView(
                 nullptr,
-                iris::PixelViewControl(this->user_.pixelView),
+                draw::PixelViewControl(this->user_.pixelView),
                 "View"),
             MakeShortcuts(this->GetUserControls())};
 
-        this->dataView_.Get()->Show();
+        this->pixelView_.Get()->Show();
     }
 
 protected:
@@ -152,5 +154,5 @@ protected:
     UserControl userControl_;
     wxpex::CallAfter doLayoutWindows_;
     wxpex::Window controlFrame_;
-    wxpex::ShortcutWindow dataView_;
+    wxpex::ShortcutWindow pixelView_;
 };
