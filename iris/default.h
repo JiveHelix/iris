@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include <Eigen/Dense>
 #include <pex/control_value.h>
+#include <tau/eigen_shim.h>
 #include <draw/size.h>
 
 

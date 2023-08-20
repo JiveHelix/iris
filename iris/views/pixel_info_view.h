@@ -3,7 +3,13 @@
 
 #include <wxpex/labeled_widget.h>
 #include <pex/value.h>
+
+#include <wxpex/ignores.h>
+
+WXSHIM_PUSH_IGNORES
 #include <wx/listctrl.h>
+WXSHIM_POP_IGNORES
+
 #include <draw/views/pixel_view_settings.h>
 
 

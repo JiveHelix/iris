@@ -1,9 +1,9 @@
 #pragma once
 
 
-#include <Eigen/Dense>
 #include <fields/fields.h>
 #include <pex/group.h>
+#include <tau/eigen_shim.h>
 
 
 namespace iris

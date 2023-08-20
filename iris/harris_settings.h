@@ -3,7 +3,7 @@
 
 #include <fields/fields.h>
 #include <pex/group.h>
-#include <Eigen/Dense>
+#include <tau/eigen_shim.h>
 
 
 namespace iris

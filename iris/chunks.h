@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include <Eigen/Dense>
 #include <vector>
+#include <tau/eigen_shim.h>
 #include <tau/convolve.h>
 
 #include "iris/error.h"
