@@ -2,6 +2,7 @@
 
 
 #include <pex/group.h>
+#include <wxpex/async.h>
 #include "iris/mask_settings.h"
 #include "iris/level_settings.h"
 #include "iris/lines_chain_settings.h"

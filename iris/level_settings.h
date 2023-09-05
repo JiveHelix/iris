@@ -6,6 +6,7 @@
 #include <pex/pex.h>
 #include <pex/linked_ranges.h>
 #include <pex/endpoint.h>
+#include <wxpex/async.h>
 #include <fields/fields.h>
 #include "iris/default.h"
 

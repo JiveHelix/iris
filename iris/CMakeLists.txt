@@ -58,7 +58,6 @@ target_sources(
     mask.cpp
     mask_settings.cpp
     node.cpp
-    projection_settings.cpp
     views/canny_settings_view.cpp
     views/canny_chain_settings_view.cpp
     views/chess_chain_settings_view.cpp
@@ -70,6 +69,7 @@ target_sources(
     views/gaussian_settings_view.cpp
     views/gradient_settings_view.cpp
     views/homography_settings_view.cpp
+    views/intrinsics_view.cpp
     views/level_settings_view.cpp
     views/lines_chain_settings_view.cpp
     views/mask_brain.cpp

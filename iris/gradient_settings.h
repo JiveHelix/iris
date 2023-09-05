@@ -3,6 +3,7 @@
 #include <fields/fields.h>
 #include <pex/group.h>
 #include <pex/select.h>
+#include <wxpex/async.h>
 #include "iris/derivative.h"
 #include "iris/default.h"
 

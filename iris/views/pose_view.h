@@ -5,8 +5,7 @@
 #include <wxpex/labeled_widget.h>
 #include <wxpex/file_field.h>
 #include <wxpex/slider.h>
-#include "iris/projection_settings.h"
-#include "iris/views/make_read_write_buttons.h"
+#include <tau/pose.h>
 
 
 namespace iris
@@ -21,7 +20,7 @@ public:
 
     PoseView(
         wxWindow *parent,
-        file::PoseControl<T> controls,
+        tau::PoseControl<T> control,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
         wxControl(parent, wxID_ANY)
@@ -80,16 +79,7 @@ public:
                 this,
                 control.settings.z_m));
 
-        FileDialogOptions options{};
-        options.style = wxFD_OPEN;
-        options.wildcard = std::string("*") + file::poseExtension;
-
-        auto fileSelector = new wxpex::FileField(
-            this,
-            control.fileName,
-            options);
-
-        auto controlsSizer = LayoutLabeled(
+        auto sizer = LayoutLabeled(
             layoutOptions,
             yaw,
             pitch,
@@ -98,15 +88,6 @@ public:
             x_m,
             y_m,
             z_m);
-
-        auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
-        sizer->Add(controlsSizer.release(), 1, wxEXPAND | wxBOTTOM, 3);
-        sizer->Add(fileSelector, 0, wxEXPAND | wxBOTTOM, 3);
-
-        sizer->Add(
-            MakeReadWriteButtons(this, control).release(),
-            0,
-            wxALIGN_CENTER);
 
         this->SetSizerAndFit(sizer.release());
     }
