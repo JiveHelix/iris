@@ -44,6 +44,11 @@ public:
         return UserControl(this->user_);
     }
 
+    void CreateFrame()
+    {
+        this->LayoutWindows();
+    }
+
     void LayoutWindows()
     {
         if (!this->controlFrame_)
