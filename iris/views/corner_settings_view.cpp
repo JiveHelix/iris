@@ -18,37 +18,37 @@ CornerSettingsView::CornerSettingsView(
     CornerControl controls,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Corner")
+    wxpex::Collapsible(parent, "Corner", borderStyle)
 {
     using namespace wxpex;
 
-    auto pane = this->GetBorderPane(borderStyle);
+    auto panel = this->GetPanel();
 
     auto enable = LabeledWidget(
-        pane,
+        panel,
         "enable",
         new CheckBox(
-            pane,
+            panel,
             "",
             controls.enable));
     
     auto window = LabeledWidget(
-        pane,
+        panel,
         "window",
         new ValueSlider(
-            pane,
+            panel,
             controls.window,
             controls.window.value));
 
     auto count = LabeledWidget(
-        pane,
+        panel,
         "Count",
-        new RadioBox(pane, controls.count));
+        new RadioBox(panel, controls.count));
 
     auto threads = wxpex::LabeledWidget(
-        pane,
+        panel,
         "Threads",
-        new wxpex::Field(pane, controls.threads));
+        new wxpex::Field(panel, controls.threads));
 
     auto sizer = LayoutLabeled(
         layoutOptions,
@@ -57,7 +57,7 @@ CornerSettingsView::CornerSettingsView(
         count,
         threads);
 
-    this->ConfigureBorderPane(borderPixels, std::move(sizer));
+    this->ConfigureTopSizer(std::move(sizer));
 }
 
 

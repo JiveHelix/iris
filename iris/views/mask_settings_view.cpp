@@ -20,29 +20,29 @@ MaskSettingsView::MaskSettingsView(
     MaskControl controls,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Mask")
+    wxpex::Collapsible(parent, "Mask", borderStyle)
 {
-    auto pane = this->GetBorderPane(borderStyle);
+    auto panel = this->GetPanel();
 
     auto enable =
-        new wxpex::CheckBox(pane, "Enable", controls.enable);
+        new wxpex::CheckBox(panel, "Enable", controls.enable);
 
     auto showOutline =
         new wxpex::CheckBox(
-            pane,
+            panel,
             "Show Outline",
             controls.showOutline);
 
     auto polygon =
         new draw::PolygonView(
-            pane,
+            panel,
             "Polygon",
             controls.polygon,
             layoutOptions);
 
     auto feather =
         new GaussianSettingsView<double>(
-            pane,
+            panel,
             "Feather",
             controls.feather,
             layoutOptions);
@@ -54,7 +54,7 @@ MaskSettingsView::MaskSettingsView(
         polygon,
         feather);
 
-    this->ConfigureBorderPane(5, std::move(sizer));
+    this->ConfigureTopSizer(std::move(sizer));
 }
 
 

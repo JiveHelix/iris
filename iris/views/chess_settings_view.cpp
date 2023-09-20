@@ -25,25 +25,25 @@ public:
         using namespace wxpex;
 
         auto minimumPointsPerLine = LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "minimum points per line",
             new ValueSlider(
-                this->GetPane(),
+                this->GetPanel(),
                 controls.minimumPointsPerLine,
                 controls.minimumPointsPerLine.value));
 
         auto maximumPointError = LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "maximum point error",
             new Field(
-                this->GetPane(),
+                this->GetPanel(),
                 controls.maximumPointError));
 
         auto angleToleranceDegrees = LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "angle tolerance (degrees)",
             new Field(
-                this->GetPane(),
+                this->GetPanel(),
                 controls.angleToleranceDegrees));
 
         auto sizer = LayoutLabeled(
@@ -67,90 +67,90 @@ ChessSettingsView::ChessSettingsView(
     using namespace wxpex;
 
     auto enable = wxpex::LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "enable",
-        new wxpex::CheckBox(this->GetPane(), "", controls.enable));
+        new wxpex::CheckBox(this->GetPanel(), "", controls.enable));
 
     auto usePoints = wxpex::LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "usePoints",
-        new wxpex::CheckBox(this->GetPane(), "", controls.usePoints));
+        new wxpex::CheckBox(this->GetPanel(), "", controls.usePoints));
 
     auto rows = LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "Row count",
         new Field(
-            this->GetPane(),
+            this->GetPanel(),
             controls.rowCount));
 
     auto columns = LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "Column count",
         new Field(
-            this->GetPane(),
+            this->GetPanel(),
             controls.columnCount));
 
     auto pointsChess = LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "",
         new PointsChessSettingsView(
-            this->GetPane(),
+            this->GetPanel(),
             controls.pointsChess,
             layoutOptions));
-        
+
     auto minimumSpacing = LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "minimum spacing",
         new Field(
-            this->GetPane(),
+            this->GetPanel(),
             controls.minimumSpacing));
 
     auto groupOn = wxpex::LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "Group",
-        new wxpex::CheckBox(this->GetPane(), "", controls.enableGroup));
+        new wxpex::CheckBox(this->GetPanel(), "", controls.enableGroup));
 
     auto groupSeparationDegrees = LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "group separation (degrees)",
         new Field(
-            this->GetPane(),
+            this->GetPanel(),
             controls.groupSeparationDegrees));
 
     auto minimumLinesPerGroup = LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "minimum lines per group",
         new Field(
-            this->GetPane(),
+            this->GetPanel(),
             controls.minimumLinesPerGroup));
 
     auto maximumSpacing = LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "maximum spacing",
         new Field(
-            this->GetPane(),
+            this->GetPanel(),
             controls.maximumSpacing));
 
     auto ratioLimit = LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "spacing ratio threshold",
         new Field(
-            this->GetPane(),
+            this->GetPanel(),
             controls.ratioLimit));
 
     auto angleFilterLow = wxpex::LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "Angle filter low",
         new wxpex::ValueSlider(
-            this->GetPane(),
+            this->GetPanel(),
             controls.angleFilter.low,
             controls.angleFilter.low.value));
 
     auto angleFilterHigh = wxpex::LabeledWidget(
-        this->GetPane(),
+        this->GetPanel(),
         "Angle filter high",
         new wxpex::ValueSlider(
-            this->GetPane(),
+            this->GetPanel(),
             controls.angleFilter.high,
             controls.angleFilter.high.value));
 

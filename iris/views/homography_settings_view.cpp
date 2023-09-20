@@ -17,33 +17,33 @@ HomographySettingsView::HomographySettingsView(
     HomographyControl control,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Homograpy")
+    wxpex::Collapsible(parent, "Homograpy", borderStyle)
 {
     using namespace wxpex;
     using SensorSizeView = SizeView<double, 0>;
     using ValueField = typename SensorSizeView::ValueField;
 
-    auto pane = this->GetBorderPane(borderStyle);
+    auto panel = this->GetPanel();
 
     auto sensorSize = wxpex::LabeledWidget(
-        pane,
+        panel,
         "Sensor Size (pixels)",
         new SensorSizeView(
-            pane,
+            panel,
             control.sensorSize_pixels));
 
     auto pixelSize = wxpex::LabeledWidget(
-        pane,
+        panel,
         "Pixel Size (microns)",
         new ValueField(
-            pane,
+            panel,
             control.pixelSize_microns));
 
     auto squareSize = wxpex::LabeledWidget(
-        pane,
+        panel,
         "Square Size (mm)",
         new ValueField(
-            pane,
+            panel,
             control.squareSize_mm));
 
     auto sizer = LayoutLabeled(
@@ -52,7 +52,7 @@ HomographySettingsView::HomographySettingsView(
         pixelSize,
         squareSize);
 
-    this->ConfigureBorderPane(borderPixels, std::move(sizer));
+    this->ConfigureTopSizer(std::move(sizer));
 }
 
 

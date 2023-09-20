@@ -28,32 +28,32 @@ public:
         GaussianControl<Value> controls,
         const LayoutOptions &layoutOptions)
         :
-        wxpex::Collapsible(parent, name)
+        wxpex::Collapsible(parent, name, borderStyle)
     {
-        auto pane = this->GetBorderPane(borderStyle);
+        auto panel = this->GetPanel();
 
         auto enable = wxpex::LabeledWidget(
-            pane,
+            panel,
             "Enable",
-            new wxpex::CheckBox(pane, "", controls.enable));
+            new wxpex::CheckBox(panel, "", controls.enable));
 
         auto sigma = wxpex::LabeledWidget(
-            pane,
+            panel,
             "sigma",
             new wxpex::ValueSlider(
-                pane,
+                panel,
                 controls.sigma,
                 controls.sigma.value));
 
         auto threshold = wxpex::LabeledWidget(
-            pane,
+            panel,
             "threshold",
-            new wxpex::Field(pane, controls.threshold));
+            new wxpex::Field(panel, controls.threshold));
 
         auto threads = wxpex::LabeledWidget(
-            pane,
+            panel,
             "Threads",
-            new wxpex::Field(pane, controls.threads));
+            new wxpex::Field(panel, controls.threads));
 
         auto sizer = wxpex::LayoutLabeled(
             layoutOptions,
@@ -62,7 +62,7 @@ public:
             threshold,
             threads);
 
-        this->ConfigureBorderPane(borderPixels, std::move(sizer));
+        this->ConfigureTopSizer(std::move(sizer));
     }
 };
 

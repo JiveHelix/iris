@@ -27,42 +27,42 @@ public:
         CannyControl<Value> controls,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        wxpex::Collapsible(parent, "Canny")
+        wxpex::Collapsible(parent, "Canny", borderStyle)
     {
         using namespace wxpex;
 
-        auto pane = this->GetBorderPane(borderStyle);
+        auto panel = this->GetPanel();
 
         auto enable = wxpex::LabeledWidget(
-            pane,
+            panel,
             "Enable",
-            new wxpex::CheckBox(pane, "", controls.enable));
+            new wxpex::CheckBox(panel, "", controls.enable));
 
         auto high = LabeledWidget(
-            pane,
+            panel,
             "High",
             new ValueSlider(
-                pane,
+                panel,
                 controls.range.high,
                 controls.range.high.value));
 
         auto low = LabeledWidget(
-            pane,
+            panel,
             "Low",
             new ValueSlider(
-                pane,
+                panel,
                 controls.range.low,
                 controls.range.low.value));
 
         auto depth = wxpex::LabeledWidget(
-            pane,
+            panel,
             "Depth",
-            new wxpex::Field(pane, controls.depth));
+            new wxpex::Field(panel, controls.depth));
 
         auto threads = wxpex::LabeledWidget(
-            pane,
+            panel,
             "Threads",
-            new wxpex::Field(pane, controls.threads));
+            new wxpex::Field(panel, controls.threads));
 
         auto sizer = LayoutLabeled(
             layoutOptions,
@@ -72,7 +72,7 @@ public:
             threads,
             depth);
 
-        this->ConfigureBorderPane(borderPixels, std::move(sizer));
+        this->ConfigureTopSizer(std::move(sizer));
     }
 };
 

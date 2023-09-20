@@ -18,31 +18,31 @@ CannyChainSettingsView::CannyChainSettingsView(
     CannyChainControl controls,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Canny Chain")
+    wxpex::Collapsible(parent, "Canny Chain", borderStyle)
 {
     using namespace wxpex;
 
-    auto pane = this->GetBorderPane(borderStyle);
+    auto panel = this->GetPanel();
 
     auto enable =
-        new wxpex::CheckBox(pane, "enable", controls.enable);
+        new wxpex::CheckBox(panel, "enable", controls.enable);
 
     auto gaussian =
         new GaussianSettingsView<int32_t>(
-            pane,
+            panel,
             "Gaussian Blur",
             controls.gaussian,
             layoutOptions);
 
     auto gradient =
         new GradientSettingsView<int32_t>(
-            pane,
+            panel,
             controls.gradient,
             layoutOptions);
 
     auto canny =
         new CannySettingsView<double>(
-            pane,
+            panel,
             controls.canny,
             layoutOptions);
 
@@ -53,7 +53,7 @@ CannyChainSettingsView::CannyChainSettingsView(
         gradient,
         canny);
 
-    this->ConfigureBorderPane(5, std::move(sizer));
+    this->ConfigureTopSizer(std::move(sizer));
 }
 
 

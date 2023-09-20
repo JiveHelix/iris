@@ -22,48 +22,48 @@ ChessChainSettingsView::ChessChainSettingsView(
     ChessChainControl controls,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Chess Chain")
+    wxpex::Collapsible(parent, "Chess Chain", borderStyle)
 {
     using namespace wxpex;
 
-    auto pane = this->GetBorderPane(borderStyle);
+    auto panel = this->GetPanel();
 
     auto enable =
-        new wxpex::CheckBox(pane, "enable", controls.enable);
+        new wxpex::CheckBox(panel, "enable", controls.enable);
 
     auto mask =
         new MaskSettingsView(
-            pane,
+            panel,
             controls.mask,
             layoutOptions);
 
     auto level =
         new LevelSettingsView<int32_t>(
-            pane,
+            panel,
             "Level",
             controls.level,
             layoutOptions);
 
     auto cornersChain =
         new CornersChainSettingsView(
-            pane,
+            panel,
             controls.corners,
             layoutOptions);
 
     auto linesChain =
         new LinesChainSettingsView(
-            pane,
+            panel,
             controls.lines,
             layoutOptions);
 
     auto chess =
         new ChessSettingsView(
-            pane,
+            panel,
             controls.chess,
             layoutOptions);
 
     auto autoDetect =
-        new wxpex::Button(pane, "Auto", controls.autoDetectSettings);
+        new wxpex::Button(panel, "Auto", controls.autoDetectSettings);
 
     auto sizer = wxpex::LayoutItems(
         verticalItems,
@@ -75,7 +75,7 @@ ChessChainSettingsView::ChessChainSettingsView(
         chess);
 
     sizer->Add(autoDetect, 0, wxALIGN_CENTER | wxTOP, 5);
-    this->ConfigureBorderPane(5, std::move(sizer));
+    this->ConfigureTopSizer(std::move(sizer));
 }
 
 

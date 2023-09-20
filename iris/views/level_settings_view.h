@@ -29,36 +29,36 @@ public:
         wxpex::Collapsible(parent, name)
     {
         auto detect = new wxpex::Button(
-            this->GetPane(),
+            this->GetPanel(),
             "Detect",
             control.autoDetectSettings);
 
         auto detectMargin = wxpex::LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "Detect Margin",
             new wxpex::ValueSlider(
-                this->GetPane(),
+                this->GetPanel(),
                 control.detectMargin,
                 control.detectMargin.value));
 
         auto enable = wxpex::LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "enable",
-            new wxpex::CheckBox(this->GetPane(), "", control.enable));
+            new wxpex::CheckBox(this->GetPanel(), "", control.enable));
 
         auto levelLow = wxpex::LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "Low",
             new wxpex::ValueSlider(
-                this->GetPane(),
+                this->GetPanel(),
                 control.range.low,
                 control.range.low.value));
 
         auto levelHigh = wxpex::LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "High",
             new wxpex::ValueSlider(
-                this->GetPane(),
+                this->GetPanel(),
                 control.range.high,
                 control.range.high.value));
 

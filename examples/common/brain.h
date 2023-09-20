@@ -147,8 +147,7 @@ protected:
         this->pixelView_ = {
             new draw::PixelView(
                 nullptr,
-                draw::PixelViewControl(this->user_.pixelView),
-                "View"),
+                draw::PixelViewControl(this->user_.pixelView)),
             MakeShortcuts(this->GetUserControls())};
 
         this->pixelView_.Get()->Show();

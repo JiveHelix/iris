@@ -18,28 +18,28 @@ LinesChainSettingsView::LinesChainSettingsView(
     LinesChainControl controls,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Lines Chain")
+    wxpex::Collapsible(parent, "Lines Chain", borderStyle)
 {
     using namespace wxpex;
 
-    auto pane = this->GetBorderPane(borderStyle);
+    auto panel = this->GetPanel();
 
     auto enable =
-        new wxpex::CheckBox(pane, "enable", controls.enable);
+        new wxpex::CheckBox(panel, "enable", controls.enable);
 
     auto cannyChain = new CannyChainSettingsView(
-        pane,
+        panel,
         controls.cannyChain,
         layoutOptions);
 
     auto hough =
         new HoughSettingsView<double>(
-            pane,
+            panel,
             controls.hough,
             layoutOptions);
 
     auto linesShape = new draw::LinesShapeView(
-        pane,
+        panel,
         "Lines Shape",
         controls.shape,
         layoutOptions);
@@ -51,7 +51,7 @@ LinesChainSettingsView::LinesChainSettingsView(
         hough,
         linesShape);
 
-    this->ConfigureBorderPane(5, std::move(sizer));
+    this->ConfigureTopSizer(std::move(sizer));
 }
 
 

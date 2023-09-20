@@ -32,44 +32,44 @@ public:
         using namespace wxpex;
 
         auto enable = LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "Enable",
-            new CheckBox(this->GetPane(), "", controls.enable));
+            new CheckBox(this->GetPanel(), "", controls.enable));
 
         auto scale = LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "Scale",
             new ValueSlider(
-                this->GetPane(),
+                this->GetPanel(),
                 controls.scale,
                 controls.scale.value));
 
         auto size = LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "Size",
             new RadioBox
             <
                 iris::DerivativeSize::Control,
                 iris::DerivativeSize::SizeToString
-            >(this->GetPane(), controls.size));
+            >(this->GetPanel(), controls.size));
 
         auto maximum = LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "Maximum",
-            new View(this->GetPane(), controls.maximum));
+            new View(this->GetPanel(), controls.maximum));
 
         auto threads = wxpex::LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "Threads",
-            new wxpex::Field(this->GetPane(), controls.threads));
+            new wxpex::Field(this->GetPanel(), controls.threads));
 
         auto percentile = wxpex::LabeledWidget(
-            this->GetPane(),
+            this->GetPanel(),
             "Percentile",
-            new wxpex::Field(this->GetPane(), controls.percentile));
+            new wxpex::Field(this->GetPanel(), controls.percentile));
 
         auto detect = new wxpex::Button(
-            this->GetPane(),
+            this->GetPanel(),
             "Detect",
             controls.autoDetectSettings);
 

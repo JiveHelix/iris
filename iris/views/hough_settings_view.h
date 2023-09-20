@@ -26,65 +26,65 @@ public:
         HoughControl<Value> controls,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        wxpex::Collapsible(parent, "Hough")
+        wxpex::Collapsible(parent, "Hough", borderStyle)
     {
         using namespace wxpex;
 
-        auto pane = this->GetBorderPane(borderStyle);
+        auto panel = this->GetPanel();
 
         auto enable = wxpex::LabeledWidget(
-            pane,
+            panel,
             "Enable",
-            new wxpex::CheckBox(pane, "", controls.enable));
+            new wxpex::CheckBox(panel, "", controls.enable));
 
         auto rhoCount = wxpex::LabeledWidget(
-            pane,
+            panel,
             "rho count",
-            new wxpex::Field(pane, controls.rhoCount));
+            new wxpex::Field(panel, controls.rhoCount));
 
         auto thetaCount = wxpex::LabeledWidget(
-            pane,
+            panel,
             "theta count",
-            new wxpex::Field(pane, controls.thetaCount));
+            new wxpex::Field(panel, controls.thetaCount));
 
         auto angleRange = LabeledWidget(
-            pane,
+            panel,
             "Angle range",
             new ValueSlider(
-                pane,
+                panel,
                 controls.angleRange,
                 controls.angleRange.value));
 
         auto weighted = wxpex::LabeledWidget(
-            pane,
+            panel,
             "Weighted",
-            new wxpex::CheckBox(pane, "", controls.weighted));
+            new wxpex::CheckBox(panel, "", controls.weighted));
 
         auto suppress = wxpex::LabeledWidget(
-            pane,
+            panel,
             "Suppress",
-            new wxpex::CheckBox(pane, "", controls.suppress));
+            new wxpex::CheckBox(panel, "", controls.suppress));
 
         auto window = LabeledWidget(
-            pane,
+            panel,
             "Window",
             new ValueSlider(
-                pane,
+                panel,
                 controls.window,
                 controls.window.value));
 
         auto threshold = LabeledWidget(
-            pane,
+            panel,
             "Threshold",
             new ValueSlider(
-                pane,
+                panel,
                 controls.threshold,
                 controls.threshold.value));
 
         auto threads = wxpex::LabeledWidget(
-            pane,
+            panel,
             "Threads",
-            new wxpex::Field(pane, controls.threads));
+            new wxpex::Field(panel, controls.threads));
 
         auto sizer = LayoutLabeled(
             layoutOptions,
@@ -98,7 +98,7 @@ public:
             threshold,
             threads);
 
-        this->ConfigureBorderPane(borderPixels, std::move(sizer));
+        this->ConfigureTopSizer(std::move(sizer));
     }
 };
 

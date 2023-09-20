@@ -217,8 +217,7 @@ private:
                 this->houghView_ = {
                     new draw::PixelView(
                         nullptr,
-                        this->houghUserControl_.houghView,
-                        "Hough Space"),
+                        this->houghUserControl_.houghView),
                     MakeShortcuts(this->GetUserControls())};
             }
 

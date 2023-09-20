@@ -20,43 +20,43 @@ CornersChainSettingsView::CornersChainSettingsView(
     CornersChainControl controls,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Corners Chain")
+    wxpex::Collapsible(parent, "Corners Chain", borderStyle)
 {
     using namespace wxpex;
 
-    auto pane = this->GetBorderPane(borderStyle);
+    auto panel = this->GetPanel();
 
     auto enable =
-        new wxpex::CheckBox(pane, "enable", controls.enable);
+        new wxpex::CheckBox(panel, "enable", controls.enable);
 
     auto gaussian =
         new GaussianSettingsView<int32_t>(
-            pane,
+            panel,
             "Gaussian Blur",
             controls.gaussian,
             layoutOptions);
 
     auto gradient =
         new GradientSettingsView<int32_t>(
-            pane,
+            panel,
             controls.gradient,
             layoutOptions);
 
     auto harris =
         new HarrisSettingsView(
-            pane,
+            panel,
             controls.harris,
             layoutOptions);
 
     auto corner =
         new CornerSettingsView(
-            pane,
+            panel,
             controls.corner,
             layoutOptions);
 
     auto pointsShape =
         new draw::PointsShapeView(
-            pane,
+            panel,
             "Corners Shape",
             controls.shape,
             layoutOptions);
@@ -70,7 +70,7 @@ CornersChainSettingsView::CornersChainSettingsView(
         corner,
         pointsShape);
 
-    this->ConfigureBorderPane(5, std::move(sizer));
+    this->ConfigureTopSizer(std::move(sizer));
 }
 
 

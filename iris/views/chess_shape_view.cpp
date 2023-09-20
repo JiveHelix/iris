@@ -19,52 +19,52 @@ ChessShapeView::ChessShapeView(
 {
     auto displayIntersections =
         new wxpex::CheckBox(
-            this->GetPane(),
+            this->GetPanel(),
             "Display Intersections",
             controls.displayIntersections);
 
     auto labelIntersections =
         new wxpex::CheckBox(
-            this->GetPane(),
+            this->GetPanel(),
             "Label Intersections",
             controls.labelIntersections);
 
     auto displayHorizontals =
         new wxpex::CheckBox(
-            this->GetPane(),
+            this->GetPanel(),
             "Display Horizontals",
             controls.displayHorizontals);
 
     auto displayVerticals =
         new wxpex::CheckBox(
-            this->GetPane(),
+            this->GetPanel(),
             "Display Verticals",
             controls.displayVerticals);
 
     auto intersectionsShape =
         new draw::PointsShapeView(
-            this->GetPane(),
+            this->GetPanel(),
             "Intersections Shape",
             controls.intersectionsShape,
             layoutOptions);
 
     auto labelsLook =
         new draw::FontLookView(
-            this->GetPane(),
+            this->GetPanel(),
             "Labels Look",
             controls.labelsLook,
             layoutOptions);
 
     auto horizontalsShape =
         new draw::LinesShapeView(
-            this->GetPane(),
+            this->GetPanel(),
             "Horizontals Shape",
             controls.horizontalsShape,
             layoutOptions);
 
     auto verticalsShape =
         new draw::LinesShapeView(
-            this->GetPane(),
+            this->GetPanel(),
             "Verticals Shape",
             controls.verticalsShape,
             layoutOptions);

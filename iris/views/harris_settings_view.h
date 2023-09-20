@@ -27,59 +27,59 @@ public:
         Control controls,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        wxpex::Collapsible(parent, "Harris")
+        wxpex::Collapsible(parent, "Harris", borderStyle)
     {
         using namespace wxpex;
 
-        auto pane = this->GetBorderPane(borderStyle);
+        auto panel = this->GetPanel();
 
         auto enable = LabeledWidget(
-            pane,
+            panel,
             "Enable",
-            new CheckBox(pane, "", controls.enable));
+            new CheckBox(panel, "", controls.enable));
 
         auto alpha = LabeledWidget(
-            pane,
+            panel,
             "alpha",
             new ValueSlider(
-                pane,
+                panel,
                 controls.alpha,
                 controls.alpha.value));
 
         auto sigma = LabeledWidget(
-            pane,
+            panel,
             "sigma",
             new ValueSlider(
-                pane,
+                panel,
                 controls.sigma,
                 controls.sigma.value));
 
         auto threshold = LabeledWidget(
-            pane,
+            panel,
             "threshold",
             new ValueSlider(
-                pane,
+                panel,
                 controls.threshold,
                 controls.threshold.value));
 
         auto suppress = LabeledWidget(
-            pane,
+            panel,
             "suppress",
-            new CheckBox(pane, "", controls.suppress));
+            new CheckBox(panel, "", controls.suppress));
 
         auto window = LabeledWidget(
-            pane,
+            panel,
             "window",
             new ValueSlider(
-                pane,
+                panel,
                 controls.window,
                 controls.window.value));
 
         auto threads = LabeledWidget(
-            pane,
+            panel,
             "threads",
             new Field(
-                pane,
+                panel,
                 controls.threads));
 
         auto sizer = LayoutLabeled(
@@ -92,7 +92,7 @@ public:
             window,
             threads);
 
-        this->ConfigureBorderPane(borderPixels, std::move(sizer));
+        this->ConfigureTopSizer(std::move(sizer));
     }
 };
 

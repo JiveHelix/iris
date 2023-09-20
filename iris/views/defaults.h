@@ -8,8 +8,11 @@ namespace iris
 {
 
 
+#ifdef __WXMSW__
+inline constexpr auto borderStyle = wxBORDER_NONE;
+#else
 inline constexpr auto borderStyle = wxBORDER_SIMPLE;
-inline constexpr int borderPixels = 5;
+#endif
 
 
 } // end namespace iris

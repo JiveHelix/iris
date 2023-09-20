@@ -25,30 +25,30 @@ public:
         ColorControl<Value> control,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        wxpex::Collapsible(parent, "Color")
+        wxpex::Collapsible(parent, "Color", borderStyle)
     {
-        auto pane = this->GetBorderPane(borderStyle);
+        auto panel = this->GetPanel();
 
         auto levelLow = wxpex::LabeledWidget(
-            pane,
+            panel,
             "Low",
             new wxpex::ValueSlider(
-                pane,
+                panel,
                 control.level.low,
                 control.level.low.value));
 
         auto levelHigh = wxpex::LabeledWidget(
-            pane,
+            panel,
             "High",
             new wxpex::ValueSlider(
-                pane,
+                panel,
                 control.level.high,
                 control.level.high.value));
 
         auto turboOn = wxpex::LabeledWidget(
-            pane,
+            panel,
             "Turbo",
-            new wxpex::CheckBox(pane, "", control.turbo));
+            new wxpex::CheckBox(panel, "", control.turbo));
 
         auto sizer = LayoutLabeled(
             layoutOptions,
@@ -56,7 +56,7 @@ public:
             levelHigh,
             turboOn);
 
-        this->ConfigureBorderPane(borderPixels, std::move(sizer));
+        this->ConfigureTopSizer(std::move(sizer));
     }
 };
 
