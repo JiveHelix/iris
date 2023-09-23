@@ -4,7 +4,7 @@
 void DemoBrain::LoadPng(const draw::Png<Pixel> &png)
 {
     auto maximum = this->demoModel_.color.level.high.GetMaximum();
-    auto scale = static_cast<float>(maximum);
+    auto scale = static_cast<double>(maximum);
 
     // Prevent drawing until new dimensions and source data are
     // synchronized.

@@ -64,7 +64,7 @@ public:
         this->demoModel_.mask.imageSize.Set(png.GetSize());
         this->demoModel_.Unmute();
 
-        auto scale = static_cast<float>(maximum);
+        auto scale = static_cast<double>(maximum);
 
         this->filters_.source.SetData(
             png.GetValue(scale).template cast<int32_t>().eval());

@@ -4,7 +4,7 @@ from conans import ConanFile, CMake, tools
 
 class IrisConan(ConanFile):
     name = "iris"
-    version = "0.2.2"
+    version = "0.2.3"
 
     scm = {
         "type": "git",
@@ -43,8 +43,8 @@ class IrisConan(ConanFile):
         self.requires("jive/[~1.1]")
         self.requires("fields/[~1.3]")
         self.requires("tau/[~1.10]")
-        self.requires("pex/[0.9.4]")
-        self.requires("wxpex/[0.9.4]")
+        self.requires("pex/[>=0.9.4 <0.10]")
+        self.requires("wxpex/[>=0.9.5 <0.10]")
         self.requires("draw/[0.1.3]")
         self.requires("libpng/1.6.39", override=True)
         self.requires("libiconv/1.17")

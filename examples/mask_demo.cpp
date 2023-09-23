@@ -62,7 +62,7 @@ public:
         wxFrame(nullptr, wxID_ANY, "Mask Demo"),
         shortcuts_(
             std::make_unique<wxpex::MenuShortcuts>(
-                wxpex::Window(this),
+                wxpex::UnclosedWindow(this),
                 MakeShortcuts(userControl)))
     {
         this->SetMenuBar(this->shortcuts_->GetMenuBar());
@@ -179,7 +179,7 @@ public:
     void LoadPng(const draw::Png<Pixel> &png)
     {
         auto scale =
-            static_cast<float>(this->demoModel_.color.level.high.GetMaximum());
+            static_cast<double>(this->demoModel_.color.level.high.GetMaximum());
 
         this->filters_.source.SetData(
             png.GetValue(scale).template cast<InProcess>().eval());

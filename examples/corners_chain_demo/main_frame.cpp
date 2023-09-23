@@ -12,7 +12,7 @@ MainFrame::MainFrame(
     wxFrame(nullptr, wxID_ANY, "Hough Demo"),
     shortcuts_(
         std::make_unique<wxpex::MenuShortcuts>(
-            wxpex::Window(this),
+            wxpex::UnclosedWindow(this),
             MakeShortcuts(userControl)))
 {
     this->SetMenuBar(this->shortcuts_->GetMenuBar());
