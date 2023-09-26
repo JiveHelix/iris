@@ -47,15 +47,14 @@ void PixelInfo::OnPoint_(const draw::Point &point)
 PixelInfoView::PixelInfoView(
     wxWindow *parent,
     draw::PixelViewControl control,
-    const std::string &title)
+    const std::string &label)
     :
-    wxFrame(parent, wxID_ANY, title),
+    wxPanel(parent, wxID_ANY),
     pixelInfo_(new PixelInfo(this, control.logicalPosition))
 
 {
-    auto pixelInfo = wxpex::LabeledWidget(this, "Pixel Info", this->pixelInfo_);
-    LayoutOptions layoutOptions{};
-    auto sizer = wxpex::LayoutLabeled(layoutOptions, pixelInfo);
+    auto pixelInfo = wxpex::LabeledWidget(this, label, this->pixelInfo_);
+    auto sizer = wxpex::LayoutLabeled(LayoutOptions{}, pixelInfo);
     this->SetSizerAndFit(sizer.release());
 }
 

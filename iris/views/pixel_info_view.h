@@ -98,7 +98,7 @@ private:
 };
 
 
-class PixelInfoView: public wxFrame
+class PixelInfoView: public wxPanel
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -106,7 +106,7 @@ public:
     PixelInfoView(
         wxWindow *parent,
         draw::PixelViewControl control,
-        const std::string &title);
+        const std::string &label = "");
 
 protected:
     PixelInfo *pixelInfo_;
