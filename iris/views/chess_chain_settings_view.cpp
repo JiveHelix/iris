@@ -7,7 +7,7 @@
 #include "iris/views/mask_settings_view.h"
 #include "iris/views/level_settings_view.h"
 #include "iris/views/lines_chain_settings_view.h"
-#include "iris/views/corners_chain_settings_view.h"
+#include "iris/views/vertex_chain_settings_view.h"
 #include "iris/views/chess_settings_view.h"
 #include "iris/views/chess_shape_view.h"
 #include "iris/views/defaults.h"
@@ -44,10 +44,10 @@ ChessChainSettingsView::ChessChainSettingsView(
             controls.level,
             layoutOptions);
 
-    auto cornersChain =
-        new CornersChainSettingsView(
+    auto vertexChain =
+        new VertexChainSettingsView(
             panel,
-            controls.corners,
+            controls.vertices,
             layoutOptions);
 
     auto linesChain =
@@ -70,7 +70,7 @@ ChessChainSettingsView::ChessChainSettingsView(
         enable,
         mask,
         level,
-        cornersChain,
+        vertexChain,
         linesChain,
         chess);
 

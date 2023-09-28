@@ -9,7 +9,7 @@ ChessChainResults::ChessChainResults(ssize_t chessShapesId)
     :
     mask{},
     level{},
-    corners{},
+    vertices{},
     lines{},
     chess{},
     chessShapesId_(chessShapesId)
@@ -63,9 +63,9 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
             houghControl);
     }
 
-    if (this->corners)
+    if (this->vertices)
     {
-        return this->corners->Display(
+        return this->vertices->Display(
             shapesControl,
             pointsShapeSettings,
             color);
@@ -83,8 +83,8 @@ ChessChainNodes::ChessChainNodes(
     mask("mask", source, control.mask, cancel),
     level(this->mask, control.level, cancel),
     lines(this->level, control.lines, cancel),
-    corners(this->level, control.corners, cancel),
-    mux(this->corners, this->lines, control.chess.usePoints, cancel),
+    vertices(this->level, control.vertices, cancel),
+    mux(this->vertices, this->lines, control.chess.useVertices, cancel),
     chess("chess", this->mux, control.chess, cancel)
 {
 
@@ -133,9 +133,9 @@ std::optional<ChessChain::ChainResults> ChessChain::GetChainResults()
 
     result.chess = this->nodes_.chess.GetResult();
 
-    if (this->settings_.chess.usePoints)
+    if (this->settings_.chess.useVertices)
     {
-        result.corners = this->nodes_.corners.GetChainResults();
+        result.vertices = this->nodes_.vertices.GetChainResults();
     }
     else
     {
@@ -159,7 +159,7 @@ std::optional<ChessChain::ChainResults> ChessChain::GetChainResults()
 void ChessChain::AutoDetectSettings()
 {
     this->nodes_.level.AutoDetectSettings();
-    this->nodes_.corners.AutoDetectSettings();
+    this->nodes_.vertices.AutoDetectSettings();
     this->nodes_.lines.AutoDetectSettings();
 }
 

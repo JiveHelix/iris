@@ -5,7 +5,7 @@
 #include <tau/vector2d.h>
 #include <tau/line2d.h>
 #include <tau/size.h>
-#include <iris/corner.h>
+#include <iris/vertex.h>
 #include <iris/threadsafe_filter.h>
 
 #include "iris/chess_settings.h"
@@ -22,7 +22,7 @@ struct ChessInput
 {
     using Lines = typename HoughResult<double>::Lines;
 
-    std::optional<CornerPoints> points;
+    std::optional<Vertices> vertices;
     std::optional<HoughResult<double>> hough;
 };
 
@@ -38,7 +38,7 @@ public:
 
     std::optional<ChessSolution> Filter(const ChessInput &input);
 
-    std::optional<ChessOutput> FilterPoints(const CornerPoints &points);
+    std::optional<ChessOutput> FilterPoints(const Vertices &vertices);
 
     std::optional<ChessOutput> FilterLines(
         const typename ChessInput::Lines &lines);

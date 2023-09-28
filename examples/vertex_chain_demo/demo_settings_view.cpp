@@ -2,7 +2,7 @@
 
 #include <iris/views/level_settings_view.h>
 #include <iris/views/mask_settings_view.h>
-#include <iris/views/corners_chain_settings_view.h>
+#include <iris/views/vertex_chain_settings_view.h>
 #include <iris/views/color_settings_view.h>
 
 
@@ -28,12 +28,12 @@ DemoSettingsView::DemoSettingsView(
         control.level,
         layoutOptions);
 
-    auto corners = new iris::CornersChainSettingsView(
+    auto vertexSettings = new iris::VertexChainSettingsView(
         this,
-        control.cornersChain,
+        control.vertexChain,
         layoutOptions);
 
-    corners->Expand();
+    vertexSettings->Expand();
 
     auto color = new iris::ColorSettingsView<int32_t>(
         this,
@@ -44,7 +44,7 @@ DemoSettingsView::DemoSettingsView(
 
     sizer->Add(mask, 0, wxEXPAND | wxBOTTOM, 5);
     sizer->Add(levels, 0, wxEXPAND | wxBOTTOM, 5);
-    sizer->Add(corners, 0, wxEXPAND | wxBOTTOM, 5);
+    sizer->Add(vertexSettings, 0, wxEXPAND | wxBOTTOM, 5);
     sizer->Add(color, 0, wxEXPAND | wxBOTTOM, 5);
 
     auto borderSizer = std::make_unique<wxBoxSizer>(wxVERTICAL);

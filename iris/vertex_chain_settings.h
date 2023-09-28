@@ -6,7 +6,7 @@
 #include "iris/gaussian_settings.h"
 #include "iris/gradient_settings.h"
 #include "iris/harris_settings.h"
-#include "iris/corner_settings.h"
+#include "iris/vertex_settings.h"
 
 
 namespace iris
@@ -14,40 +14,40 @@ namespace iris
 
 
 template<typename T>
-struct CornersChainFields
+struct VertexChainFields
 {
     static constexpr auto fields = std::make_tuple(
         fields::Field(&T::enable, "enable"),
         fields::Field(&T::gaussian, "gaussian"),
         fields::Field(&T::gradient, "gradient"),
         fields::Field(&T::harris, "harris"),
-        fields::Field(&T::corner, "corner"),
+        fields::Field(&T::vertex, "vertex"),
         fields::Field(&T::shape, "shape"));
 };
 
 
 template<template<typename> typename T>
-struct CornersChainTemplate
+struct VertexChainTemplate
 {
     T<bool> enable;
     T<GaussianGroupMaker<int32_t>> gaussian;
     T<GradientGroupMaker<int32_t>> gradient;
     T<HarrisGroupMaker<double>> harris;
-    T<CornerGroupMaker> corner;
+    T<VertexGroupMaker> vertex;
     T<draw::PointsShapeGroupMaker> shape;
 
     static constexpr auto fields =
-        CornersChainFields<CornersChainTemplate>::fields;
+        VertexChainFields<VertexChainTemplate>::fields;
 
-    static constexpr auto fieldsTypeName = "CornersChain";
+    static constexpr auto fieldsTypeName = "VertexChain";
 };
 
 
-struct CornersChainSettings
+struct VertexChainSettings
     :
-    public CornersChainTemplate<pex::Identity>
+    public VertexChainTemplate<pex::Identity>
 {
-    static CornersChainSettings Default()
+    static VertexChainSettings Default()
     {
         auto defaultGaussian = GaussianSettings<int32_t>::Default();
         defaultGaussian.sigma = 2.0;
@@ -57,29 +57,29 @@ struct CornersChainSettings
             defaultGaussian,
             GradientSettings<int32_t>::Default(),
             HarrisSettings<double>::Default(),
-            CornerSettings::Default(),
+            VertexSettings::Default(),
             draw::PointsShapeSettings::Default()}};
     }
 };
 
 
-DECLARE_EQUALITY_OPERATORS(CornersChainSettings)
+DECLARE_EQUALITY_OPERATORS(VertexChainSettings)
 
 
-using CornersChainGroup = pex::Group
+using VertexChainGroup = pex::Group
     <
-        CornersChainFields,
-        CornersChainTemplate,
-        CornersChainSettings
+        VertexChainFields,
+        VertexChainTemplate,
+        VertexChainSettings
     >;
 
 
-struct CornersChainModel: public CornersChainGroup::Model
+struct VertexChainModel: public VertexChainGroup::Model
 {
 public:
-    CornersChainModel()
+    VertexChainModel()
         :
-        CornersChainGroup::Model(),
+        VertexChainGroup::Model(),
         maximumEndpoint_(this)
     {
 
@@ -89,7 +89,7 @@ public:
     {
         this->maximumEndpoint_.ConnectUpstream(
             maximumControl,
-            &CornersChainModel::OnMaximum_);
+            &VertexChainModel::OnMaximum_);
     }
 
 private:
@@ -101,13 +101,13 @@ private:
         deferGradient.Set(maximum);
     }
 
-    pex::Endpoint<CornersChainModel, MaximumControl> maximumEndpoint_;
+    pex::Endpoint<VertexChainModel, MaximumControl> maximumEndpoint_;
 };
 
-using CornersChainControl = typename CornersChainGroup::Control;
+using VertexChainControl = typename VertexChainGroup::Control;
 
-using CornersChainGroupMaker =
-    pex::MakeGroup<CornersChainGroup, CornersChainModel>;
+using VertexChainGroupMaker =
+    pex::MakeGroup<VertexChainGroup, VertexChainModel>;
 
 
 } // end namespace iris
@@ -116,14 +116,14 @@ using CornersChainGroupMaker =
 
 extern template struct pex::Group
     <
-        iris::CornersChainFields,
-        iris::CornersChainTemplate,
-        iris::CornersChainSettings
+        iris::VertexChainFields,
+        iris::VertexChainTemplate,
+        iris::VertexChainSettings
     >;
 
 
 extern template struct pex::MakeGroup
     <
-        iris::CornersChainGroup,
-        iris::CornersChainModel
+        iris::VertexChainGroup,
+        iris::VertexChainModel
     >;

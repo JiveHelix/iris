@@ -1,4 +1,4 @@
-#include "iris/corner.h"
+#include "iris/vertex.h"
 #include <algorithm>
 
 
@@ -10,7 +10,7 @@ namespace detail
 {
 
 
-std::optional<CornerPoint> GetCentroid(size_t count, const Points &points)
+std::optional<Vertex> GetCentroid(size_t count, const Points &points)
 {
     auto pointsSize = points.size();
 
@@ -22,7 +22,7 @@ std::optional<CornerPoint> GetCentroid(size_t count, const Points &points)
     if (pointsSize % 2 != 0)
     {
         // Odd number of harris detections are unlikely to be centered
-        // around an intersection.
+        // around a vertex.
         return {};
     }
 
@@ -41,16 +41,16 @@ std::optional<CornerPoint> GetCentroid(size_t count, const Points &points)
         centroidY += point.y;
     }
 
-    return CornerPoint(
+    return Vertex(
         centroidX / pointCount,
         centroidY / pointCount,
         pointCount);
 }
 
 
-CornerPoints PointGroups::GetCornerPoints() const
+Vertices PointGroups::GetVertices() const
 {
-    CornerPoints firstPass;
+    Vertices firstPass;
 
     for (const auto &entry: this->pointGroupByPoint_)
     {
@@ -63,33 +63,6 @@ CornerPoints PointGroups::GetCornerPoints() const
     }
 
     return firstPass;
-#if 0
-    std::map<tau::Point2d<double>, Points> cornerPointsByPoint;
-
-    CornerPoints result;
-
-    auto AddCornerPoint = [&cornerPointsByPoint](const auto &point)
-    {
-        for (auto &entry: cornerPointsByPoint)
-        {
-            if ((point.point - entry.first.point).SquaredSum()
-                    < this->radiusSquared_)
-            {
-                entry.second.push_back(point)
-                return;
-            }
-        }
-
-        cornerPointsByPoint[point].push_back(point);
-    };
-
-    // Second pass
-    for (auto &cornerPoint: firstPass)
-    {
-        AddCornerPoint(cornerPoint);
-    }
-#endif
-
 }
 
 
@@ -108,48 +81,30 @@ void PointGroups::AddPoint_(const tau::Point2d<double> &point)
     this->pointGroupByPoint_[point].push_back(point);
 }
 
-#if 0
-CornerCollector::CornerCollector(size_t windowSize, size_t count)
-    :
-    windowSize_(windowSize),
-    count_(count),
-    points_(),
-    corners_()
-{
-    this->points_.reserve(windowSize * windowSize);
-}
-
-
-const CornerPoints & CornerCollector::GetCorners()
-{
-    return this->corners_;
-}
-
-#endif
 
 } // end namespace detail
 
 
-std::vector<tau::Point2d<double>> CornerPointsToPoints(
-    const CornerPoints &cornerPoints)
+std::vector<tau::Point2d<double>> VerticesToPoints(
+    const Vertices &vertices)
 {
     std::vector<tau::Point2d<double>> result;
-    result.reserve(cornerPoints.size());
+    result.reserve(vertices.size());
 
     std::transform(
-        std::begin(cornerPoints),
-        std::end(cornerPoints),
+        std::begin(vertices),
+        std::end(vertices),
         std::back_inserter(result),
-        [](const CornerPoint &cornerPoint)
+        [](const Vertex &vertex)
         {
-            return cornerPoint.point;
+            return vertex.point;
         });
 
     return result;
 }
 
 
-CornerPoint::CornerPoint(double x, double y, double count_)
+Vertex::Vertex(double x, double y, double count_)
     :
     point(x, y),
     count(count_)
@@ -157,7 +112,7 @@ CornerPoint::CornerPoint(double x, double y, double count_)
 
 }
 
-bool CornerPoint::operator>(const CornerPoint &other) const
+bool Vertex::operator>(const Vertex &other) const
 {
     if (this->point.template Convert<int>()
         == other.point.template Convert<int>())
@@ -169,7 +124,7 @@ bool CornerPoint::operator>(const CornerPoint &other) const
         > other.point.template Convert<int>();
 }
 
-bool CornerPoint::operator<(const CornerPoint &other) const
+bool Vertex::operator<(const Vertex &other) const
 {
     if (this->point.template Convert<int>()
         == other.point.template Convert<int>())
@@ -181,18 +136,18 @@ bool CornerPoint::operator<(const CornerPoint &other) const
         < other.point.template Convert<int>());
 }
 
-// For the purpose of determining unique corners, corners with the same
+// For the purpose of determining unique vertices, vertices with the same
 // point compare equal, even if their counts differ.
-bool CornerPoint::operator==(const CornerPoint &other) const
+bool Vertex::operator==(const Vertex &other) const
 {
     return (this->point.template Convert<int>()
         == other.point.template Convert<int>());
 }
 
 
-std::ostream & operator<<(std::ostream &output, const CornerPoint &point)
+std::ostream & operator<<(std::ostream &output, const Vertex &point)
 {
-    return output << "CornerPoint(point: " << point.point
+    return output << "Vertex(point: " << point.point
         << ", count: " << point.count << ")";
 }
 

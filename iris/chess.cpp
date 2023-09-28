@@ -14,14 +14,14 @@ Chess::Chess(const ChessSettings &settings)
 }
 
 
-std::optional<ChessOutput> Chess::FilterPoints(const CornerPoints &points)
+std::optional<ChessOutput> Chess::FilterPoints(const Vertices &vertices)
 {
-    if (points.empty())
+    if (vertices.empty())
     {
         return {};
     }
 
-    auto lines = LineCollector(this->settings_).FormLines(points);
+    auto lines = LineCollector(this->settings_).FormLines(vertices);
 
     if (lines.empty())
     {
@@ -30,11 +30,11 @@ std::optional<ChessOutput> Chess::FilterPoints(const CornerPoints &points)
 
     if (this->settings_.enableGroup)
     {
-        return ChessFromPoints(lines, this->settings_);
+        return ChessFromVertices(lines, this->settings_);
     }
 
-    ChessFromPoints solution;
-    solution.cornerLines = lines;
+    ChessFromVertices solution;
+    solution.vertexLines = lines;
 
     return solution;
 }
@@ -72,14 +72,14 @@ std::optional<ChessSolution> Chess::Filter(const ChessInput &input)
         return {};
     }
 
-    if (this->settings_.usePoints)
+    if (this->settings_.useVertices)
     {
-        if (!input.points)
+        if (!input.vertices)
         {
             return {};
         }
 
-        auto output = this->FilterPoints(*input.points);
+        auto output = this->FilterPoints(*input.vertices);
 
         if (!output)
         {

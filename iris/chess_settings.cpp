@@ -3,9 +3,9 @@
 
 template struct pex::Group
     <
-        iris::PointsChessFields,
-        iris::PointsChessTemplate,
-        iris::PointsChessSettings
+        iris::VertexChessFields,
+        iris::VertexChessTemplate,
+        iris::VertexChessSettings
     >;
 
 

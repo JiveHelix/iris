@@ -1,4 +1,4 @@
-#include "corners_chain_settings_view.h"
+#include "vertex_chain_settings_view.h"
 
 #include <wxpex/labeled_widget.h>
 #include <wxpex/check_box.h>
@@ -7,7 +7,7 @@
 #include "iris/views/gaussian_settings_view.h"
 #include "iris/views/gradient_settings_view.h"
 #include "iris/views/harris_settings_view.h"
-#include "iris/views/corner_settings_view.h"
+#include "iris/views/vertex_settings_view.h"
 #include "iris/views/defaults.h"
 
 
@@ -15,12 +15,12 @@ namespace iris
 {
 
 
-CornersChainSettingsView::CornersChainSettingsView(
+VertexChainSettingsView::VertexChainSettingsView(
     wxWindow *parent,
-    CornersChainControl controls,
+    VertexChainControl controls,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Corners Chain", borderStyle)
+    wxpex::Collapsible(parent, "Vertex Chain", borderStyle)
 {
     using namespace wxpex;
 
@@ -48,16 +48,16 @@ CornersChainSettingsView::CornersChainSettingsView(
             controls.harris,
             layoutOptions);
 
-    auto corner =
-        new CornerSettingsView(
+    auto vertexSettings =
+        new VertexSettingsView(
             panel,
-            controls.corner,
+            controls.vertex,
             layoutOptions);
 
     auto pointsShape =
         new draw::PointsShapeView(
             panel,
-            "Corners Shape",
+            "Vertex Shape",
             controls.shape,
             layoutOptions);
 
@@ -67,7 +67,7 @@ CornersChainSettingsView::CornersChainSettingsView(
         gaussian,
         gradient,
         harris,
-        corner,
+        vertexSettings,
         pointsShape);
 
     this->ConfigureTopSizer(std::move(sizer));

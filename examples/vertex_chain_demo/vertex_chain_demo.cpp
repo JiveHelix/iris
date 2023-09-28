@@ -93,7 +93,7 @@ public:
 
     void ShowAbout()
     {
-        wxAboutBox(MakeAboutDialogInfo("Corners Demo"));
+        wxAboutBox(MakeAboutDialogInfo("Vertex Demo"));
     }
 
     std::shared_ptr<draw::Pixels>
@@ -108,9 +108,9 @@ public:
         this->userControl_.pixelView.asyncShapes.Set(
             draw::Shapes::MakeResetter());
 
-        auto cornersResult = this->filters_.cornersChain.GetChainResults();
+        auto vertexResult = this->filters_.vertexChain.GetChainResults();
 
-        if (!cornersResult)
+        if (!vertexResult)
         {
             auto levelResult = this->filters_.level.GetResult();
 
@@ -122,9 +122,9 @@ public:
             return this->MakePixels(*levelResult);
         }
 
-        return cornersResult->Display(
+        return vertexResult->Display(
             this->userControl_.pixelView.asyncShapes,
-            this->demoModel_.cornersChain.shape.Get(),
+            this->demoModel_.vertexChain.shape.Get(),
             this->filters_.color);
     }
 

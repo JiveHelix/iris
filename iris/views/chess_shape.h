@@ -18,11 +18,11 @@ template<typename T>
 struct ChessShapeFields
 {
     static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::displayIntersections, "displayIntersections"),
-        fields::Field(&T::labelIntersections, "labelIntersections"),
+        fields::Field(&T::displayVertices, "displayVertices"),
+        fields::Field(&T::labelVertices, "labelVertices"),
         fields::Field(&T::displayHorizontals, "displayHorizontals"),
         fields::Field(&T::displayVerticals, "displayVerticals"),
-        fields::Field(&T::intersectionsShape, "intersectionsShape"),
+        fields::Field(&T::verticesShape, "verticesShape"),
         fields::Field(&T::labelsLook, "labelsLook"),
         fields::Field(&T::horizontalsShape, "horizontalsShape"),
         fields::Field(&T::verticalsShape, "verticalsShape"));
@@ -32,11 +32,11 @@ struct ChessShapeFields
 template<template<typename> typename T>
 struct ChessShapeTemplate
 {
-    T<bool> displayIntersections;
-    T<bool> labelIntersections;
+    T<bool> displayVertices;
+    T<bool> labelVertices;
     T<bool> displayHorizontals;
     T<bool> displayVerticals;
-    T<draw::PointsShapeGroupMaker> intersectionsShape;
+    T<draw::PointsShapeGroupMaker> verticesShape;
     T<draw::FontLookGroupMaker> labelsLook;
     T<draw::LinesShapeGroupMaker> horizontalsShape;
     T<draw::LinesShapeGroupMaker> verticalsShape;

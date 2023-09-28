@@ -6,7 +6,7 @@
 #include "iris/mask_settings.h"
 #include "iris/level_settings.h"
 #include "iris/lines_chain_settings.h"
-#include "iris/corners_chain_settings.h"
+#include "iris/vertex_chain_settings.h"
 #include "iris/chess_settings.h"
 
 
@@ -21,7 +21,7 @@ struct ChessChainFields
         fields::Field(&T::enable, "enable"),
         fields::Field(&T::mask, "mask"),
         fields::Field(&T::level, "level"),
-        fields::Field(&T::corners, "corners"),
+        fields::Field(&T::vertices, "vertices"),
         fields::Field(&T::lines, "lines"),
         fields::Field(&T::chess, "chess"),
         fields::Field(&T::autoDetectSettings, "autoDetectSettings"));
@@ -34,7 +34,7 @@ struct ChessChainTemplate
     T<bool> enable;
     T<MaskGroupMaker> mask;
     T<LevelGroupMaker<int32_t>> level;
-    T<CornersChainGroupMaker> corners;
+    T<VertexChainGroupMaker> vertices;
     T<LinesChainGroupMaker> lines;
     T<ChessGroupMaker> chess;
     T<pex::MakeSignal> autoDetectSettings;
@@ -54,7 +54,7 @@ struct ChessChainSettings
             true,
             MaskSettings::Default(),
             LevelSettings<int32_t>::Default(),
-            CornersChainSettings::Default(),
+            VertexChainSettings::Default(),
             LinesChainSettings::Default(),
             ChessSettings::Default(),
             {}}};

@@ -3,7 +3,7 @@
 
 #include <iris/mask_settings.h>
 #include <iris/level_adjust.h>
-#include <iris/corners_chain_settings.h>
+#include <iris/vertex_chain_settings.h>
 #include <iris/color_settings.h>
 
 
@@ -14,7 +14,7 @@ struct DemoFields
         fields::Field(&T::maximum, "maximum"),
         fields::Field(&T::mask, "mask"),
         fields::Field(&T::level, "level"),
-        fields::Field(&T::cornersChain, "cornersChain"),
+        fields::Field(&T::vertexChain, "vertexChain"),
         fields::Field(&T::color, "color"));
 };
 
@@ -25,7 +25,7 @@ struct DemoTemplate
     T<iris::InProcess> maximum;
     T<iris::MaskGroupMaker> mask;
     T<iris::LevelGroupMaker<int32_t>> level;
-    T<iris::CornersChainGroupMaker> cornersChain;
+    T<iris::VertexChainGroupMaker> vertexChain;
     T<iris::ColorGroupMaker<int32_t>> color;
 
     static constexpr auto fields = DemoFields<DemoTemplate>::fields;
@@ -45,7 +45,7 @@ struct DemoModel: public DemoGroup::Model
             iris::MaximumControl(this->maximum),
             &DemoModel::OnMaximum_)
     {
-        this->cornersChain.SetMaximumControl(
+        this->vertexChain.SetMaximumControl(
             iris::MaximumControl(this->maximum));
     }
 

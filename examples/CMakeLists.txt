@@ -81,14 +81,14 @@ target_link_libraries(
 
 
 add_executable(
-    corners_chain_demo
-    corners_chain_demo/corners_chain_demo.cpp
-    corners_chain_demo/filters.cpp
-    corners_chain_demo/main_frame.cpp
-    corners_chain_demo/demo_settings_view.cpp)
+    vertex_chain_demo
+    vertex_chain_demo/vertex_chain_demo.cpp
+    vertex_chain_demo/filters.cpp
+    vertex_chain_demo/main_frame.cpp
+    vertex_chain_demo/demo_settings_view.cpp)
 
 target_link_libraries(
-    corners_chain_demo
+    vertex_chain_demo
     PRIVATE
     project_warnings
     project_options

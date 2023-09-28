@@ -1,4 +1,4 @@
-#include "iris/views/corner_settings_view.h"
+#include "iris/views/vertex_settings_view.h"
 
 #include <wxpex/labeled_widget.h>
 #include <wxpex/slider.h>
@@ -13,12 +13,12 @@ namespace iris
 {
 
 
-CornerSettingsView::CornerSettingsView(
+VertexSettingsView::VertexSettingsView(
     wxWindow *parent,
-    CornerControl controls,
+    VertexControl controls,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Corner", borderStyle)
+    wxpex::Collapsible(parent, "Vertex", borderStyle)
 {
     using namespace wxpex;
 

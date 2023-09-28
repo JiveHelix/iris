@@ -7,11 +7,11 @@ namespace iris
 
 LineCollector::LineCollector(const ChessSettings &settings)
     :
-    cornerLines{},
-    maximumPointError(settings.pointsChess.maximumPointError),
-    angleToleranceDegrees(settings.pointsChess.angleToleranceDegrees),
+    vertexLines{},
+    maximumPointError(settings.vertexChess.maximumPointError),
+    angleToleranceDegrees(settings.vertexChess.angleToleranceDegrees),
     minimumSpacing(settings.minimumSpacing),
-    minimumPointsPerLine(settings.pointsChess.minimumPointsPerLine),
+    minimumPointsPerLine(settings.vertexChess.minimumPointsPerLine),
     angleFilterLow(settings.angleFilter.low),
     angleFilterHigh(settings.angleFilter.high)
 {
@@ -32,7 +32,7 @@ void LineCollector::AddToLines(
         firstPoint,
         secondPoint);
 
-    for (auto &line: this->cornerLines)
+    for (auto &line: this->vertexLines)
     {
         if (line.GetError(firstPoint) <= this->maximumPointError)
         {
@@ -54,7 +54,7 @@ void LineCollector::AddToLines(
     {
         // The candidate line is not colinear with any of the other lines.
         // Add it to the collection.
-        this->cornerLines.push_back(candidateLine);
+        this->vertexLines.push_back(candidateLine);
     }
 };
 
@@ -64,7 +64,7 @@ void LineCollector::AddToLines(
 // points, leaving them as outliers that have too much point error.
 void LineCollector::RemoveOutliers()
 {
-    for (auto &line: this->cornerLines)
+    for (auto &line: this->vertexLines)
     {
         line.RemoveOutliers(this->maximumPointError);
     }
@@ -75,8 +75,8 @@ void LineCollector::RemoveOutliers()
 void LineCollector::Filter()
 {
     auto linesEnd = std::remove_if(
-        begin(this->cornerLines),
-        end(this->cornerLines),
+        begin(this->vertexLines),
+        end(this->vertexLines),
         [this] (const auto &line) -> bool
         {
             return (line.GetPointCount() < this->minimumPointsPerLine)
@@ -84,26 +84,26 @@ void LineCollector::Filter()
                 || (line.GetAngleDegrees() > this->angleFilterHigh);
         });
 
-    if (linesEnd != end(this->cornerLines))
+    if (linesEnd != end(this->vertexLines))
     {
-        this->cornerLines.erase(linesEnd, end(this->cornerLines));
+        this->vertexLines.erase(linesEnd, end(this->vertexLines));
     }
 
     // As points are added to lines, the lines shift slightly to fit the
     // new points. This leads to duplicate lines.
-    std::sort(begin(this->cornerLines), end(this->cornerLines));
+    std::sort(begin(this->vertexLines), end(this->vertexLines));
 
     // Remove duplicate lines.
     LineCollection filtered{};
 
-    auto line = begin(this->cornerLines);
+    auto line = begin(this->vertexLines);
 
-    while (line != end(this->cornerLines))
+    while (line != end(this->vertexLines))
     {
-        auto adjacent = std::adjacent_find(line, end(this->cornerLines));
+        auto adjacent = std::adjacent_find(line, end(this->vertexLines));
         filtered.insert(end(filtered), line, adjacent);
 
-        if (adjacent == end(this->cornerLines))
+        if (adjacent == end(this->vertexLines))
         {
             // There were no duplicates.
             break;
@@ -111,7 +111,7 @@ void LineCollector::Filter()
 
         auto duplicate = adjacent;
 
-        while (++duplicate != end(this->cornerLines))
+        while (++duplicate != end(this->vertexLines))
         {
             // Search up to the end for duplicates
             if (*adjacent != *duplicate)
@@ -125,35 +125,35 @@ void LineCollector::Filter()
             adjacent->Combine(*duplicate);
         }
 
-        assert(adjacent != end(this->cornerLines));
+        assert(adjacent != end(this->vertexLines));
         filtered.push_back(*adjacent);
         line = duplicate;
     }
 
-    this->cornerLines = filtered;
+    this->vertexLines = filtered;
 }
 
 
 LineCollector::LineCollection
-LineCollector::FormLines(const iris::CornerPoints &corners)
+LineCollector::FormLines(const iris::Vertices &vertices)
 {
-    assert(!corners.empty());
+    assert(!vertices.empty());
 
-    for (size_t i = 0; i < corners.size() - 1; ++i)
+    for (size_t i = 0; i < vertices.size() - 1; ++i)
     {
-        const auto &firstCorner = corners[i];
+        const auto &firstVertex = vertices[i];
 
-        for (size_t j = i + 1; j < corners.size(); ++j)
+        for (size_t j = i + 1; j < vertices.size(); ++j)
         {
-            const auto &secondCorner = corners[j];
-            this->AddToLines(firstCorner.point, secondCorner.point);
+            const auto &secondVertex = vertices[j];
+            this->AddToLines(firstVertex.point, secondVertex.point);
         }
     }
 
     this->RemoveOutliers();
     this->Filter();
 
-    return this->cornerLines;
+    return this->vertexLines;
 }
 
 

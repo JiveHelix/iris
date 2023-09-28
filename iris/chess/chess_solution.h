@@ -6,30 +6,30 @@
 #include "iris/chess/line_from_points.h"
 #include "iris/chess/line_group.h"
 #include "iris/chess/groups.h"
-#include "iris/chess/intersection.h"
+#include "iris/chess/named_vertex.h"
 
 
 namespace iris
 {
 
 
-struct ChessFromPoints
+struct ChessFromVertices
 {
     using Line = LineFromPoints;
     using Point = typename LineFromPoints::Point;
     using LineCollection = typename LineGroup<LineFromPoints>::LineCollection;
 
-    ChessFromPoints() = default;
+    ChessFromVertices() = default;
 
-    ChessFromPoints(
-        const LineCollection &cornerLines_,
+    ChessFromVertices(
+        const LineCollection &vertexLines_,
         const ChessSettings &settings);
 
-    LineCollection cornerLines;
+    LineCollection vertexLines;
     Groups<Line> groups;
     LineGroup<Line> horizontal;
     LineGroup<Line> vertical;
-    Intersections intersections;
+    NamedVertices vertices;
 };
 
 
@@ -49,11 +49,11 @@ struct ChessFromLines
     Groups<Line> groups;
     LineGroup<Line> horizontal;
     LineGroup<Line> vertical;
-    Intersections intersections;
+    NamedVertices vertices;
 };
 
 
-using ChessOutput = std::variant<ChessFromPoints, ChessFromLines>;
+using ChessOutput = std::variant<ChessFromVertices, ChessFromLines>;
 
 
 struct ChessSolution
@@ -68,7 +68,7 @@ public:
     std::vector<tau::Line2d<double>> lines;
     std::vector<tau::Line2d<double>> horizontal;
     std::vector<tau::Line2d<double>> vertical;
-    Intersections intersections;
+    NamedVertices vertices;
 };
 
 

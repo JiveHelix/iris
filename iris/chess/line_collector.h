@@ -4,7 +4,7 @@
 #include <vector>
 #include <tau/vector2d.h>
 #include "iris/chess_settings.h"
-#include "iris/corner.h"
+#include "iris/vertex.h"
 #include "iris/chess/line_from_points.h"
 
 
@@ -17,7 +17,7 @@ class LineCollector
 public:
     using LineCollection = std::vector<LineFromPoints>;
 
-    LineCollection cornerLines;
+    LineCollection vertexLines;
     double maximumPointError;
     double angleToleranceDegrees;
     double minimumSpacing;
@@ -40,7 +40,7 @@ public:
     // Apply angle and minimum points filters.
     void Filter();
 
-    LineCollection FormLines(const iris::CornerPoints &corners);
+    LineCollection FormLines(const iris::Vertices &vertices);
 };
 
 

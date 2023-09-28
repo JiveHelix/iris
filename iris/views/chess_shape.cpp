@@ -17,10 +17,10 @@ ChessShapeSettings ChessShapeSettings::Default()
         draw::LinesShapeSettings::Default(),
         draw::LinesShapeSettings::Default()}};
 
-    result.intersectionsShape.look.fillEnable = false;
-    result.intersectionsShape.look.strokeEnable = true;
-    result.intersectionsShape.look.strokeColor = {{0.0, 1.0, 1.0}};
-    result.intersectionsShape.radius = 3.0;
+    result.verticesShape.look.fillEnable = false;
+    result.verticesShape.look.strokeEnable = true;
+    result.verticesShape.look.strokeColor = {{0.0, 1.0, 1.0}};
+    result.verticesShape.radius = 3.0;
 
     result.labelsLook.color = {{300.0, 1.0, 1.0}};
     result.horizontalsShape.look.strokeColor = {{120.0, 1.0, 1.0}};
@@ -43,30 +43,30 @@ ChessShape::ChessShape(
 
 void ChessShape::Draw(wxpex::GraphicsContext &context)
 {
-    if (!this->chessSolution_.intersections.empty())
+    if (!this->chessSolution_.vertices.empty())
     {
-        if (this->settings_.displayIntersections)
+        if (this->settings_.displayVertices)
         {
             auto pixels =
-                IntersectionsToPixels(this->chessSolution_.intersections);
+                NamedVerticesToPixels(this->chessSolution_.vertices);
 
-            auto cornerPointsShape = draw::PointsShape(
-                this->settings_.intersectionsShape,
+            auto verticesShape = draw::PointsShape(
+                this->settings_.verticesShape,
                 pixels);
 
-            cornerPointsShape.Draw(context);
+            verticesShape.Draw(context);
         }
 
-        if (this->settings_.labelIntersections)
+        if (this->settings_.labelVertices)
         {
             draw::ConfigureFontLook(context, this->settings_.labelsLook);
 
-            for (const auto &intersection: this->chessSolution_.intersections)
+            for (const auto &vertex: this->chessSolution_.vertices)
             {
                 context->DrawText(
-                    intersection.logical.GetAsString(),
-                    intersection.pixel.x,
-                    intersection.pixel.y);
+                    vertex.logical.GetAsString(),
+                    vertex.pixel.x,
+                    vertex.pixel.y);
             }
         }
     }

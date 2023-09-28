@@ -12,7 +12,7 @@ namespace iris
 
 
 template<typename T>
-struct PointsChessFields
+struct VertexChessFields
 {
     static constexpr auto fields = std::make_tuple(
         fields::Field(&T::minimumPointsPerLine, "minimumPointsPerLine"),
@@ -22,7 +22,7 @@ struct PointsChessFields
 
 
 template<template<typename> typename T>
-struct PointsChessTemplate
+struct VertexChessTemplate
 {
     using PointsLow = pex::Limit<3>;
     using PointsHigh = pex::Limit<32>;
@@ -32,17 +32,17 @@ struct PointsChessTemplate
     T<double> angleToleranceDegrees;
 
     static constexpr auto fields =
-        PointsChessFields<PointsChessTemplate>::fields;
+        VertexChessFields<VertexChessTemplate>::fields;
 
-    static constexpr auto fieldsTypeName = "CornerChess";
+    static constexpr auto fieldsTypeName = "VertexChess";
 };
 
 
-struct PointsChessSettings
+struct VertexChessSettings
     :
-    public PointsChessTemplate<pex::Identity>
+    public VertexChessTemplate<pex::Identity>
 {
-    static PointsChessSettings Default()
+    static VertexChessSettings Default()
     {
         static constexpr size_t defaultMinimumPointsPerLine = 4;
         static constexpr double defaultMaximumPointError = 4.0;
@@ -56,21 +56,21 @@ struct PointsChessSettings
 };
 
 
-DECLARE_EQUALITY_OPERATORS(PointsChessSettings)
-DECLARE_OUTPUT_STREAM_OPERATOR(PointsChessSettings)
+DECLARE_EQUALITY_OPERATORS(VertexChessSettings)
+DECLARE_OUTPUT_STREAM_OPERATOR(VertexChessSettings)
 
 
-using PointsChessGroup =
+using VertexChessGroup =
     pex::Group
     <
-        PointsChessFields,
-        PointsChessTemplate,
-        PointsChessSettings
+        VertexChessFields,
+        VertexChessTemplate,
+        VertexChessSettings
     >;
 
-using PointsChessControl = typename PointsChessGroup::Control;
+using VertexChessControl = typename VertexChessGroup::Control;
 
-using PointsChessGroupMaker = pex::MakeGroup<PointsChessGroup>;
+using VertexChessGroupMaker = pex::MakeGroup<VertexChessGroup>;
 
 
 template<typename T>
@@ -78,8 +78,8 @@ struct ChessFields
 {
     static constexpr auto fields = std::make_tuple(
         fields::Field(&T::enable, "enable"),
-        fields::Field(&T::usePoints, "usePoints"),
-        fields::Field(&T::pointsChess, "pointsChess"),
+        fields::Field(&T::useVertices, "useVertices"),
+        fields::Field(&T::vertexChess, "vertexChess"),
         fields::Field(&T::minimumSpacing, "minimumSpacing"),
         fields::Field(&T::enableGroup, "enableGroup"),
         fields::Field(&T::groupSeparationDegrees, "groupSeparationDegrees"),
@@ -111,8 +111,8 @@ struct ChessTemplate
     struct Template
     {
         T<bool> enable;
-        T<bool> usePoints;
-        T<PointsChessGroupMaker> pointsChess;
+        T<bool> useVertices;
+        T<VertexChessGroupMaker> vertexChess;
         T<double> minimumSpacing;
         T<bool> enableGroup;
         T<double> groupSeparationDegrees;
@@ -146,7 +146,7 @@ struct ChessSettings
         return {{
             true,
             true,
-            PointsChessSettings::Default(),
+            VertexChessSettings::Default(),
             defaultLineSeparation,
             true,
             defaultGroupSeparation_degrees,
@@ -184,9 +184,9 @@ using ChessGroupMaker = pex::MakeGroup<ChessGroup>;
 
 extern template struct pex::Group
     <
-        iris::PointsChessFields,
-        iris::PointsChessTemplate,
-        iris::PointsChessSettings
+        iris::VertexChessFields,
+        iris::VertexChessTemplate,
+        iris::VertexChessSettings
     >;
 
 

@@ -25,7 +25,7 @@ void ChessChainModel::SetImageSizeControl(const draw::SizeControl &sizeControl)
 
 void ChessChainModel::SetMaximumControl(const MaximumControl &maximumControl)
 {
-    this->corners.SetMaximumControl(maximumControl);
+    this->vertices.SetMaximumControl(maximumControl);
     this->lines.SetMaximumControl(maximumControl);
 
     this->maximumEndpoint_.ConnectUpstream(

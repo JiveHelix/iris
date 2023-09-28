@@ -11,7 +11,7 @@ namespace iris
 
 
 template<typename T>
-struct CornerFields
+struct VertexFields
 {
     static constexpr auto fields = std::make_tuple(
         fields::Field(&T::enable, "enable"),
@@ -22,7 +22,7 @@ struct CornerFields
 
 
 template<template<typename> typename T>
-struct CornerTemplate
+struct VertexTemplate
 {
     using WindowLow = pex::Limit<3>;
     using WindowHigh = pex::Limit<64>;
@@ -36,17 +36,17 @@ struct CornerTemplate
     T<size_t> threads;
 
     static constexpr auto fields =
-        CornerFields<CornerTemplate>::fields;
+        VertexFields<VertexTemplate>::fields;
 
-    static constexpr auto fieldsTypeName = "Corner";
+    static constexpr auto fieldsTypeName = "Vertex";
 };
 
 
-struct CornerSettings
+struct VertexSettings
     :
-    public CornerTemplate<pex::Identity>
+    public VertexTemplate<pex::Identity>
 {
-    static CornerSettings Default()
+    static VertexSettings Default()
     {
         static constexpr Eigen::Index defaultWindow = 50;
         static constexpr Eigen::Index defaultCount = 2;
@@ -57,31 +57,31 @@ struct CornerSettings
 };
 
 
-DECLARE_EQUALITY_OPERATORS(CornerSettings)
+DECLARE_EQUALITY_OPERATORS(VertexSettings)
 
 
-using CornerGroup = pex::Group
+using VertexGroup = pex::Group
     <
-        CornerFields,
-        CornerTemplate,
-        CornerSettings
+        VertexFields,
+        VertexTemplate,
+        VertexSettings
     >;
 
 
-struct CornerModel: public CornerGroup::Model
+struct VertexModel: public VertexGroup::Model
 {
-    CornerModel()
+    VertexModel()
         :
-        CornerGroup::Model()
+        VertexGroup::Model()
     {
         this->count.SetChoices({2, 4});
     }
 };
 
 
-using CornerControl = typename CornerGroup::Control;
+using VertexControl = typename VertexGroup::Control;
 
-using CornerGroupMaker = pex::MakeGroup<CornerGroup, CornerModel>;
+using VertexGroupMaker = pex::MakeGroup<VertexGroup, VertexModel>;
 
 
 } // end namespace iris
@@ -89,7 +89,7 @@ using CornerGroupMaker = pex::MakeGroup<CornerGroup, CornerModel>;
 
 extern template struct pex::Group
     <
-        iris::CornerFields,
-        iris::CornerTemplate,
-        iris::CornerSettings
+        iris::VertexFields,
+        iris::VertexTemplate,
+        iris::VertexSettings
     >;

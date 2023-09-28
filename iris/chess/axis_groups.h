@@ -39,7 +39,7 @@ struct AxisGroups
             allowSkippedLines);
     }
 
-    bool CanFormIntersections() const
+    bool CanFormVertices() const
     {
         if (
             this->vertical.lines.empty()

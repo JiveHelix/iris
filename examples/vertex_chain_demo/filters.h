@@ -4,7 +4,7 @@
 #include <iris/node.h>
 #include <iris/mask.h>
 #include <iris/color.h>
-#include <iris/corners_chain.h>
+#include <iris/vertex_chain.h>
 #include <iris/level_adjust.h>
 
 #include "demo_settings.h"
@@ -19,13 +19,13 @@ public:
 
     using MaskNode = iris::Node<SourceNode, Mask, iris::MaskControl>;
     using LevelNode = iris::LevelAdjustNode<MaskNode, int32_t, double>;
-    using CornersChain = iris::CornersChain<LevelNode>;
+    using VertexChain = iris::VertexChain<LevelNode>;
 
     iris::Cancel cancel;
     SourceNode source;
     MaskNode mask;
     LevelNode level;
-    CornersChain cornersChain;
+    VertexChain vertexChain;
     Color color;
 
     Filters(DemoControl controls);

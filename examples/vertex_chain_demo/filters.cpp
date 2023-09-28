@@ -14,9 +14,9 @@ Filters::Filters(DemoControl controls)
         this->mask,
         controls.level,
         iris::CancelControl(this->cancel)),
-    cornersChain(
+    vertexChain(
         this->level,
-        controls.cornersChain,
+        controls.vertexChain,
         iris::CancelControl(this->cancel)),
     color(controls.color)
 {

@@ -4,12 +4,12 @@
 #include <optional>
 #include <draw/views/pixel_view_settings.h>
 #include <draw/points_shape.h>
-#include "iris/corners_chain_settings.h"
+#include "iris/vertex_chain_settings.h"
 #include "iris/level_adjust.h"
 #include "iris/gaussian.h"
 #include "iris/gradient.h"
 #include "iris/harris.h"
-#include "iris/corner.h"
+#include "iris/vertex.h"
 #include "iris/node.h"
 #include "iris/image.h"
 #include "iris/color.h"
@@ -19,27 +19,27 @@ namespace iris
 {
 
 
-struct CornersChainFilters
+struct VertexChainFilters
 {
     using GaussianFilter = Gaussian<int32_t, 0>;
     using GradientFilter = Gradient<int32_t>;
     using HarrisFilter = Harris<double>;
-    using CornerFilter = Corner<double>;
+    using VertexFilter = VertexFinder;
 };
 
 
-struct CornersChainResults
+struct VertexChainResults
 {
-    using Filters = CornersChainFilters;
+    using Filters = VertexChainFilters;
     std::optional<typename Filters::GaussianFilter::Result> gaussian;
     std::optional<typename Filters::GradientFilter::Result> gradient;
     std::optional<typename Filters::HarrisFilter::Result> harris;
-    std::optional<typename Filters::CornerFilter::Result> corner;
+    std::optional<typename Filters::VertexFilter::Result> vertex;
 
     using ShapesControl =
         typename draw::PixelViewControl::AsyncShapesControl;
 
-    CornersChainResults(ssize_t shapesId);
+    VertexChainResults(ssize_t shapesId);
 
     std::shared_ptr<draw::Pixels> Display(
         draw::ShapesControl shapesControl,
@@ -52,16 +52,16 @@ private:
 
 
 template<typename SourceNode>
-struct CornersChainNodes
+struct VertexChainNodes
 {
-    using Filters = CornersChainFilters;
+    using Filters = VertexChainFilters;
     using GaussianFilter = typename Filters::GaussianFilter;
     using GradientFilter = typename Filters::GradientFilter;
     using HarrisFilter = typename Filters::HarrisFilter;
-    using CornerFilter = typename Filters::CornerFilter;
+    using VertexFilter = typename Filters::VertexFilter;
 
-    using Result = typename CornerFilter::Result;
-    using ChainResults = CornersChainResults;
+    using Result = typename VertexFilter::Result;
+    using ChainResults = VertexChainResults;
 
     using GaussianNode =
         iris::Node<SourceNode, GaussianFilter, GaussianControl<int32_t>>;
@@ -71,25 +71,25 @@ struct CornersChainNodes
     using HarrisNode =
         iris::Node<GradientNode_, HarrisFilter, HarrisControl<double>>;
 
-    using CornerNode =
-        iris::Node<HarrisNode, CornerFilter, CornerControl>;
+    using VertexNode =
+        iris::Node<HarrisNode, VertexFilter, VertexControl>;
 
     SourceNode & source;
     GaussianNode gaussian;
     GradientNode_ gradient;
     HarrisNode harris;
-    CornerNode corner;
+    VertexNode vertex;
 
-    CornersChainNodes(
+    VertexChainNodes(
         SourceNode &source_,
-        CornersChainControl controls,
+        VertexChainControl controls,
         CancelControl cancel)
         :
         source(source_),
         gaussian("Gaussian", this->source, controls.gaussian, cancel),
         gradient(this->gaussian, controls.gradient, cancel),
         harris("Harris", this->gradient, controls.harris, cancel),
-        corner("Corner", this->harris, controls.corner, cancel)
+        vertex("Vertex", this->harris, controls.vertex, cancel)
     {
 
     }
@@ -98,34 +98,34 @@ struct CornersChainNodes
 
 
 template<typename SourceNode>
-class CornersChain
+class VertexChain
     :
     public NodeBase
         <
             SourceNode,
-            CornersChainControl,
-            typename CornersChainNodes<SourceNode>::Result,
-            CornersChain<SourceNode>
+            VertexChainControl,
+            typename VertexChainNodes<SourceNode>::Result,
+            VertexChain<SourceNode>
         >
 {
 public:
-    using Result = typename CornersChainNodes<SourceNode>::Result;
-    using ChainResults = CornersChainResults;
+    using Result = typename VertexChainNodes<SourceNode>::Result;
+    using ChainResults = VertexChainResults;
 
     using Base = NodeBase
         <
             SourceNode,
-            CornersChainControl,
+            VertexChainControl,
             Result,
-            CornersChain<SourceNode>
+            VertexChain<SourceNode>
         >;
 
-    CornersChain(
+    VertexChain(
         SourceNode &sourceNode,
-        CornersChainControl controls,
+        VertexChainControl controls,
         CancelControl cancel)
         :
-        Base("CornersChain", sourceNode, controls, cancel),
+        Base("VertexChain", sourceNode, controls, cancel),
         shapesId_(),
         nodes_(sourceNode, controls, cancel)
     {
@@ -139,7 +139,7 @@ public:
             return {};
         }
 
-        return this->nodes_.corner.GetResult();
+        return this->nodes_.vertex.GetResult();
     }
 
     std::optional<ChainResults> GetChainResults()
@@ -155,7 +155,7 @@ public:
         }
 
         ChainResults result(this->shapesId_.Get());
-        result.corner = this->nodes_.corner.GetResult();
+        result.vertex = this->nodes_.vertex.GetResult();
         result.harris = this->nodes_.harris.GetResult();
         result.gradient = this->nodes_.gradient.GetResult();
         result.gaussian = this->nodes_.gaussian.GetResult();
@@ -182,12 +182,12 @@ public:
 
 private:
     draw::ShapesId shapesId_;
-    CornersChainNodes<SourceNode> nodes_;
+    VertexChainNodes<SourceNode> nodes_;
 };
 
 
-extern template class CornersChain<DefaultLevelAdjustNode>;
-using DefaultCornersChain = CornersChain<DefaultLevelAdjustNode>;
+extern template class VertexChain<DefaultLevelAdjustNode>;
+using DefaultVertexChain = VertexChain<DefaultLevelAdjustNode>;
 
 
 } // end namespace iris

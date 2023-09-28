@@ -7,27 +7,27 @@ namespace iris
 {
 
 
-ChessFromPoints::ChessFromPoints(
-    const LineCollection &cornerLines_,
+ChessFromVertices::ChessFromVertices(
+    const LineCollection &vertexLines_,
     const ChessSettings &settings)
     :
-    cornerLines(cornerLines_),
+    vertexLines(vertexLines_),
     groups(),
     horizontal(),
     vertical(),
-    intersections()
+    vertices()
 {
     // Begin the first group with the first line.
-    this->groups.emplace_back(this->cornerLines.at(0));
+    this->groups.emplace_back(this->vertexLines.at(0));
 
     double groupSeparationDegrees = settings.groupSeparationDegrees;
     size_t index = 1;
 
-    while (index < this->cornerLines.size())
+    while (index < this->vertexLines.size())
     {
         AddLineToGroups(
             this->groups,
-            this->cornerLines[index++],
+            this->vertexLines[index++],
             groupSeparationDegrees);
     }
 
@@ -61,9 +61,9 @@ ChessFromPoints::ChessFromPoints(
     this->vertical = axisGroups.vertical;
     this->horizontal = axisGroups.horizontal;
 
-    this->intersections = FormIntersections(
+    this->vertices = FormVertices(
         axisGroups,
-        settings.pointsChess.maximumPointError);
+        settings.vertexChess.maximumPointError);
 }
 
 
@@ -91,7 +91,7 @@ ChessFromLines::ChessFromLines(
     groups(),
     horizontal(),
     vertical(),
-    intersections()
+    vertices()
 {
     CHESS_LOG("lines: ", lines_.size());
 
@@ -136,7 +136,7 @@ ChessFromLines::ChessFromLines(
         settings.rowCount,
         settings.columnCount,
         settings.minimumLinesPerGroup);
-    
+
     LOG_GROUPS
 
     if (this->groups.empty())
@@ -157,38 +157,38 @@ ChessFromLines::ChessFromLines(
     this->vertical = axisGroups.vertical;
     this->horizontal = axisGroups.horizontal;
 
-    this->intersections = FormIntersections(
+    this->vertices = FormVertices(
         axisGroups,
-        settings.pointsChess.maximumPointError);
+        settings.vertexChess.maximumPointError);
 }
 
 
 ChessSolution::ChessSolution()
     :
-    intersections()
+    vertices()
 {
 
 }
 
 ChessSolution::ChessSolution(const ChessOutput &chessOutput)
 {
-    if (std::holds_alternative<ChessFromPoints>(chessOutput))
+    if (std::holds_alternative<ChessFromVertices>(chessOutput))
     {
-        this->intersections =
-            std::get<ChessFromPoints>(chessOutput).intersections;
+        this->vertices =
+            std::get<ChessFromVertices>(chessOutput).vertices;
 
-        auto &cornerLines =
-            std::get<ChessFromPoints>(chessOutput).cornerLines;
+        auto &vertexLines =
+            std::get<ChessFromVertices>(chessOutput).vertexLines;
 
         auto &horizontal =
-            std::get<ChessFromPoints>(chessOutput).horizontal.lines;
+            std::get<ChessFromVertices>(chessOutput).horizontal.lines;
 
         auto &vertical =
-            std::get<ChessFromPoints>(chessOutput).vertical.lines;
+            std::get<ChessFromVertices>(chessOutput).vertical.lines;
 
         this->lines = Lines(
-            std::begin(cornerLines),
-            std::end(cornerLines));
+            std::begin(vertexLines),
+            std::end(vertexLines));
 
         this->horizontal = Lines(
             std::begin(horizontal),
@@ -200,8 +200,8 @@ ChessSolution::ChessSolution(const ChessOutput &chessOutput)
     }
     else
     {
-        this->intersections =
-            std::get<ChessFromLines>(chessOutput).intersections;
+        this->vertices =
+            std::get<ChessFromLines>(chessOutput).vertices;
 
         this->lines =
             std::get<ChessFromLines>(chessOutput).lines;

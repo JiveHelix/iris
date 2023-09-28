@@ -7,7 +7,7 @@
 #include "iris/mask.h"
 #include "iris/level_adjust.h"
 #include "iris/lines_chain.h"
-#include "iris/corners_chain.h"
+#include "iris/vertex_chain.h"
 #include "iris/chess.h"
 #include "iris/views/chess_shape.h"
 #include "iris/chess_chain_settings.h"
@@ -17,10 +17,10 @@ namespace iris
 {
 
 
-template<typename CornersSource, typename LinesSource>
+template<typename VertexSource, typename LinesSource>
 struct ChessNodes
 {
-    using MuxNode = Mux<CornersSource, LinesSource, ChessInput>;
+    using MuxNode = Mux<VertexSource, LinesSource, ChessInput>;
     using FilterNode = Node<MuxNode, Chess, ChessControl>;
 };
 
@@ -37,7 +37,7 @@ struct ChessChainResults
     using Filters = ChessChainFilters;
     std::optional<typename Filters::MaskFilter::Result> mask;
     std::optional<typename Filters::LevelFilter::Result> level;
-    std::optional<CornersChainResults> corners;
+    std::optional<VertexChainResults> vertices;
     std::optional<LinesChainResults> lines;
     std::optional<typename Chess::Result> chess;
 
@@ -72,20 +72,20 @@ struct ChessChainNodes
     using MaskNode = Node<SourceNode, MaskFilter, MaskControl>;
     using LevelNode = LevelAdjustNode<MaskNode, InProcess, double>;
     using LinesChainNode = LinesChain<LevelNode>;
-    using CornersChainNode = CornersChain<LevelNode>;
+    using VertexChainNode = VertexChain<LevelNode>;
 
     using Result = typename Chess::Result;
 
     using MuxNode =
-        typename ChessNodes<CornersChainNode, LinesChainNode>::MuxNode;
+        typename ChessNodes<VertexChainNode, LinesChainNode>::MuxNode;
 
     using ChessNode =
-        typename ChessNodes<CornersChainNode, LinesChainNode>::FilterNode;
+        typename ChessNodes<VertexChainNode, LinesChainNode>::FilterNode;
 
     MaskNode mask;
     LevelNode level;
     LinesChainNode lines;
-    CornersChainNode corners;
+    VertexChainNode vertices;
     MuxNode mux;
     ChessNode chess;
 

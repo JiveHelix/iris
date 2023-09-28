@@ -10,14 +10,14 @@ namespace iris
 {
 
 
-class PointsChessSettingsView: public wxpex::Collapsible
+class VertexChessSettingsView: public wxpex::Collapsible
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
 
-    PointsChessSettingsView(
+    VertexChessSettingsView(
         wxWindow *parent,
-        PointsChessControl controls,
+        VertexChessControl controls,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
         wxpex::Collapsible(parent, "Points")
@@ -71,10 +71,10 @@ ChessSettingsView::ChessSettingsView(
         "enable",
         new wxpex::CheckBox(this->GetPanel(), "", controls.enable));
 
-    auto usePoints = wxpex::LabeledWidget(
+    auto useVertices = wxpex::LabeledWidget(
         this->GetPanel(),
-        "usePoints",
-        new wxpex::CheckBox(this->GetPanel(), "", controls.usePoints));
+        "Use Vertices",
+        new wxpex::CheckBox(this->GetPanel(), "", controls.useVertices));
 
     auto rows = LabeledWidget(
         this->GetPanel(),
@@ -90,12 +90,12 @@ ChessSettingsView::ChessSettingsView(
             this->GetPanel(),
             controls.columnCount));
 
-    auto pointsChess = LabeledWidget(
+    auto vertexChess = LabeledWidget(
         this->GetPanel(),
         "",
-        new PointsChessSettingsView(
+        new VertexChessSettingsView(
             this->GetPanel(),
-            controls.pointsChess,
+            controls.vertexChess,
             layoutOptions));
 
     auto minimumSpacing = LabeledWidget(
@@ -157,10 +157,10 @@ ChessSettingsView::ChessSettingsView(
     auto sizer = LayoutLabeled(
         layoutOptions,
         enable,
-        usePoints,
+        useVertices,
         rows,
         columns,
-        pointsChess,
+        vertexChess,
         minimumSpacing,
         groupOn,
         groupSeparationDegrees,

@@ -3,21 +3,21 @@
 
 #include <wxpex/labeled_widget.h>
 #include <wxpex/collapsible.h>
-#include "iris/corners_chain_settings.h"
+#include "iris/vertex_chain_settings.h"
 
 
 namespace iris
 {
 
 
-class CornersChainSettingsView: public wxpex::Collapsible
+class VertexChainSettingsView: public wxpex::Collapsible
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
 
-    CornersChainSettingsView(
+    VertexChainSettingsView(
         wxWindow *parent,
-        CornersChainControl controls,
+        VertexChainControl controls,
         const LayoutOptions &layoutOptions = LayoutOptions{});
 };
 

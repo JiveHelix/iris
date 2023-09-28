@@ -4,7 +4,7 @@
 #include "iris/chess/chess_log.h"
 #include "iris/chess/groups.h"
 #include "iris/chess/axis_groups.h"
-#include "iris/chess/intersection.h"
+#include "iris/chess/named_vertex.h"
 #include "iris/chess/find_point.h"
 
 
@@ -345,16 +345,16 @@ AxisGroups<Line> SelectAxisGroups(
 
 
 template<typename Line>
-Intersections FormIntersections(
+NamedVertices FormVertices(
     const AxisGroups<Line> &axisGroups,
     [[maybe_unused]] double maximumPointError)
 {
-    if (!axisGroups.CanFormIntersections())
+    if (!axisGroups.CanFormVertices())
     {
         return {};
     }
 
-    auto result = Intersections{};
+    auto result = NamedVertices{};
 
     size_t verticalCount = axisGroups.vertical.lines.size();
     size_t horizontalCount = axisGroups.horizontal.lines.size();
@@ -362,9 +362,9 @@ Intersections FormIntersections(
     using Points = LineFromPoints::Points;
     Points horizontalPoints;
 
-    // Iterate over the intersections of horizontal and vertical lines.
-    // For LinesFromPoints, if an intersection has a point within the
-    // maximumPointError threshold, consider that point a point on the chess
+    // Iterate over the vertices of horizontal and vertical lines.
+    // For LinesFromPoints, if a vertex has a point within the
+    // maximumPointError threshold, consider that point a vertex on the chess
     // board.
     for (auto j: jive::Range<size_t>(0, horizontalCount))
     {
@@ -380,13 +380,13 @@ Intersections FormIntersections(
         for (auto i: jive::Range<size_t>(0, verticalCount))
         {
             const Line &verticalLine = axisGroups.vertical.lines[i];
-            auto intersection = verticalLine.Intersect(horizontalLine);
+            auto vertex = verticalLine.Intersect(horizontalLine);
             auto logicalColumn = axisGroups.vertical.GetLogicalIndex(i);
 
             if constexpr (std::is_same_v<Line, LineFromPoints>)
             {
                 auto point = FindPoint(
-                    intersection,
+                    vertex,
                     horizontalPoints,
                     verticalLine.GetPoints(),
                     2 * maximumPointError);
@@ -399,9 +399,9 @@ Intersections FormIntersections(
             }
             else
             {
-                // Intersections were formed by image lines.
+                // Vertices were formed by image lines.
                 result.push_back(
-                    {{logicalColumn, logicalRow}, intersection});
+                    {{logicalColumn, logicalRow}, vertex});
             }
         }
     }

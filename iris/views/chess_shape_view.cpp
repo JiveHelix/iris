@@ -17,17 +17,17 @@ ChessShapeView::ChessShapeView(
     :
     wxpex::Collapsible(parent, "Chess Shape")
 {
-    auto displayIntersections =
+    auto displayVertices =
         new wxpex::CheckBox(
             this->GetPanel(),
-            "Display Intersections",
-            controls.displayIntersections);
+            "Display Vertices",
+            controls.displayVertices);
 
-    auto labelIntersections =
+    auto labelVertices =
         new wxpex::CheckBox(
             this->GetPanel(),
-            "Label Intersections",
-            controls.labelIntersections);
+            "Label Vertices",
+            controls.labelVertices);
 
     auto displayHorizontals =
         new wxpex::CheckBox(
@@ -41,11 +41,11 @@ ChessShapeView::ChessShapeView(
             "Display Verticals",
             controls.displayVerticals);
 
-    auto intersectionsShape =
+    auto verticesShape =
         new draw::PointsShapeView(
             this->GetPanel(),
-            "Intersections Shape",
-            controls.intersectionsShape,
+            "Vertices Shape",
+            controls.verticesShape,
             layoutOptions);
 
     auto labelsLook =
@@ -71,11 +71,11 @@ ChessShapeView::ChessShapeView(
 
     auto sizer = wxpex::LayoutItems(
         wxpex::verticalItems,
-        displayIntersections,
-        labelIntersections,
+        displayVertices,
+        labelVertices,
         displayHorizontals,
         displayVerticals,
-        intersectionsShape,
+        verticesShape,
         labelsLook,
         horizontalsShape,
         verticalsShape);

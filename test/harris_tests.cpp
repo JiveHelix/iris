@@ -5,7 +5,7 @@
 #include <iris/gradient.h>
 
 
-TEST_CASE("Create Harris corner detection class", "[harris]")
+TEST_CASE("Create Harris vertex detection class", "[harris]")
 {
     using Matrix = Eigen::MatrixX<float>;
 

@@ -57,10 +57,10 @@ Homography::Homography(const HomographySettings &settings)
 
 
 Eigen::Matrix<double, 2, 9>
-Homography::GetHomographyFactors(const Intersection & intersection)
+Homography::GetHomographyFactors(const NamedVertex &vertex)
 {
-    auto world = this->world_(intersection.logical);
-    auto sensor = this->normalize_(intersection.pixel);
+    auto world = this->world_(vertex.logical);
+    auto sensor = this->normalize_(vertex.pixel);
 
     return tau::Matrix<2, 9, double>(
         // The factors dependent on sensor x coordinates
@@ -88,16 +88,16 @@ Homography::GetHomographyFactors(const Intersection & intersection)
 
 
 Homography::Factors Homography::CombineHomographyFactors(
-    const std::vector<Intersection> &intersections)
+    const std::vector<NamedVertex> &vertices)
 {
     using Index = Eigen::Index;
-    auto intersectionCount = static_cast<Index>(intersections.size());
-    Homography::Factors result(2 * intersectionCount, 9);
+    auto vertexCount = static_cast<Index>(vertices.size());
+    Homography::Factors result(2 * vertexCount, 9);
 
-    for (auto i: jive::Range<Index>(0, intersectionCount))
+    for (auto i: jive::Range<Index>(0, vertexCount))
     {
-        const auto &intersection = intersections[static_cast<size_t>(i)];
-        result.block<2, 9>(i * 2, 0) = this->GetHomographyFactors(intersection);
+        const auto &vertex = vertices[static_cast<size_t>(i)];
+        result.block<2, 9>(i * 2, 0) = this->GetHomographyFactors(vertex);
     }
 
     return result;
@@ -160,9 +160,9 @@ SvdSolve(Eigen::MatrixBase<Derived> &factors)
 
 
 HomographyMatrix Homography::GetHomographyMatrix(
-    const std::vector<Intersection> &intersections)
+    const std::vector<NamedVertex> &vertices)
 {
-    auto factors = this->CombineHomographyFactors(intersections);
+    auto factors = this->CombineHomographyFactors(vertices);
 
     HomographyMatrix homographyMatrix =
         SvdSolve(factors).reshaped<Eigen::RowMajor>(3, 3);
@@ -191,7 +191,7 @@ Homography::Intrinsics Homography::ComputeIntrinsics(
         const auto &solution = chessSolutions[static_cast<size_t>(i)];
 
         factors.block<2, 6>(2 * i, 0) = GetConstrainedFactors(
-            this->GetHomographyMatrix(solution.intersections));
+            this->GetHomographyMatrix(solution.vertices));
     }
 
 

@@ -1,23 +1,23 @@
-#include "iris/corners_chain.h"
+#include "iris/vertex_chain.h"
 
 
 namespace iris
 {
 
 
-CornersChainResults::CornersChainResults(ssize_t shapesId)
+VertexChainResults::VertexChainResults(ssize_t shapesId)
     :
     gaussian{},
     gradient{},
     harris{},
-    corner{},
+    vertex{},
     shapesId_(shapesId)
 {
 
 }
 
 
-std::shared_ptr<draw::Pixels> CornersChainResults::Display(
+std::shared_ptr<draw::Pixels> VertexChainResults::Display(
     draw::ShapesControl shapesControl,
     const draw::PointsShapeSettings &pointsShapeSettings,
     ThreadsafeColor<int32_t> &color) const
@@ -32,13 +32,13 @@ std::shared_ptr<draw::Pixels> CornersChainResults::Display(
     auto gaussianPixels =
         std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
 
-    if (this->corner)
+    if (this->vertex)
     {
         draw::Shapes shapes(this->shapesId_);
 
         shapes.EmplaceBack<draw::PointsShape>(
             pointsShapeSettings,
-            CornerPointsToPoints(*this->corner));
+            VerticesToPoints(*this->vertex));
 
         shapesControl.Set(shapes);
 
@@ -61,7 +61,7 @@ std::shared_ptr<draw::Pixels> CornersChainResults::Display(
 }
 
 
-template class CornersChain<DefaultLevelAdjustNode>;
+template class VertexChain<DefaultLevelAdjustNode>;
 
 
 } // end namespace iris

@@ -129,15 +129,13 @@ public:
     Homography(const HomographySettings &settings);
 
     Eigen::Matrix<double, 2, 9>
-    GetHomographyFactors(const Intersection & intersection);
+    GetHomographyFactors(const NamedVertex &vertext);
 
     using Factors = Eigen::Matrix<double, Eigen::Dynamic, 9>;
 
-    Factors CombineHomographyFactors(
-        const std::vector<Intersection> &intersections);
+    Factors CombineHomographyFactors(const NamedVertices &vertices);
 
-    HomographyMatrix GetHomographyMatrix(
-        const std::vector<Intersection> &intersections);
+    HomographyMatrix GetHomographyMatrix(const NamedVertices &vertices);
 
     Intrinsics ComputeIntrinsics(
         const std::vector<ChessSolution> &chessSolutions);
