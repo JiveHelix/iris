@@ -350,9 +350,12 @@ public:
                 {
                     if (this->space_(rowIndex, columnIndex) > threshold)
                     {
-                        result.emplace_back(
-                            this->ToRho(rowIndex),
-                            tau::ToDegrees(this->ToTheta(columnIndex)));
+                        auto rho = this->ToRho(rowIndex);
+
+                        auto degrees =
+                            tau::ToDegrees(this->ToTheta(columnIndex));
+
+                        result.emplace_back(rho, degrees);
                     }
                 }
             }
@@ -468,10 +471,32 @@ public:
 
         if (this->settings_.suppress)
         {
+            auto windowSize = this->settings_.window;
+
             hough.space = Suppression(
                 this->settings_.threads,
-                this->settings_.window,
+                windowSize,
                 combined);
+
+            // Run suppression again on the seam between 180 and 0.
+            auto seam = Matrix(hough.space.rows(), 2 * windowSize);
+
+            seam.leftCols(windowSize) =
+                hough.space.rightCols(windowSize);
+
+            seam.rightCols(windowSize) =
+                hough.space.leftCols(windowSize).colwise().reverse();
+
+            auto suppressedSeam = Suppression(
+                this->settings_.threads,
+                windowSize,
+                seam);
+
+            hough.space.rightCols(windowSize) =
+                suppressedSeam.leftCols(windowSize);
+
+            hough.space.leftCols(windowSize) =
+                suppressedSeam.rightCols(windowSize).colwise().reverse();
 
             accumulator.SetSpace(hough.space);
             hough.lines = accumulator.GetLines(this->settings_.threshold);
