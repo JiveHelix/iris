@@ -1,79 +1,20 @@
 #include "chess_solution.h"
 #include "group_functions.h"
 #include "chess_log.h"
+#include "find_vertex.h"
 
 
 namespace iris
 {
 
 
-ChessFromVertices::ChessFromVertices(
-    const LineCollection &vertexLines_,
-    const ChessSettings &settings)
-    :
-    vertexLines(vertexLines_),
-    groups(),
-    horizontal(),
-    vertical(),
-    vertices()
-{
-    // Begin the first group with the first line.
-    this->groups.emplace_back(this->vertexLines.at(0));
-
-    double groupSeparationDegrees = settings.groupSeparationDegrees;
-    size_t index = 1;
-
-    while (index < this->vertexLines.size())
-    {
-        AddLineToGroups(
-            this->groups,
-            this->vertexLines[index++],
-            groupSeparationDegrees);
-    }
-
-    CombineFirstAndLast(this->groups, groupSeparationDegrees);
-
-    this->groups = FilterByAngle(
-        SplitGroups(
-            this->groups,
-            settings.maximumSpacing,
-            settings.minimumSpacing));
-
-    RemoveOutlierGroups(
-        this->groups,
-        settings.rowCount,
-        settings.columnCount,
-        settings.minimumLinesPerGroup);
-
-    if (this->groups.empty())
-    {
-        return;
-    }
-
-    // There is at least one group, and
-    // all remaining groups have the minimum number of lines.
-
-    auto axisGroups = SelectAxisGroups(
-        this->groups,
-        settings.minimumSpacing,
-        true);
-
-    this->vertical = axisGroups.vertical;
-    this->horizontal = axisGroups.horizontal;
-
-    this->vertices = FormVertices(
-        axisGroups,
-        settings.vertexChess.maximumPointError);
-}
-
-
 #ifdef ENABLE_CHESS_LOG
 #define LOG_GROUPS                                                  \
-    CHESS_LOG("groups size: ", this->groups.size());                \
+    CHESS_LOG("\nLOG_GROUPS\n  groups size: ", this->groups.size());                \
                                                                     \
     for (auto &group: this->groups)                                 \
     {                                                               \
-        std::cout << "  group.lines.size(): "                       \
+        std::cout << "    group.lines.size(): "                       \
             << group.lines.size() << "\n";                          \
     }                                                               \
                                                                     \
@@ -83,8 +24,9 @@ ChessFromVertices::ChessFromVertices(
 #endif
 
 
-ChessFromLines::ChessFromLines(
+ChessOutput::ChessOutput(
     const LineCollection &lines_,
+    const Vertices &vertices_,
     const ChessSettings &settings)
     :
     lines(lines_),
@@ -103,32 +45,31 @@ ChessFromLines::ChessFromLines(
 
     while (index < this->lines.size())
     {
-        CHESS_LOG("Adding line: ", index);
-
         AddLineToGroups(
             this->groups,
             this->lines[index++],
             groupSeparationDegrees);
-
-        LOG_GROUPS
     }
 
-    CHESS_LOG("groups.size(): ", this->groups.size());
+    LOG_GROUPS
 
     CombineFirstAndLast(this->groups, groupSeparationDegrees);
 
     LOG_GROUPS
 
-    this->groups = FilterByAngle(
-        SplitGroups(
-            this->groups,
-            settings.maximumSpacing,
-            settings.minimumSpacing));
+    this->groups = SplitGroupsOnSpacing(
+        this->groups,
+        settings.maximumSpacing,
+        settings.minimumSpacing);
+
+    LOG_GROUPS
+
+    this->groups = FilterByAngle(this->groups);
 
     LOG_GROUPS
 
     this->groups = SplitMissingLines(this->groups, settings.ratioLimit);
-    
+
     LOG_GROUPS
 
     RemoveOutlierGroups(
@@ -159,7 +100,56 @@ ChessFromLines::ChessFromLines(
 
     this->vertices = FormVertices(
         axisGroups,
-        settings.vertexChess.maximumPointError);
+        vertices_,
+        settings.maximumVertexDistance);
+}
+
+
+NamedVertices FormVertices(
+    const AxisGroups &axisGroups,
+    const Vertices &vertices,
+    double maximumVertexDistance)
+{
+    using Line = typename ChessOutput::Line;
+
+    if (!axisGroups.CanFormVertices())
+    {
+        return {};
+    }
+
+    auto result = NamedVertices{};
+
+    size_t verticalCount = axisGroups.vertical.lines.size();
+    size_t horizontalCount = axisGroups.horizontal.lines.size();
+
+    // Iterate over the vertices of horizontal and vertical lines.
+    // If an intersection has a vertex within the maximumVertexDistance
+    // threshold, consider that point a vertex on the chess board.
+    for (auto j: jive::Range<size_t>(0, horizontalCount))
+    {
+        const Line &horizontalLine = axisGroups.horizontal.lines[j];
+        auto logicalRow = axisGroups.horizontal.GetLogicalIndex(j);
+
+        for (auto i: jive::Range<size_t>(0, verticalCount))
+        {
+            const Line &verticalLine = axisGroups.vertical.lines[i];
+            auto vertex = verticalLine.Intersect(horizontalLine);
+            auto logicalColumn = axisGroups.vertical.GetLogicalIndex(i);
+
+            auto vertexPoint = FindVertex(
+                vertex,
+                vertices,
+                maximumVertexDistance);
+
+            if (vertexPoint)
+            {
+                result.push_back(
+                    {{logicalColumn, logicalRow}, vertexPoint->point});
+            }
+        }
+    }
+
+    return result;
 }
 
 
@@ -170,48 +160,13 @@ ChessSolution::ChessSolution()
 
 }
 
+
 ChessSolution::ChessSolution(const ChessOutput &chessOutput)
 {
-    if (std::holds_alternative<ChessFromVertices>(chessOutput))
-    {
-        this->vertices =
-            std::get<ChessFromVertices>(chessOutput).vertices;
-
-        auto &vertexLines =
-            std::get<ChessFromVertices>(chessOutput).vertexLines;
-
-        auto &horizontal =
-            std::get<ChessFromVertices>(chessOutput).horizontal.lines;
-
-        auto &vertical =
-            std::get<ChessFromVertices>(chessOutput).vertical.lines;
-
-        this->lines = Lines(
-            std::begin(vertexLines),
-            std::end(vertexLines));
-
-        this->horizontal = Lines(
-            std::begin(horizontal),
-            std::end(horizontal));
-
-        this->vertical = Lines(
-            std::begin(vertical),
-            std::end(vertical));
-    }
-    else
-    {
-        this->vertices =
-            std::get<ChessFromLines>(chessOutput).vertices;
-
-        this->lines =
-            std::get<ChessFromLines>(chessOutput).lines;
-
-        this->horizontal =
-            std::get<ChessFromLines>(chessOutput).horizontal.lines;
-
-        this->vertical =
-            std::get<ChessFromLines>(chessOutput).vertical.lines;
-    }
+    this->vertices = chessOutput.vertices;
+    this->lines = chessOutput.lines;
+    this->horizontal = chessOutput.horizontal.lines;
+    this->vertical = chessOutput.vertical.lines;
 }
 
 

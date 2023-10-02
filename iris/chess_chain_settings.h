@@ -21,8 +21,18 @@ struct ChessChainFields
         fields::Field(&T::enable, "enable"),
         fields::Field(&T::mask, "mask"),
         fields::Field(&T::level, "level"),
+
+        fields::Field(&T::gaussian, "gaussian"),
+        fields::Field(&T::gradient, "gradient"),
+
+        fields::Field(&T::canny, "canny"),
+        fields::Field(&T::hough, "hough"),
+        fields::Field(&T::linesShape, "linesShape"),
+
+        fields::Field(&T::harris, "harris"),
         fields::Field(&T::vertices, "vertices"),
-        fields::Field(&T::lines, "lines"),
+        fields::Field(&T::verticesShape, "verticesShape"),
+
         fields::Field(&T::chess, "chess"),
         fields::Field(&T::autoDetectSettings, "autoDetectSettings"));
 };
@@ -34,8 +44,18 @@ struct ChessChainTemplate
     T<bool> enable;
     T<MaskGroupMaker> mask;
     T<LevelGroupMaker<int32_t>> level;
-    T<VertexChainGroupMaker> vertices;
-    T<LinesChainGroupMaker> lines;
+
+    T<GaussianGroupMaker<int32_t>> gaussian;
+    T<GradientGroupMaker<int32_t>> gradient;
+
+    T<CannyGroupMaker<double>> canny;
+    T<HoughGroupMaker<double>> hough;
+    T<draw::LinesShapeGroupMaker> linesShape;
+
+    T<HarrisGroupMaker<double>> harris;
+    T<VertexGroupMaker> vertices;
+    T<draw::PointsShapeGroupMaker> verticesShape;
+
     T<ChessGroupMaker> chess;
     T<pex::MakeSignal> autoDetectSettings;
 
@@ -50,12 +70,25 @@ struct ChessChainSettings
 {
     static ChessChainSettings Default()
     {
+        auto defaultGaussian = GaussianSettings<int32_t>::Default();
+        defaultGaussian.sigma = 2.0;
+
         return {{
             true,
             MaskSettings::Default(),
             LevelSettings<int32_t>::Default(),
-            VertexChainSettings::Default(),
-            LinesChainSettings::Default(),
+
+            defaultGaussian,
+            GradientSettings<int32_t>::Default(),
+
+            CannySettings<double>::Default(),
+            HoughSettings<double>::Default(),
+            draw::LinesShapeSettings::Default(),
+
+            HarrisSettings<double>::Default(),
+            VertexSettings::Default(),
+            draw::PointsShapeSettings::Default(),
+
             ChessSettings::Default(),
             {}}};
     }

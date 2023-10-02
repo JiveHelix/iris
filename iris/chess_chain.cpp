@@ -5,87 +5,31 @@ namespace iris
 {
 
 
-ChessChainResults::ChessChainResults(ssize_t chessShapesId)
-    :
-    mask{},
-    level{},
-    vertices{},
-    lines{},
-    chess{},
-    chessShapesId_(chessShapesId)
-{
-
-}
-
-
-std::shared_ptr<draw::Pixels> ChessChainResults::Display(
-    draw::ShapesControl shapesControl,
-    const draw::LinesShapeSettings &linesShapeSettings,
-    const draw::PointsShapeSettings &pointsShapeSettings,
-    const ChessShapeSettings &chessShapeSettings,
-    ThreadsafeColor<int32_t> &color,
-    std::optional<HoughControl> houghControl) const
-{
-    if (!this->mask)
-    {
-        // There's nothing to display if the first filter in the chain has no
-        // result.
-        return {};
-    }
-
-    if (!this->level)
-    {
-        return std::make_shared<draw::Pixels>(color.Filter(*this->mask));
-    }
-
-    auto leveledPixels =
-        std::make_shared<draw::Pixels>(color.Filter(*this->level));
-
-    if (this->chess)
-    {
-        draw::Shapes shapes(this->chessShapesId_);
-
-        shapes.EmplaceBack<iris::ChessShape>(
-            chessShapeSettings,
-            *this->chess);
-
-        shapesControl.Set(shapes);
-
-        return leveledPixels;
-    }
-
-    if (this->lines)
-    {
-        return this->lines->Display(
-            shapesControl,
-            linesShapeSettings,
-            color,
-            houghControl);
-    }
-
-    if (this->vertices)
-    {
-        return this->vertices->Display(
-            shapesControl,
-            pointsShapeSettings,
-            color);
-    }
-
-    return leveledPixels;
-}
-
-
 ChessChainNodes::ChessChainNodes(
     SourceNode &source,
     ChessChainControl control,
     CancelControl cancel)
     :
-    mask("mask", source, control.mask, cancel),
+    mask("Mask", source, control.mask, cancel),
     level(this->mask, control.level, cancel),
-    lines(this->level, control.lines, cancel),
-    vertices(this->level, control.vertices, cancel),
-    mux(this->vertices, this->lines, control.chess.useVertices, cancel),
-    chess("chess", this->mux, control.chess, cancel)
+    gaussian("Gaussian", this->level, control.gaussian, cancel),
+
+    gradientForCanny(
+        this->gaussian,
+        control.gradient,
+        cancel),
+
+    gradientForHarris(
+        this->gaussian,
+        control.gradient,
+        cancel),
+
+    canny("Canny", this->gradientForCanny, control.canny, cancel),
+    hough("Hough", this->canny, control.hough, cancel),
+    harris("Harris", this->gradientForHarris, control.harris, cancel),
+    vertices("Vertices", this->harris, control.vertices, cancel),
+    mix(this->vertices, this->hough, cancel),
+    chess("chess", this->mix, control.chess, cancel)
 {
 
 }
@@ -129,19 +73,18 @@ std::optional<ChessChain::ChainResults> ChessChain::GetChainResults()
         this->settingsChanged_ = false;
     }
 
-    ChainResults result(this->chessShapesId_.Get());
+    ChainResults result(
+        this->chessShapesId_.Get(),
+        this->linesShapesId_.Get(),
+        this->verticesShapesId_.Get());
 
     result.chess = this->nodes_.chess.GetResult();
-
-    if (this->settings_.chess.useVertices)
-    {
-        result.vertices = this->nodes_.vertices.GetChainResults();
-    }
-    else
-    {
-        result.lines = this->nodes_.lines.GetChainResults();
-    }
-
+    result.vertices = this->nodes_.vertices.GetResult();
+    result.harris = this->nodes_.harris.GetResult();
+    result.hough = this->nodes_.hough.GetResult();
+    result.canny = this->nodes_.canny.GetResult();
+    result.gradient = this->nodes_.gradientForHarris.GetResult();
+    result.gaussian = this->nodes_.gaussian.GetResult();
     result.level = this->nodes_.level.GetResult();
     result.mask = this->nodes_.mask.GetResult();
 
@@ -159,8 +102,8 @@ std::optional<ChessChain::ChainResults> ChessChain::GetChainResults()
 void ChessChain::AutoDetectSettings()
 {
     this->nodes_.level.AutoDetectSettings();
-    this->nodes_.vertices.AutoDetectSettings();
-    this->nodes_.lines.AutoDetectSettings();
+    this->nodes_.gradientForCanny.AutoDetectSettings();
+    this->nodes_.gradientForHarris.AutoDetectSettings();
 }
 
 

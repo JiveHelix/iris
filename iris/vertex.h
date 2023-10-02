@@ -145,7 +145,10 @@ public:
         count_(static_cast<size_t>(settings.count)),
         windowSize_(settings.window)
     {
-        assert(settings.count < settings.window * settings.window);
+        assert(
+            settings.count
+                < static_cast<Eigen::Index>(settings.window * settings.window));
+
         assert(settings.count > 0);
     }
 

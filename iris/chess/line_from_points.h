@@ -31,7 +31,7 @@ public:
 
     bool AddPoint(const Point &point);
 
-    void RemoveOutliers(double maximumPointError);
+    void RemoveOutliers(double maximumVertexDistance);
 
     size_t GetPointCount() const;
 

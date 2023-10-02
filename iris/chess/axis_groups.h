@@ -8,52 +8,13 @@ namespace iris
 {
 
 
-template<typename Line>
 struct AxisGroups
 {
-    LineGroup<Line> vertical;
-    LineGroup<Line> horizontal;
+    LineGroup vertical;
+    LineGroup horizontal;
 
-    void ComputeIndices(double minimumSpacing, bool allowSkippedLines)
-    {
-        if (
-            this->vertical.lines.size() < 2
-            || this->horizontal.lines.size() < 2)
-        {
-            return;
-        }
-
-        this->vertical.SortByPosition(false);
-        this->horizontal.SortByPosition(true);
-
-        this->vertical.ComputeIndices(
-            false,
-            minimumSpacing,
-            this->horizontal.GetPerspective(),
-            allowSkippedLines);
-
-        this->horizontal.ComputeIndices(
-            true,
-            minimumSpacing,
-            this->vertical.GetPerspective(),
-            allowSkippedLines);
-    }
-
-    bool CanFormVertices() const
-    {
-        if (
-            this->vertical.lines.empty()
-            || this->horizontal.lines.empty())
-        {
-            return false;
-        }
-
-        // Previous stages may not have been able to guess the logical
-        // indices.
-        return
-            !this->vertical.logicalIndices.empty()
-            && !this->horizontal.logicalIndices.empty();
-    }
+    void ComputeIndices(double minimumSpacing, bool allowSkippedLines);
+    bool CanFormVertices() const;
 };
 
 

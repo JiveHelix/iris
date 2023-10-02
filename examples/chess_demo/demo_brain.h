@@ -17,7 +17,7 @@
 #include "../common/brain.h"
 
 #include "./demo_settings.h"
-#include "./main_frame.h"
+#include "./demo_controls.h"
 #include "./filters.h"
 
 
@@ -33,9 +33,19 @@ class DemoBrain: public Brain<DemoBrain>
 public:
     DemoBrain();
 
+    ~DemoBrain()
+    {
+        this->Shutdown();
+    }
+
+    std::string GetAppName() const
+    {
+        return "Chess Demo";
+    }
+
     void LoadPng(const draw::Png<Pixel> &png);
 
-    wxpex::Window CreateControlFrame();
+    wxWindow * CreateControls(wxWindow *parent);
 
     void SaveSettings() const;
 

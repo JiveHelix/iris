@@ -27,14 +27,16 @@ target_sources(
     canny_chain.cpp
     canny_chain_settings.cpp
     canny_settings.cpp
+    chess/axis_groups.cpp
     chess/chess_solution.cpp
-    chess/find_point.cpp
+    chess/find_vertex.cpp
+    chess/group_functions.cpp
     chess/named_vertex.cpp
-    chess/line_collector.cpp
     chess/line_from_points.cpp
     chess/line_group.cpp
     chess.cpp
     chess_chain.cpp
+    chess_chain_results.cpp
     chess_chain_settings.cpp
     chess_settings.cpp
     color.cpp

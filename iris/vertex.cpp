@@ -70,7 +70,7 @@ void PointGroups::AddPoint_(const tau::Point2d<double> &point)
 {
     for (auto &entry: this->pointGroupByPoint_)
     {
-        // Use SquaredSum to avoid many sqrt operations.
+        // Use SquaredSum to avoid sqrt.
         if ((point - entry.first).SquaredSum() < this->radiusSquared_)
         {
             entry.second.push_back(point);

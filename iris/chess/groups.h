@@ -9,8 +9,7 @@ namespace iris
 {
 
 
-template<typename Line>
-using Groups = std::list<LineGroup<Line>>;
+using Groups = std::list<LineGroup>;
 
 
 } // end namespace iris

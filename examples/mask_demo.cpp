@@ -52,21 +52,16 @@ using DemoControl = typename DemoGroup::Control;
 DECLARE_OUTPUT_STREAM_OPERATOR(DemoSettings)
 
 
-class DemoMainFrame: public wxFrame
+class DemoControls: public wxPanel
 {
 public:
-    DemoMainFrame(
+    DemoControls(
+        wxWindow *parent,
         UserControl userControl,
         DemoControl control)
         :
-        wxFrame(nullptr, wxID_ANY, "Mask Demo"),
-        shortcuts_(
-            std::make_unique<wxpex::MenuShortcuts>(
-                wxpex::UnclosedWindow(this),
-                MakeShortcuts(userControl)))
+        wxPanel(parent, wxID_ANY)
     {
-        this->SetMenuBar(this->shortcuts_->GetMenuBar());
-
         auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
 
         wxpex::LayoutOptions layoutOptions{};
@@ -100,9 +95,6 @@ public:
         topSizer->Add(sizer.release(), 1, wxEXPAND | wxALL, 5);
         this->SetSizerAndFit(topSizer.release());
     }
-
-private:
-    std::unique_ptr<wxpex::MenuShortcuts> shortcuts_;
 };
 
 
@@ -176,6 +168,11 @@ public:
         this->demoModel_.color.level.high.Set(8096);
     }
 
+    std::string GetAppName() const
+    {
+        return "Mask Demo";
+    }
+
     void LoadPng(const draw::Png<Pixel> &png)
     {
         auto scale =
@@ -188,13 +185,12 @@ public:
         this->demoModel_.mask.imageSize.Set(png.GetSize());
     }
 
-    wxpex::Window CreateControlFrame()
+    wxWindow * CreateControls(wxWindow *parent)
     {
-        auto window = wxpex::Window(new DemoMainFrame(
+        return new DemoControls(
+            parent,
             this->GetUserControls(),
-            DemoControl(this->demoModel_)));
-
-        return window;
+            DemoControl(this->demoModel_));
     }
 
     void SaveSettings() const

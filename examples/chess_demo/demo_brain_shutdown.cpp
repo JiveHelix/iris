@@ -3,6 +3,12 @@
 
 void DemoBrain::Shutdown()
 {
+    if (!this->displayThread_.joinable())
+    {
+        Brain<DemoBrain>::Shutdown();
+        return;
+    }
+
     {
         std::lock_guard lock(this->mutex_);
         this->displayLoopIsRunning_ = false;

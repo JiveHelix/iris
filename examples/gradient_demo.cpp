@@ -49,21 +49,16 @@ using DemoModel = typename DemoGroup::Model;
 using DemoControl = typename DemoGroup::Control;
 
 
-class DemoMainFrame: public wxFrame
+class DemoControls: public wxPanel
 {
 public:
-    DemoMainFrame(
+    DemoControls(
+        wxWindow *parent,
         UserControl userControl,
         DemoControl control)
         :
-        wxFrame(nullptr, wxID_ANY, "Gradient Demo"),
-        shortcuts_(
-            std::make_unique<wxpex::MenuShortcuts>(
-                wxpex::UnclosedWindow(this),
-                MakeShortcuts(userControl)))
+        wxPanel(parent, wxID_ANY)
     {
-        this->SetMenuBar(this->shortcuts_->GetMenuBar());
-
         wxpex::LayoutOptions layoutOptions{};
         layoutOptions.labelFlags = wxALIGN_RIGHT;
 
@@ -109,9 +104,6 @@ public:
         topSizer->Add(sizer.release(), 1, wxEXPAND | wxALL, 5);
         this->SetSizerAndFit(topSizer.release());
     }
-
-private:
-    std::unique_ptr<wxpex::MenuShortcuts> shortcuts_;
 };
 
 
@@ -140,9 +132,15 @@ public:
         this->color_ = Color(this->demoModel_.color.Get());
     }
 
-    wxpex::Window CreateControlFrame()
+    std::string GetAppName() const
     {
-        return new DemoMainFrame(
+        return "Gradient Demo";
+    }
+
+    wxWindow * CreateControls(wxWindow *parent)
+    {
+        return new DemoControls(
+            parent,
             this->GetUserControls(),
             DemoControl(this->demoModel_));
     }

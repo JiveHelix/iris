@@ -1,11 +1,10 @@
 #include "demo_brain.h"
 
 
-wxpex::Window DemoBrain::CreateControlFrame()
+wxWindow * DemoBrain::CreateControls(wxWindow *parent)
 {
-    auto window = wxpex::Window(new MainFrame(
+    return new DemoControls(
+        parent,
         this->GetUserControls(),
-        DemoControl(this->demoModel_)));
-
-    return window;
+        DemoControl(this->demoModel_));
 }

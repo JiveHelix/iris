@@ -3,8 +3,12 @@
 
 void DemoBrain::LoadPng(const draw::Png<Pixel> &png)
 {
-    auto maximum = this->demoModel_.color.level.high.GetMaximum();
-    auto scale = static_cast<double>(maximum);
+    auto maximum = 1023;
+
+    if (sizeof(Pixel) == 1)
+    {
+        maximum = 255;
+    }
 
     // Prevent drawing until new dimensions and source data are
     // synchronized.
@@ -15,8 +19,10 @@ void DemoBrain::LoadPng(const draw::Png<Pixel> &png)
     this->demoModel_.imageSize.Set(png.GetSize());
     this->demoModel_.Unmute();
 
-    this->filters_.source.SetData(
-        png.GetValue(scale).template cast<int32_t>().eval());
+    auto pngValues =
+        png.GetValue(1.0).template cast<int32_t>().eval();
+
+    this->filters_.source.SetData(pngValues);
 
     this->pngIsLoaded_ = true;
     this->Display();

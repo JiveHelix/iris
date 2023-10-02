@@ -4,12 +4,17 @@
 #include <wxpex/check_box.h>
 #include <wxpex/button.h>
 #include <wxpex/indent_sizer.h>
+#include <draw/views/lines_shape_view.h>
+#include <draw/views/points_shape_view.h>
 #include "iris/views/mask_settings_view.h"
 #include "iris/views/level_settings_view.h"
-#include "iris/views/lines_chain_settings_view.h"
-#include "iris/views/vertex_chain_settings_view.h"
+#include "iris/views/gaussian_settings_view.h"
+#include "iris/views/gradient_settings_view.h"
+#include "iris/views/canny_settings_view.h"
+#include "iris/views/hough_settings_view.h"
+#include "iris/views/harris_settings_view.h"
+#include "iris/views/vertex_settings_view.h"
 #include "iris/views/chess_settings_view.h"
-#include "iris/views/chess_shape_view.h"
 #include "iris/views/defaults.h"
 
 
@@ -44,16 +49,56 @@ ChessChainSettingsView::ChessChainSettingsView(
             controls.level,
             layoutOptions);
 
-    auto vertexChain =
-        new VertexChainSettingsView(
+    auto gaussian =
+        new GaussianSettingsView<int32_t>(
+            panel,
+            "Gaussian Blur",
+            controls.gaussian,
+            layoutOptions);
+
+    auto gradient =
+        new GradientSettingsView<int32_t>(
+            panel,
+            controls.gradient,
+            layoutOptions);
+
+    auto canny =
+        new CannySettingsView<double>(
+            panel,
+            controls.canny,
+            layoutOptions);
+
+    // Line detection
+    auto hough =
+        new HoughSettingsView<double>(
+            panel,
+            controls.hough,
+            layoutOptions);
+
+    auto linesShape = new draw::LinesShapeView(
+        panel,
+        "Lines Shape",
+        controls.linesShape,
+        layoutOptions);
+
+    // Vertex detection
+    auto harris =
+        new HarrisSettingsView(
+            panel,
+            controls.harris,
+            layoutOptions);
+
+    auto verticesSettings =
+        new VertexSettingsView(
             panel,
             controls.vertices,
             layoutOptions);
 
-    auto linesChain =
-        new LinesChainSettingsView(
+    auto verticesShape =
+        new draw::PointsShapeView(
             panel,
-            controls.lines,
+            "Vertex Shape",
+            controls.verticesShape,
             layoutOptions);
 
     auto chess =
@@ -70,8 +115,14 @@ ChessChainSettingsView::ChessChainSettingsView(
         enable,
         mask,
         level,
-        vertexChain,
-        linesChain,
+        gaussian,
+        gradient,
+        canny,
+        hough,
+        linesShape,
+        harris,
+        verticesSettings,
+        verticesShape,
         chess);
 
     sizer->Add(autoDetect, 0, wxALIGN_CENTER | wxTOP, 5);

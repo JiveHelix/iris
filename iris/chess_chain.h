@@ -2,14 +2,7 @@
 
 
 #include <pex/endpoint.h>
-
-#include "iris/node.h"
-#include "iris/mask.h"
-#include "iris/level_adjust.h"
-#include "iris/lines_chain.h"
-#include "iris/vertex_chain.h"
-#include "iris/chess.h"
-#include "iris/views/chess_shape.h"
+#include "iris/chess_chain_results.h"
 #include "iris/chess_chain_settings.h"
 
 
@@ -20,45 +13,8 @@ namespace iris
 template<typename VertexSource, typename LinesSource>
 struct ChessNodes
 {
-    using MuxNode = Mux<VertexSource, LinesSource, ChessInput>;
-    using FilterNode = Node<MuxNode, Chess, ChessControl>;
-};
-
-
-struct ChessChainFilters
-{
-    using MaskFilter = Mask<InProcess>;
-    using LevelFilter = LevelAdjust<InProcess, double>;
-};
-
-
-struct ChessChainResults
-{
-    using Filters = ChessChainFilters;
-    std::optional<typename Filters::MaskFilter::Result> mask;
-    std::optional<typename Filters::LevelFilter::Result> level;
-    std::optional<VertexChainResults> vertices;
-    std::optional<LinesChainResults> lines;
-    std::optional<typename Chess::Result> chess;
-
-    using ShapesControl =
-        typename draw::PixelViewControl::AsyncShapesControl;
-
-    using HoughControl =
-        typename draw::PixelViewControl::AsyncPixelsControl;
-
-    ChessChainResults(ssize_t chessShapesId);
-
-    std::shared_ptr<draw::Pixels> Display(
-        draw::ShapesControl shapesControl,
-        const draw::LinesShapeSettings &linesShapeSettings,
-        const draw::PointsShapeSettings &pointsShapeSettings,
-        const ChessShapeSettings &chessShapeSettings,
-        ThreadsafeColor<InProcess> &color,
-        std::optional<HoughControl> houghControl) const;
-
-private:
-    ssize_t chessShapesId_;
+    using MixNode = Mix<VertexSource, LinesSource, ChessInput>;
+    using FilterNode = Node<MixNode, Chess, ChessControl>;
 };
 
 
@@ -67,26 +23,63 @@ struct ChessChainNodes
     using SourceNode = Source<ProcessMatrix>;
 
     using Filters = ChessChainFilters;
+
+    // Common
     using MaskFilter = typename Filters::MaskFilter;
+    using GaussianFilter = typename Filters::GaussianFilter;
+    using GradientFilter = typename Filters::GradientFilter;
+
+    // Lines
+    using CannyFilter = typename Filters::CannyFilter;
+    using HoughFilter = typename Filters::HoughFilter;
+
+    // Vertices
+    using HarrisFilter = typename Filters::HarrisFilter;
+    using VertexFilter = typename Filters::VertexFilter;
+
 
     using MaskNode = Node<SourceNode, MaskFilter, MaskControl>;
     using LevelNode = LevelAdjustNode<MaskNode, InProcess, double>;
-    using LinesChainNode = LinesChain<LevelNode>;
-    using VertexChainNode = VertexChain<LevelNode>;
+
+    using GaussianNode =
+        iris::Node<LevelNode, GaussianFilter, GaussianControl<int32_t>>;
+
+    using GradientNode_ = GradientNode<GaussianNode>;
+
+
+    using CannyNode =
+        iris::Node<GradientNode_, CannyFilter, CannyControl<double>>;
+
+    using HoughNode =
+        iris::Node<CannyNode, HoughFilter, HoughControl<double>>;
+
+    using HarrisNode =
+        iris::Node<GradientNode_, HarrisFilter, HarrisControl<double>>;
+
+    using VertexNode =
+        iris::Node<HarrisNode, VertexFilter, VertexControl>;
 
     using Result = typename Chess::Result;
 
-    using MuxNode =
-        typename ChessNodes<VertexChainNode, LinesChainNode>::MuxNode;
+    using MixNode =
+        typename ChessNodes<VertexNode, HoughNode>::MixNode;
 
     using ChessNode =
-        typename ChessNodes<VertexChainNode, LinesChainNode>::FilterNode;
+        typename ChessNodes<VertexNode, HoughNode>::FilterNode;
 
     MaskNode mask;
     LevelNode level;
-    LinesChainNode lines;
-    VertexChainNode vertices;
-    MuxNode mux;
+    GaussianNode gaussian;
+    GradientNode_ gradientForCanny;
+    GradientNode_ gradientForHarris;
+
+    CannyNode canny;
+    HoughNode hough;
+
+    HarrisNode harris;
+    VertexNode vertices;
+
+    MixNode mix;
     ChessNode chess;
 
     ChessChainNodes(
@@ -136,6 +129,8 @@ public:
     }
 
 private:
+    draw::ShapesId linesShapesId_;
+    draw::ShapesId verticesShapesId_;
     draw::ShapesId chessShapesId_;
     ChessChainNodes nodes_;
     pex::Endpoint<ChessChain, pex::control::Signal<>> autoDetectEndpoint_;

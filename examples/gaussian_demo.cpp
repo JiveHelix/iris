@@ -12,21 +12,16 @@
 #include "common/brain.h"
 
 
-class DemoMainFrame: public wxFrame
+class DemoControls: public wxPanel
 {
 public:
-    DemoMainFrame(
+    DemoControls(
+        wxWindow *parent,
         UserControl userControl,
         iris::GaussianControl<Pixel> gaussianControl)
         :
-        wxFrame(nullptr, wxID_ANY, "Gaussian Demo"),
-        shortcuts_(
-            std::make_unique<wxpex::MenuShortcuts>(
-                wxpex::UnclosedWindow(this),
-                MakeShortcuts(userControl)))
+        wxPanel(parent, wxID_ANY)
     {
-        this->SetMenuBar(this->shortcuts_->GetMenuBar());
-
         wxpex::LayoutOptions layoutOptions{};
         layoutOptions.labelFlags = wxALIGN_RIGHT;
 
@@ -55,9 +50,6 @@ public:
         topSizer->Add(sizer.release(), 1, wxEXPAND | wxALL, 5);
         this->SetSizerAndFit(topSizer.release());
     }
-
-private:
-    std::unique_ptr<wxpex::MenuShortcuts> shortcuts_;
 };
 
 
@@ -81,9 +73,15 @@ public:
 
     }
 
-    wxpex::Window CreateControlFrame()
+    std::string GetAppName() const
     {
-        return new DemoMainFrame(
+        return "Gaussian Demo";
+    }
+
+    wxWindow * CreateControls(wxWindow *parent)
+    {
+        return new DemoControls(
+            parent,
             this->GetUserControls(),
             iris::GaussianControl<Pixel>(this->gaussianModel_));
     }

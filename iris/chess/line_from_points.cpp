@@ -100,7 +100,7 @@ bool LineFromPoints::AddPoint(const Point &point_)
 }
 
 
-void LineFromPoints::RemoveOutliers(double maximumPointError)
+void LineFromPoints::RemoveOutliers(double maximumVertexDistance)
 {
     double pointError = 0;
 
@@ -112,9 +112,9 @@ void LineFromPoints::RemoveOutliers(double maximumPointError)
     auto pointsEnd = std::remove_if(
         begin(this->points_),
         end(this->points_),
-        [this, maximumPointError] (const auto &point_) -> bool
+        [this, maximumVertexDistance] (const auto &point_) -> bool
         {
-            return this->GetError(point_) > maximumPointError;
+            return this->GetError(point_) > maximumVertexDistance;
         });
 
     if (pointsEnd != end(this->points_))

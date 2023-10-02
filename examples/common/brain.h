@@ -2,6 +2,8 @@
 
 
 #include <wxpex/ignores.h>
+#include <wxpex/window.h>
+#include <wxpex/splitter.h>
 
 WXSHIM_PUSH_IGNORES
 #include <wx/display.h>
@@ -24,9 +26,14 @@ public:
         :
         user_{},
         userControl_(this->user_),
-        doLayoutWindows_([this](){this->LayoutWindows();})
+        applicationFrame_(new wxFrame(nullptr, wxID_ANY, "")),
+        shortcuts_(
+            std::make_unique<wxpex::MenuShortcuts>(
+                wxpex::UnclosedWindow(this->applicationFrame_.Get()),
+                MakeShortcuts(this->userControl_)))
     {
-
+        this->applicationFrame_.Get()->SetMenuBar(
+            this->shortcuts_->GetMenuBar());
     }
 
     Derived * GetDerived()
@@ -46,71 +53,22 @@ public:
 
     void CreateFrame()
     {
-        this->LayoutWindows();
-    }
+        auto splitter = new wxpex::Splitter(this->applicationFrame_.Get());
+        auto controls = this->GetDerived()->CreateControls(splitter);
+        auto pixelView = this->CreatePixelView_(splitter);
 
-    void LayoutWindows()
-    {
-        if (!this->controlFrame_)
-        {
-            this->controlFrame_ = this->GetDerived()->CreateControlFrame();
+        splitter->SplitVerticallyLeft(
+            controls,
+            pixelView);
 
-            // Allow the window to fully initialize before layout continues.
-            this->doLayoutWindows_();
-            return;
-        }
+        auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
+        sizer->Add(splitter, 1, wxEXPAND);
+        this->applicationFrame_.Get()->SetSizerAndFit(sizer.release());
 
-        if (!this->pixelView_)
-        {
-            this->GetDerived()->CreatePixelView_();
+        this->applicationFrame_.Get()->SetTitle(
+            this->GetDerived()->GetAppName());
 
-            // Allow the window to fully initialize before layout continues.
-            this->doLayoutWindows_();
-            return;
-        }
-
-        auto displayIndex = wxDisplay::GetFromWindow(this->controlFrame_.Get());
-
-        if (displayIndex < 0)
-        {
-            DisplayError("Layout Error", "Unable to detect display");
-            return;
-        }
-
-        auto controlFrame = this->controlFrame_.Get();
-        controlFrame->Layout();
-
-        auto pixelView = this->pixelView_.Get();
-
-        auto display = wxDisplay(static_cast<unsigned int>(displayIndex));
-        auto clientArea = display.GetClientArea();
-        auto topLeft = wxpex::ToPoint<int>(clientArea.GetTopLeft());
-        auto clientSize = wxpex::ToSize<int>(clientArea.GetSize());
-        auto controlFrameSize = wxpex::ToSize<int>(controlFrame->GetSize());
-        controlFrameSize.height = clientSize.height;
-        auto remainingWidth = clientSize.width - controlFrameSize.width;
-
-        controlFrame->SetPosition(wxpex::ToWxPoint(topLeft));
-        controlFrame->SetSize(wxpex::ToWxSize(controlFrameSize));
-        topLeft.x += controlFrameSize.width;
-
-        auto asFrame = dynamic_cast<wxFrame *>(pixelView);
-
-        if (asFrame)
-        {
-            if (asFrame->IsMaximized())
-            {
-                asFrame->Maximize(false);
-            }
-        }
-
-        auto pixelViewSize = wxpex::ToSize<int>(pixelView->GetSize());
-        pixelViewSize.height = clientSize.height;
-        pixelViewSize.width = remainingWidth;
-
-        pixelView->SetPosition(wxpex::ToWxPoint(topLeft));
-        pixelView->SetSize(wxpex::ToWxSize(pixelViewSize));
-
+        this->applicationFrame_.Get()->Maximize();
         this->GetDerived()->Display();
     }
 
@@ -123,13 +81,7 @@ public:
 
         this->GetDerived()->LoadPng(png);
 
-        if (!this->pixelView_)
-        {
-            this->GetDerived()->CreatePixelView_();
-        }
-
         this->user_.pixelView.viewSettings.imageSize.Set(png.GetSize());
-        this->LayoutWindows();
         this->user_.pixelView.viewSettings.FitZoom();
 
         this->GetDerived()->Display();
@@ -137,26 +89,20 @@ public:
 
     void Shutdown()
     {
-        this->controlFrame_.Close();
-        this->pixelView_.Close();
+        this->applicationFrame_.Close();
     }
 
 protected:
-    void CreatePixelView_()
+    wxWindow * CreatePixelView_(wxWindow *parent)
     {
-        this->pixelView_ = {
-            new draw::PixelView(
-                nullptr,
-                draw::PixelViewControl(this->user_.pixelView)),
-            MakeShortcuts(this->GetUserControls())};
-
-        this->pixelView_.Get()->Show();
+        return new draw::PixelView(
+            parent,
+            draw::PixelViewControl(this->user_.pixelView));
     }
 
 protected:
     UserModel user_;
     UserControl userControl_;
-    wxpex::CallAfter doLayoutWindows_;
-    wxpex::Window controlFrame_;
-    wxpex::ShortcutWindow pixelView_;
+    wxpex::UnclosedFrame applicationFrame_;
+    std::unique_ptr<wxpex::MenuShortcuts> shortcuts_;
 };

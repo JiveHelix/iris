@@ -17,8 +17,8 @@ std::shared_ptr<draw::Pixels> DemoBrain::Process()
 
     return chainResult->Display(
         this->userControl_.pixelView.asyncShapes,
-        this->demoModel_.chess.lines.shape.Get(),
-        this->demoModel_.chess.vertices.shape.Get(),
+        this->demoModel_.chess.linesShape.Get(),
+        this->demoModel_.chess.verticesShape.Get(),
         this->demoModel_.chessShape.Get(),
         this->filters_.color,
         {});

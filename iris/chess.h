@@ -22,8 +22,8 @@ struct ChessInput
 {
     using Lines = typename HoughResult<double>::Lines;
 
-    std::optional<Vertices> vertices;
-    std::optional<HoughResult<double>> hough;
+    Vertices vertices;
+    HoughResult<double> hough;
 };
 
 
@@ -37,11 +37,6 @@ public:
     Chess(const ChessSettings &settings);
 
     std::optional<ChessSolution> Filter(const ChessInput &input);
-
-    std::optional<ChessOutput> FilterPoints(const Vertices &vertices);
-
-    std::optional<ChessOutput> FilterLines(
-        const typename ChessInput::Lines &lines);
 
 private:
     ChessSettings settings_;

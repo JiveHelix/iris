@@ -1,5 +1,4 @@
 #include "iris/chess.h"
-#include "iris/chess/line_collector.h"
 
 
 namespace iris
@@ -14,57 +13,6 @@ Chess::Chess(const ChessSettings &settings)
 }
 
 
-std::optional<ChessOutput> Chess::FilterPoints(const Vertices &vertices)
-{
-    if (vertices.empty())
-    {
-        return {};
-    }
-
-    auto lines = LineCollector(this->settings_).FormLines(vertices);
-
-    if (lines.empty())
-    {
-        return {};
-    }
-
-    if (this->settings_.enableGroup)
-    {
-        return ChessFromVertices(lines, this->settings_);
-    }
-
-    ChessFromVertices solution;
-    solution.vertexLines = lines;
-
-    return solution;
-}
-
-
-std::optional<ChessOutput> Chess::FilterLines(
-    const typename ChessInput::Lines &lines)
-{
-    if (!this->settings_.enable)
-    {
-        return {};
-    }
-
-    if (lines.empty())
-    {
-        return {};
-    }
-
-    if (this->settings_.enableGroup)
-    {
-        return ChessFromLines(lines, this->settings_);
-    }
-
-    ChessFromLines solution;
-    solution.lines = lines;
-
-    return solution;
-}
-
-
 std::optional<ChessSolution> Chess::Filter(const ChessInput &input)
 {
     if (!this->settings_.enable)
@@ -72,36 +20,18 @@ std::optional<ChessSolution> Chess::Filter(const ChessInput &input)
         return {};
     }
 
-    if (this->settings_.useVertices)
-    {
-        if (!input.vertices)
-        {
-            return {};
-        }
-
-        auto output = this->FilterPoints(*input.vertices);
-
-        if (!output)
-        {
-            return {};
-        }
-
-        return ChessSolution(*output);
-    }
-
-    if (!input.hough)
+    if (input.vertices.empty())
     {
         return {};
     }
 
-    auto output = this->FilterLines(input.hough->lines);
-
-    if (!output)
+    if (input.hough.lines.empty())
     {
         return {};
     }
 
-    return ChessSolution(*output);
+    return ChessSolution(
+        ChessOutput(input.hough.lines, input.vertices, this->settings_));
 }
 
 

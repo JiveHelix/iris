@@ -16,9 +16,6 @@ std::shared_ptr<draw::Pixels> CannyChainResults::Display(
         return {};
     }
 
-    auto gaussianPixels =
-        std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
-
     if (this->canny)
     {
         return std::make_shared<draw::Pixels>(this->canny->Colorize());
@@ -30,7 +27,7 @@ std::shared_ptr<draw::Pixels> CannyChainResults::Display(
         return std::make_shared<draw::Pixels>(this->gradient->Colorize());
     }
 
-    return gaussianPixels;
+    return std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
 }
 
 

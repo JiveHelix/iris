@@ -5,10 +5,11 @@
 #include "demo_settings.h"
 
 
-class MainFrame: public wxFrame
+class DemoControls: public wxPanel
 {
 public:
-    MainFrame(
+    DemoControls(
+        wxWindow *parent,
         UserControl userControl,
         DemoControl control);
 

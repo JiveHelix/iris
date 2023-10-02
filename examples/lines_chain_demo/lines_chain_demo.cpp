@@ -15,7 +15,7 @@
 #include "../common/brain.h"
 
 #include "demo_settings.h"
-#include "main_frame.h"
+#include "demo_controls.h"
 #include "filters.h"
 
 
@@ -87,6 +87,11 @@ public:
 
     }
 
+    std::string GetAppName() const
+    {
+        return "Lines Demo";
+    }
+
     void LoadPng(const draw::Png<Pixel> &png)
     {
         auto maximum = this->demoModel_.color.level.high.GetMaximum();
@@ -107,11 +112,12 @@ public:
         this->Display();
     }
 
-    wxpex::Window CreateControlFrame()
+    wxWindow * CreateControls(wxWindow *parent)
     {
-        auto window = wxpex::Window(new MainFrame(
+        auto window = new DemoControls(
+            parent,
             this->GetUserControls(),
-            this->demoControl_));
+            this->demoControl_);
 
         this->OnHoughSettings_(this->demoControl_.lines.hough.Get());
         return window;

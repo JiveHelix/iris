@@ -1,22 +1,17 @@
-#include "main_frame.h"
+#include "demo_controls.h"
 #include "demo_settings_view.h"
 
 
 #include <wxpex/file_field.h>
 
 
-MainFrame::MainFrame(
+DemoControls::DemoControls(
+    wxWindow *parent,
     UserControl userControl,
     DemoControl control)
     :
-    wxFrame(nullptr, wxID_ANY, "Chess Demo"),
-    shortcuts_(
-        std::make_unique<wxpex::MenuShortcuts>(
-            wxpex::UnclosedWindow(this),
-            MakeShortcuts(userControl)))
+    wxPanel(parent, wxID_ANY)
 {
-    this->SetMenuBar(this->shortcuts_->GetMenuBar());
-
     auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
 
     wxpex::FileDialogOptions options{};

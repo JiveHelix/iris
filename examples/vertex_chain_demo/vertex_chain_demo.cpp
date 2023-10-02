@@ -13,7 +13,7 @@
 #include "../common/brain.h"
 
 #include "demo_settings.h"
-#include "main_frame.h"
+#include "demo_controls.h"
 #include "filters.h"
 
 
@@ -55,6 +55,11 @@ public:
 
     }
 
+    std::string GetAppName() const
+    {
+        return "Vertex Demo";
+    }
+
     void LoadPng(const draw::Png<Pixel> &png)
     {
         auto maximum = this->demoModel_.color.level.high.GetMaximum();
@@ -72,13 +77,12 @@ public:
         this->pngIsLoaded_ = true;
     }
 
-    wxpex::Window CreateControlFrame()
+    wxWindow * CreateControls(wxWindow *parent)
     {
-        auto window = wxpex::Window(new MainFrame(
+        return new DemoControls(
+            parent,
             this->GetUserControls(),
-            DemoControl(this->demoModel_)));
-
-        return window;
+            DemoControl(this->demoModel_));
     }
 
     void SaveSettings() const

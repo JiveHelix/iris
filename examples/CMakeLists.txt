@@ -44,7 +44,7 @@ add_executable(
     lines_chain_demo
     lines_chain_demo/lines_chain_demo.cpp
     lines_chain_demo/filters.cpp
-    lines_chain_demo/main_frame.cpp
+    lines_chain_demo/demo_controls.cpp
     lines_chain_demo/demo_settings_view.cpp)
 
 target_link_libraries(
@@ -68,7 +68,7 @@ add_executable(
     chess_demo/demo_brain_shutdown.cpp
     chess_demo/demo_brain_display.cpp
     chess_demo/filters.cpp
-    chess_demo/main_frame.cpp
+    chess_demo/demo_controls.cpp
     chess_demo/demo_settings_view.cpp)
 
 target_link_libraries(
@@ -84,7 +84,7 @@ add_executable(
     vertex_chain_demo
     vertex_chain_demo/vertex_chain_demo.cpp
     vertex_chain_demo/filters.cpp
-    vertex_chain_demo/main_frame.cpp
+    vertex_chain_demo/demo_controls.cpp
     vertex_chain_demo/demo_settings_view.cpp)
 
 target_link_libraries(
