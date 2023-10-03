@@ -21,7 +21,10 @@ HomographySettingsView::HomographySettingsView(
 {
     using namespace wxpex;
     using SensorSizeView = SizeView<double, 0>;
-    using ValueField = typename SensorSizeView::ValueField;
+
+    using PixelSizeControl = decltype(HomographyControl::pixelSize_microns);
+    using Converter = wxpex::PrecisionConverter<PixelSizeControl, 1>;
+    using ValueField = wxpex::Field<PixelSizeControl, Converter>;
 
     auto panel = this->GetPanel();
 

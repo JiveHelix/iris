@@ -2,10 +2,23 @@
 
 #include <wxpex/field.h>
 #include <wxpex/file_field.h>
+#include <wxpex/converter.h>
 
 
 namespace iris
 {
+
+
+template<typename Control, size_t precision>
+struct ValueField_
+{
+    using Converter = wxpex::PrecisionConverter<Control, precision>;
+    using Type = wxpex::Field<Control, Converter>;
+};
+
+
+template<typename Control, size_t precision>
+using ValueField = typename ValueField_<Control, precision>::Type;
 
 
 IntrinsicsView::IntrinsicsView(
@@ -16,47 +29,48 @@ IntrinsicsView::IntrinsicsView(
     :
     wxpex::StaticBox(parent, name)
 {
-    using namespace wxpex;
+    using Control =
+        decltype(tau::IntrinsicsControl<double>::pixelSize_um);
 
-    auto pixelSize_um = LabeledWidget(
+    auto pixelSize_um = wxpex::LabeledWidget(
         this,
         "Pixel Size (um)",
-        new Field(
+        new ValueField<Control, 1>(
             this,
             control.pixelSize_um));
 
-    auto focalLengthX_mm = LabeledWidget(
+    auto focalLengthX_mm = wxpex::LabeledWidget(
         this,
         "Focal Length X (mm)",
-        new Field(
+        new ValueField<Control, 4>(
             this,
             control.focalLengthX_mm));
 
-    auto focalLengthY_mm = LabeledWidget(
+    auto focalLengthY_mm = wxpex::LabeledWidget(
         this,
         "Focal Length Y (mm)",
-        new Field(
+        new ValueField<Control, 4>(
             this,
             control.focalLengthY_mm));
 
-    auto principalX_pixels = LabeledWidget(
+    auto principalX_pixels = wxpex::LabeledWidget(
         this,
         "Principal Point X (pixels)",
-        new Field(
+        new ValueField<Control, 4>(
             this,
             control.principalX_pixels));
 
-    auto principalY_pixels = LabeledWidget(
+    auto principalY_pixels = wxpex::LabeledWidget(
         this,
         "Principal Point Y (pixels)",
-        new Field(
+        new ValueField<Control, 4>(
             this,
             control.principalY_pixels));
 
-    auto skew = LabeledWidget(
+    auto skew = wxpex::LabeledWidget(
         this,
         "Skew",
-        new Field(
+        new ValueField<Control, 5>(
             this,
             control.skew));
 
