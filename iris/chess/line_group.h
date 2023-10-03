@@ -41,7 +41,7 @@ struct LineGroup
 
     void RemoveOutlierLines();
 
-    std::vector<LineGroup> SplitOnSorting();
+    LineGroup FilterOnSorting();
 
     std::vector<LineGroup> SplitOnSpacing(
         double maximumSpacing,
@@ -69,6 +69,11 @@ struct LineGroup
 
     void SortByPosition(bool isHorizontal);
 };
+
+
+std::ostream & operator<<(
+    std::ostream &outputStream,
+    const LineGroup &group);
 
 
 std::ostream & operator<<(

@@ -58,8 +58,8 @@ struct ChessSettings
         static constexpr size_t defaultMinimumLinesPerGroup = 3;
         static constexpr double defaultSpacingLimit = 150.0;
         static constexpr double defaultSpacingRatioThreshold = 0.1;
-        static constexpr size_t defaultRowCount = 15;
-        static constexpr size_t defaultColumnCount = 15;
+        static constexpr size_t defaultRowCount = 16;
+        static constexpr size_t defaultColumnCount = 16;
         static constexpr size_t defaultGroupSeparation_degrees = 20;
         static constexpr double defaultMaximumVertexDistance = 4.0;
 

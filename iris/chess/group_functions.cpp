@@ -107,12 +107,7 @@ Groups FilterByAngle(const Groups &groups)
             }
             else
             {
-                auto splitOnSorting = localGroup.SplitOnSorting();
-
-                for (auto &splitGroup: splitOnSorting)
-                {
-                    result.push_back(splitGroup);
-                }
+                result.push_back(localGroup.FilterOnSorting());
             }
         }
         else

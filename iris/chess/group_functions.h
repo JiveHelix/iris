@@ -4,7 +4,6 @@
 #include "iris/chess/chess_log.h"
 #include "iris/chess/groups.h"
 #include "iris/chess/axis_groups.h"
-#include "iris/chess/named_vertex.h"
 
 
 namespace iris

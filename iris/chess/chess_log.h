@@ -1,6 +1,5 @@
 #pragma once
 
-
 #ifdef ENABLE_CHESS_LOG
 
 #include <pex/log.h>

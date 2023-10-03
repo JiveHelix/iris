@@ -10,11 +10,13 @@ namespace iris
 
 #ifdef ENABLE_CHESS_LOG
 #define LOG_GROUPS                                                  \
-    CHESS_LOG("\nLOG_GROUPS\n  groups size: ", this->groups.size());                \
+    CHESS_LOG(                                                      \
+        "\nLOG_GROUPS\n  groups size: ",                            \
+        this->groups.size());                                       \
                                                                     \
     for (auto &group: this->groups)                                 \
     {                                                               \
-        std::cout << "    group.lines.size(): "                       \
+        std::cout << "    group.lines.size(): "                     \
             << group.lines.size() << "\n";                          \
     }                                                               \
                                                                     \

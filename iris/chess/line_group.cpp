@@ -100,6 +100,8 @@ void LineGroup::RemoveOutlierLines()
         return;
     }
 
+    CHESS_LOG("lines.size(): ", this->lines.size());
+
     auto quartiles = tau::GetAngularQuartiles(this->GetAngles());
 
     CHESS_LOG(
@@ -156,35 +158,66 @@ void LineGroup::RemoveOutlierLines()
         });
 
     this->lines.erase(result, this->lines.end());
+
+    CHESS_LOG("lines.size(): ", this->lines.size());
 }
 
 
-std::vector<LineGroup> LineGroup::SplitOnSorting()
+LineGroup LineGroup::FilterOnSorting()
 {
-    // Apply a hysteresis to allow small deviations from the dominant
-    // sorting.
-    double hysteresis = 1.0;
-
     using Eigen::Index;
-    std::vector<LineGroup> result;
 
     if (this->lines.size() < 3)
     {
-        result.push_back(*this);
-        return result;
+        return *this;
     }
 
-    result.emplace_back(this->lines[0]);
-    LineGroup *current = &result.back();
+    // Find the dominant sorting.
+    double sumOfDifferences = 0.0;
 
-    bool isDescending =
-        tau::LineAngleDifference(
-            this->lines[0].GetAngleDegrees(),
-            this->lines[1].GetAngleDegrees()) >= 0.0;
+    for (size_t i = 0; i < this->lines.size() - 1; ++i)
+    {
+        auto &first = this->lines[i];
+        auto &second = this->lines[i + 1];
 
-    bool sortingChanged = false;
+        sumOfDifferences += tau::LineAngleDifference(
+            first.GetAngleDegrees(),
+            second.GetAngleDegrees());
+    }
 
-    for (size_t i = 1; i < this->lines.size() - 1; ++i)
+    bool isDescending = (sumOfDifferences > 0.0);
+
+    auto Matches = [isDescending](double difference) -> bool
+    {
+        // Apply a hysteresis to allow small deviations from the dominant
+        // sorting.
+        static const double hysteresis = 0.5;
+
+        if (isDescending)
+        {
+            if (difference > -hysteresis)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        // is ascending
+        if (difference < hysteresis)
+        {
+            return true;
+        }
+
+        return false;
+    };
+
+    LineGroup result;
+    result.AddLine(this->lines[0]);
+
+    CHESS_LOG(*this);
+
+    for (size_t i = 0; i < this->lines.size() - 1; ++i)
     {
         auto &first = this->lines[i];
         auto &second = this->lines[i + 1];
@@ -193,78 +226,12 @@ std::vector<LineGroup> LineGroup::SplitOnSorting()
             first.GetAngleDegrees(),
             second.GetAngleDegrees());
 
-        sortingChanged = false;
+        CHESS_LOG("difference: ", difference, " isDescending: ", isDescending);
 
-        if (isDescending)
+        if (Matches(difference))
         {
-            // Require the change to be large enough in the other
-            // direction.
-            if (difference < -hysteresis)
-            {
-                sortingChanged = true;
-            }
+            result.AddLine(second);
         }
-        else
-        {
-            // Require the change to be large enough in the other
-            // direction.
-            if (difference > hysteresis)
-            {
-                sortingChanged = true;
-            }
-        }
-
-        if (sortingChanged)
-        {
-            // The sort order has changed.
-            // Create a new group.
-            result.emplace_back(first);
-            current = &result.back();
-            isDescending = !isDescending;
-        }
-        else
-        {
-            // The current sort order matches the previous.
-            // Add first to the current group.
-            current->AddLine(first);
-        }
-    }
-
-    auto &last = this->lines.back();
-    auto &penultimate = this->lines[this->lines.size() - 2];
-
-    auto difference = tau::LineAngleDifference(
-        penultimate.GetAngleDegrees(),
-        last.GetAngleDegrees());
-
-    sortingChanged = false;
-
-    if (isDescending)
-    {
-        // Require the change to be large enough in the other
-        // direction.
-        if (difference < -hysteresis)
-        {
-            sortingChanged = true;
-        }
-    }
-    else
-    {
-        // Require the change to be large enough in the other
-        // direction.
-        if (difference > hysteresis)
-        {
-            sortingChanged = true;
-        }
-    }
-
-    if (sortingChanged)
-    {
-        result.emplace_back(last);
-    }
-    else
-    {
-        current->AddLine(last);
     }
 
     return result;
@@ -688,13 +655,21 @@ void LineGroup::SortByPosition(bool isHorizontal)
 
 std::ostream & operator<<(
     std::ostream &outputStream,
+    const LineGroup &group)
+{
+    return group.ToStream(outputStream);
+}
+
+
+std::ostream & operator<<(
+    std::ostream &outputStream,
     const std::list<LineGroup> &groups)
 {
     size_t count = 0;
 
     for (auto &group: groups)
     {
-        group.ToStream(outputStream << ++count << ": ") << std::endl;
+        outputStream << ++count << ": " << group << std::endl;
     }
 
     return outputStream;
@@ -709,7 +684,7 @@ std::ostream & operator<<(
 
     for (auto &group: groups)
     {
-        group.ToStream(outputStream << ++count << ": ") << std::endl;
+        outputStream << ++count << ": " << group << std::endl;
     }
 
     return outputStream;
