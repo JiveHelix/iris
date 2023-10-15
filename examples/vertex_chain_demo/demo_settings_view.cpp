@@ -10,7 +10,7 @@ DemoSettingsView::DemoSettingsView(
     wxWindow *parent,
     DemoControl control)
     :
-    wxScrolled<wxPanel>(parent, wxID_ANY)
+    wxpex::Scrolled(parent)
 {
     wxpex::LayoutOptions layoutOptions{};
     layoutOptions.labelFlags = wxALIGN_RIGHT;
@@ -49,9 +49,6 @@ DemoSettingsView::DemoSettingsView(
 
     auto borderSizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
     borderSizer->Add(sizer.release(), 1, wxEXPAND | wxALL, 5);
-    auto topSizer = borderSizer.release();
-    this->SetSizer(topSizer);
-    topSizer->FitInside(this);
-    this->SetScrollRate(0, 10);
-    this->SetMinSize(wxSize(-1, 400));
+
+    this->ConfigureTopSizer(wxpex::verticalScrolled, std::move(borderSizer));
 }

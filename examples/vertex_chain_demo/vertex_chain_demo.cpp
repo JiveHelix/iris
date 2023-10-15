@@ -11,6 +11,7 @@
 #include "../common/about_window.h"
 #include "../common/observer.h"
 #include "../common/brain.h"
+#include "../common/png_settings.h"
 
 #include "demo_settings.h"
 #include "demo_controls.h"
@@ -60,21 +61,22 @@ public:
         return "Vertex Demo";
     }
 
-    void LoadPng(const draw::Png<Pixel> &png)
+    void LoadPng(const draw::GrayPng<PngPixel> &png)
     {
-        auto maximum = this->demoModel_.color.level.high.GetMaximum();
+        int32_t maximum = pngMaximum;
 
-        this->demoModel_.Mute();
+        // Prevent drawing until new dimensions and source data are
+        // synchronized.
+        this->pngIsLoaded_ = false;
+
+        this->demoModel_.color.range.high.SetMaximum(maximum);
+        this->demoModel_.color.range.high.Set(maximum);
         this->demoModel_.maximum.Set(maximum);
-        this->demoModel_.mask.imageSize.Set(png.GetSize());
-        this->demoModel_.Unmute();
-
-        auto scale = static_cast<double>(maximum);
-
-        this->filters_.source.SetData(
-            png.GetValue(scale).template cast<int32_t>().eval());
+        this->filters_.source.SetData(png.GetValues().template cast<int32_t>());
 
         this->pngIsLoaded_ = true;
+
+        this->Display();
     }
 
     wxWindow * CreateControls(wxWindow *parent)

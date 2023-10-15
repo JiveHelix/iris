@@ -22,7 +22,6 @@ std::shared_ptr<draw::Pixels> LinesChainResults::Display(
     ThreadsafeColor<int32_t> &color,
     std::optional<HoughControl> houghControl) const
 {
-
     if (!this->cannyChain)
     {
         // There's nothing to display if the first filter in the chain has no
@@ -41,8 +40,10 @@ std::shared_ptr<draw::Pixels> LinesChainResults::Display(
             auto scale = static_cast<double>(color.GetSettings().maximum);
             ProcessMatrix space = houghResult.GetScaledSpace<int32_t>(scale);
 
-            houghControl->Set(
-                std::make_shared<draw::Pixels>(color.Filter(space)));
+            auto houghPixels =
+                std::make_shared<draw::Pixels>(color.Filter(space));
+
+            houghControl->Set(houghPixels);
         }
 
         if (houghResult.lines.empty())

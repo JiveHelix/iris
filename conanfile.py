@@ -4,7 +4,7 @@ from conans import ConanFile, CMake, tools
 
 class IrisConan(ConanFile):
     name = "iris"
-    version = "0.2.7"
+    version = "0.2.8"
 
     scm = {
         "type": "git",

@@ -17,8 +17,8 @@ namespace iris
 template<typename T, typename Value>
 auto MakeColorMap(const ColorSettings<Value> &colorSettings)
 {
-    auto low = colorSettings.level.low;
-    auto high = colorSettings.level.high;
+    auto low = colorSettings.range.low;
+    auto high = colorSettings.range.high;
 
     static constexpr auto maximum =
         static_cast<decltype(low)>(std::numeric_limits<T>::max());

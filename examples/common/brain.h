@@ -1,21 +1,17 @@
 #pragma once
 
 
-#include <wxpex/ignores.h>
 #include <wxpex/window.h>
 #include <wxpex/splitter.h>
-
-WXSHIM_PUSH_IGNORES
-#include <wx/display.h>
-WXSHIM_POP_IGNORES
 
 #include <draw/png.h>
 #include <draw/views/pixel_view.h>
 #include "user.h"
 #include "display_error.h"
+#include "png_settings.h"
 
 
-using Pixel = uint32_t;
+using Pixel = int32_t;
 
 
 template<typename Derived>
@@ -34,6 +30,11 @@ public:
     {
         this->applicationFrame_.Get()->SetMenuBar(
             this->shortcuts_->GetMenuBar());
+    }
+
+    void ExportPng()
+    {
+        std::cout << "ExportPng not implemented" << std::endl;
     }
 
     Derived * GetDerived()
@@ -76,8 +77,8 @@ public:
     {
         // Open PNG file, and read data into Eigen matrix.
         // Display pixel view.
-        draw::Png<Pixel> png =
-            draw::Png<Pixel>(this->user_.fileName.Get(), true);
+        auto png =
+            draw::GrayPng<PngPixel>(this->user_.fileName.Get());
 
         this->GetDerived()->LoadPng(png);
 

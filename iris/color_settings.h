@@ -44,7 +44,7 @@ struct ColorFields
 {
     static constexpr auto fields = std::make_tuple(
         fields::Field(&T::turbo, "turbo"),
-        fields::Field(&T::level, "level"),
+        fields::Field(&T::range, "range"),
         fields::Field(&T::maximum, "maximum"));
 };
 
@@ -56,7 +56,7 @@ struct ColorTemplate
     struct Template
     {
         T<bool> turbo;
-        T<typename LevelRanges<Value>::GroupMaker> level;
+        T<typename LevelRanges<Value>::GroupMaker> range;
         T<Value> maximum;
 
         static constexpr auto fields = ColorFields<Template>::fields;
@@ -111,7 +111,7 @@ public:
 private:
     void OnMaximum_(Value maximum_)
     {
-        this->level.SetMaximumValue(maximum_);
+        this->range.SetMaximumValue(maximum_);
     }
 
 private:

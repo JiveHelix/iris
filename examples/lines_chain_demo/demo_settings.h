@@ -7,6 +7,8 @@
 #include <iris/lines_chain_settings.h>
 #include <iris/color_settings.h>
 
+#include "../common/png_settings.h"
+
 
 template<typename T>
 struct DemoFields
@@ -52,8 +54,18 @@ struct DemoModel: public DemoGroup::Model
             draw::SizeControl(this->imageSize),
             &DemoModel::OnImageSize_)
     {
+        iris::InProcess maximum = pngMaximum;
+        this->level.range.high.SetMaximum(maximum);
+        this->level.range.high.Set(maximum);
+        this->level.maximum.Set(maximum);
+        this->color.range.high.SetMaximum(maximum);
+        this->color.range.high.Set(maximum);
+        this->color.maximum.Set(maximum);
+
         this->lines.SetMaximumControl(iris::MaximumControl(this->maximum));
         this->lines.SetImageSizeControl(draw::SizeControl(this->imageSize));
+
+        this->maximum.Set(maximum);
     }
 
     void OnMaximum_(iris::InProcess maximumValue)

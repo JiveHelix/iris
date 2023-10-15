@@ -33,7 +33,7 @@ struct HoughResult
     Lines lines;
 
     template<typename Value>
-    tau::MatrixLike<Value, Matrix> GetScaledSpace(Float maximumValue) const
+    tau::MatrixLike<Value, Matrix> GetScaledSpace(Float targetMaximum) const
     {
         auto maximum = this->space.maxCoeff();
 
@@ -44,8 +44,10 @@ struct HoughResult
                 this->space.cols());
         }
 
-        return (this->space.array() * maximumValue / maximum)
+        auto scaled = (this->space.array() * targetMaximum / maximum)
                 .floor().template cast<Value>();
+
+        return scaled;
     }
 };
 
@@ -188,6 +190,15 @@ public:
 
         Accumulator() = default;
 
+        static Float GetToIndexFactor(Index rhoCount, Float maximumRho)
+        {
+            auto maximumRhoIndex = static_cast<Float>(rhoCount - 1);
+
+            // rho can be negative, so there are 2x as many indices as
+            // maximumRho_.
+            return maximumRhoIndex / (2 * maximumRho);
+        }
+
         Accumulator(
                 const draw::Size &imageSize,
                 size_t rhoCount,
@@ -199,8 +210,7 @@ public:
             rhoCount_(static_cast<Index>(rhoCount)),
 
             toIndexFactor_(
-                static_cast<Float>(this->rhoCount_ - 1)
-                    / (2 * this->maximumRho_)),
+                GetToIndexFactor(this->rhoCount_, this->maximumRho_)),
 
             thetaCount_(static_cast<Index>(thetaCount)),
             angleRange_(angleRange),
@@ -215,8 +225,8 @@ public:
                     this->thetas_.array().cos().eval())),
             space_(
                 Matrix::Zero(
-                    static_cast<Index>(rhoCount + 1),
-                    static_cast<Index>(thetaCount + 1)))
+                    static_cast<Index>(rhoCount),
+                    static_cast<Index>(thetaCount)))
         {
 
         }
@@ -251,10 +261,11 @@ public:
 
             auto indices = this->ToRhoIndex(rhos);
 
-            assert(indices.cols() == rhos.cols());
-            assert(lowIndex + rhos.cols() <= this->space_.cols());
+            assert(indices.cols() == thetaCount);
+            assert(lowIndex + thetaCount <= this->space_.cols());
+            assert(indices.maxCoeff() < this->space_.rows());
 
-            for (Index i = 0; i < rhos.cols(); ++i)
+            for (Index i = 0; i < thetaCount; ++i)
             {
                 this->space_(indices(i), lowIndex + i) += weight;
             }

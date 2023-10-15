@@ -143,8 +143,8 @@ public:
     {
         this->demoModel_.gradient.enable = false;
         this->demoModel_.gradient.maximum.Set(8096);
-        this->demoModel_.color.level.SetMaximumValue(8096);
-        this->demoModel_.color.level.high.Set(8096);
+        this->demoModel_.color.range.SetMaximumValue(8096);
+        this->demoModel_.color.range.high.Set(8096);
         this->color_ = Color(this->demoModel_.color.Get());
     }
 
@@ -187,7 +187,7 @@ public:
         std::lock_guard lock(this->mutex_);
 
         auto scale =
-            static_cast<float>(this->demoModel_.color.level.high.GetMaximum());
+            static_cast<float>(this->demoModel_.color.range.high.GetMaximum());
 
         iris::ProcessMatrix processed =
             this->png_.GetValue(scale).template cast<InProcess>();

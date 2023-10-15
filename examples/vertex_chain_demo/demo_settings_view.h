@@ -1,16 +1,11 @@
 #pragma once
 
 
-#include <wxpex/ignores.h>
-
-WXSHIM_PUSH_IGNORES
-#include <wx/scrolwin.h>
-WXSHIM_POP_IGNORES
-
+#include <wxpex/scrolled.h>
 #include "demo_settings.h"
 
 
-class DemoSettingsView: public wxScrolled<wxPanel>
+class DemoSettingsView: public wxpex::Scrolled
 {
 public:
     DemoSettingsView(

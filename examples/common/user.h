@@ -16,6 +16,7 @@ struct UserFields
         fields::Field(&T::fileName, "fileName"),
         fields::Field(&T::saveSettings, "saveSettings"),
         fields::Field(&T::loadSettings, "loadSettings"),
+        fields::Field(&T::exportPng, "exportPng"),
         fields::Field(&T::quit, "quit"),
         fields::Field(&T::about, "about"),
         fields::Field(&T::showPixelViewLayout, "showPixelViewLayout"),
@@ -31,6 +32,7 @@ struct UserTemplate
     T<std::string> fileName;
     T<pex::MakeSignal> saveSettings;
     T<pex::MakeSignal> loadSettings;
+    T<pex::MakeSignal> exportPng;
     T<pex::MakeSignal> quit;
     T<pex::MakeSignal> about;
     T<pex::MakeSignal> showPixelViewLayout;

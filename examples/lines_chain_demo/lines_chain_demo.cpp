@@ -6,6 +6,7 @@
 #include <wxpex/app.h>
 
 #include <draw/pixels.h>
+#include <draw/png.h>
 
 
 #include <iris/views/mask_brain.h>
@@ -13,6 +14,7 @@
 #include "../common/about_window.h"
 #include "../common/observer.h"
 #include "../common/brain.h"
+#include "../common/png_settings.h"
 
 #include "demo_settings.h"
 #include "demo_controls.h"
@@ -82,9 +84,15 @@ public:
         displayRequested_(false),
         displayLoopIsRunning_(true),
         displayThread_(
-            std::bind(&DemoBrain::DisplayLoop_, this))
+            std::bind(&DemoBrain::DisplayLoop_, this)),
+        doDisplay_([this](){this->Display();})
     {
 
+    }
+
+    ~DemoBrain()
+    {
+        this->Shutdown();
     }
 
     std::string GetAppName() const
@@ -92,24 +100,28 @@ public:
         return "Lines Demo";
     }
 
-    void LoadPng(const draw::Png<Pixel> &png)
+    void LoadPng(const draw::GrayPng<PngPixel> &png)
     {
-        auto maximum = this->demoModel_.color.level.high.GetMaximum();
-        auto scale = static_cast<double>(maximum);
-
         // Prevent drawing until new dimensions and source data are
         // synchronized.
         this->pngIsLoaded_ = false;
 
-        this->demoModel_.maximum.Set(maximum);
         this->demoModel_.imageSize.Set(png.GetSize());
-
-        this->filters_.source.SetData(
-            png.GetValue(scale).template cast<int32_t>().eval());
+        this->filters_.source.SetData(png.GetValues().template cast<int32_t>());
 
         this->pngIsLoaded_ = true;
 
+        this->filters_.level.AutoDetectSettings();
+        this->filters_.lines.AutoDetectSettings();
+
         this->Display();
+    }
+
+    void ExportPng()
+    {
+        draw::WritePng(
+            "hough.png",
+            *this->houghUserControl_.houghView.pixels.Get());
     }
 
     wxWindow * CreateControls(wxWindow *parent)
@@ -138,7 +150,8 @@ public:
         wxAboutBox(MakeAboutDialogInfo("Lines Demo"));
     }
 
-    std::shared_ptr<draw::Pixels> MakePixels(const iris::ProcessMatrix &value) const
+    std::shared_ptr<draw::Pixels> MakePixels(
+        const iris::ProcessMatrix &value) const
     {
         return std::make_shared<draw::Pixels>(
             this->filters_.color.Filter(value));
@@ -192,14 +205,17 @@ public:
 
     void Shutdown()
     {
+        if (this->displayLoopIsRunning_)
         {
-            std::lock_guard lock(this->mutex_);
-            this->displayLoopIsRunning_ = false;
-            this->filters_.cancel.Set(true);
-            this->condition_.notify_one();
-        }
+            {
+                std::lock_guard lock(this->mutex_);
+                this->displayLoopIsRunning_ = false;
+                this->filters_.cancel.Set(true);
+                this->condition_.notify_one();
+            }
 
-        this->displayThread_.join();
+            this->displayThread_.join();
+        }
 
         this->houghView_.Close();
         Brain<DemoBrain>::Shutdown();
@@ -208,10 +224,7 @@ public:
 private:
     void OnSettings_(const DemoSettings &)
     {
-        if (this->pngIsLoaded_)
-        {
-            this->Display();
-        }
+        this->doDisplay_();
     }
 
     void OnHoughEnable_(bool isEnabled)
@@ -221,9 +234,9 @@ private:
             if (!this->houghView_)
             {
                 this->houghView_ = {
-                    new draw::PixelView(
-                        nullptr,
-                        this->houghUserControl_.houghView),
+                    new draw::PixelFrame(
+                        this->houghUserControl_.houghView,
+                        "Hough Space"),
                     MakeShortcuts(this->GetUserControls())};
             }
 
@@ -271,6 +284,11 @@ private:
                     return;
                 }
 
+                if (this->filters_.cancel.Get())
+                {
+                    this->filters_.cancel.Set(false);
+                }
+
                 this->displayState_ = DisplayState::processing;
             }
 
@@ -278,14 +296,15 @@ private:
 
             {
                 std::lock_guard lock(this->mutex_);
-
                 if (this->filters_.cancel.Get())
                 {
                     this->filters_.cancel.Set(false);
-                    continue;
                 }
-                else
+
+                if (pixels)
                 {
+                    // Processing succeeded.
+                    // Go back to the top of the loop and wait.
                     this->displayRequested_ = false;
                 }
             }
@@ -315,6 +334,7 @@ private:
     std::atomic_bool displayRequested_;
     std::atomic_bool displayLoopIsRunning_;
     std::thread displayThread_;
+    wxpex::CallAfter doDisplay_;
 };
 
 

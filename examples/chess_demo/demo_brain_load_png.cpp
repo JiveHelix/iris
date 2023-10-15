@@ -1,29 +1,22 @@
 #include "demo_brain.h"
+#include "../common/png_settings.h"
 
 
-void DemoBrain::LoadPng(const draw::Png<Pixel> &png)
+void DemoBrain::LoadPng(const draw::GrayPng<PngPixel> &png)
 {
-    auto maximum = 1023;
-
-    if (sizeof(Pixel) == 1)
-    {
-        maximum = 255;
-    }
+    int32_t maximum = pngMaximum;
 
     // Prevent drawing until new dimensions and source data are
     // synchronized.
     this->pngIsLoaded_ = false;
 
-    this->demoModel_.Mute();
+    this->demoModel_.color.range.high.SetMaximum(maximum);
+    this->demoModel_.color.range.high.Set(maximum);
     this->demoModel_.maximum.Set(maximum);
     this->demoModel_.imageSize.Set(png.GetSize());
-    this->demoModel_.Unmute();
-
-    auto pngValues =
-        png.GetValue(1.0).template cast<int32_t>().eval();
-
-    this->filters_.source.SetData(pngValues);
+    this->filters_.source.SetData(png.GetValues().template cast<int32_t>());
 
     this->pngIsLoaded_ = true;
+
     this->Display();
 }

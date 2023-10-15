@@ -34,16 +34,16 @@ public:
             "Low",
             new wxpex::ValueSlider(
                 panel,
-                control.level.low,
-                control.level.low.value));
+                control.range.low,
+                control.range.low.value));
 
         auto levelHigh = wxpex::LabeledWidget(
             panel,
             "High",
             new wxpex::ValueSlider(
                 panel,
-                control.level.high,
-                control.level.high.value));
+                control.range.high,
+                control.range.high.value));
 
         auto turboOn = wxpex::LabeledWidget(
             panel,

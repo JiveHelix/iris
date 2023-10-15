@@ -15,6 +15,7 @@
 #include "../common/about_window.h"
 #include "../common/observer.h"
 #include "../common/brain.h"
+#include "../common/png_settings.h"
 
 #include "./demo_settings.h"
 #include "./demo_controls.h"
@@ -43,7 +44,7 @@ public:
         return "Chess Demo";
     }
 
-    void LoadPng(const draw::Png<Pixel> &png);
+    void LoadPng(const draw::GrayPng<PngPixel> &png);
 
     wxWindow * CreateControls(wxWindow *parent);
 

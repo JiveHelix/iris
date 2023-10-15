@@ -32,6 +32,9 @@ public:
         this->endpoints_.fileName.Connect(
             &Observer::OnFileName_);
 
+        this->endpoints_.exportPng.Connect(
+            &Observer::OnExportPng_);
+
         this->endpoints_.errors.Connect(&Observer::OnErrors_);
     }
 
@@ -39,6 +42,11 @@ private:
     void OnFileName_(const std::string &)
     {
         this->doOpenFile_();
+    }
+
+    void OnExportPng_()
+    {
+        this->actor_->ExportPng();
     }
 
     void OnOpenFile_()

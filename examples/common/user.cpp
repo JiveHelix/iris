@@ -26,6 +26,13 @@ static wxpex::Shortcuts GetFileMenuShortcuts(UserControl userControl)
             "Load settings from a file"),
 
         wxpex::Shortcut(
+            userControl.exportPng,
+            wxACCEL_CMD,
+            'E',
+            "Export PNG",
+            "Export displayed data as PNG."),
+
+        wxpex::Shortcut(
             userControl.quit,
             wxACCEL_CMD,
             'Q',
