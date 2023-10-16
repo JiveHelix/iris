@@ -3,6 +3,7 @@
 
 #include <future>
 #include <vector>
+#include <deque>
 #include <optional>
 #include <tau/eigen.h>
 #include <tau/planar.h>
@@ -13,6 +14,9 @@
 #include "iris/gradient.h"
 #include "iris/chunks.h"
 #include "draw/pixels.h"
+
+
+// #define LOG_REPEAT_SUPPRESSION
 
 
 namespace iris
@@ -103,6 +107,50 @@ public:
                     return std::make_pair(
                         Point(this->x, this->y - 1),
                         Point(this->x, this->y + 1));
+
+                default:
+                    throw std::logic_error("Unexpected direction");
+            }
+        }
+
+        Point GetNext(int direction) const
+        {
+            switch (direction)
+            {
+                case 0:
+                    // horizontal
+                    return Point(this->x + 1, this->y);
+
+                case 1:
+                case 3:
+                    // diagonal
+                    return Point(this->x + 1, this->y + 1);
+
+                case 2:
+                    // vertical
+                    return Point(this->x, this->y + 1);
+
+                default:
+                    throw std::logic_error("Unexpected direction");
+            }
+        }
+
+        Point GetPrevious(int direction) const
+        {
+            switch (direction)
+            {
+                case 0:
+                    // horizontal
+                    return Point(this->x - 1, this->y);
+
+                case 1:
+                case 3:
+                    // diagonal
+                    return Point(this->x - 1, this->y - 1);
+
+                case 2:
+                    // vertical
+                    return Point(this->x, this->y - 1);
 
                 default:
                     throw std::logic_error("Unexpected direction");
@@ -233,6 +281,90 @@ public:
         return solver.result;
     }
 
+    static bool LocateCenterPoint(
+        int direction,
+        Phasor<Float> &phasor,
+        Matrix &suppressed,
+        Point previous,
+        Point point,
+        Point next)
+    {
+        std::deque<Point> similarPoints;
+        similarPoints.push_back(point);
+
+        auto previousValue = phasor.GetMagnitude(previous);
+        auto value = phasor.GetMagnitude(point);
+        auto nextValue = phasor.GetMagnitude(next);
+
+        auto rowCount = phasor.magnitude.rows();
+        auto columnCount = phasor.magnitude.cols();
+
+        // Collect all previous values that match
+        while (value == previousValue)
+        {
+            similarPoints.push_front(previous);
+            previous = previous.GetPrevious(direction);
+
+            if (!previous.InBounds(rowCount, columnCount))
+            {
+                break;
+            }
+
+            previousValue = phasor.GetMagnitude(previous);
+
+            if (previousValue > value)
+            {
+                // We are done
+                break;
+            }
+        }
+
+        // Collect all next values that match.
+        while (value == nextValue)
+        {
+            similarPoints.push_back(next);
+            next = next.GetNext(direction);
+
+            if (!next.InBounds(rowCount, columnCount))
+            {
+                break;
+            }
+
+            nextValue = phasor.GetMagnitude(next);
+
+            if (nextValue > value)
+            {
+                // We are done
+                break;
+            }
+        }
+
+        // Choose the middle point to pass through the suppression filter.
+        auto middleIndex = similarPoints.size() / 2;
+
+        auto keeper = similarPoints[middleIndex];
+
+        bool repeated = false;
+
+        if (suppressed(keeper.y, keeper.x) > 0.0)
+        {
+            repeated = true;
+        }
+        else
+        {
+            suppressed(keeper.y, keeper.x) = phasor.GetMagnitude(keeper);
+        }
+
+        // TODO: Reduce or eliminate repeated calls to this function without
+        // degrading the result.
+        // Note: Attempted setting all similarPoints to zero in the phasor
+        // magnitude, but that degraded the result and made very little
+        // difference to the repeat count.
+
+        return repeated;
+    }
+
+
     template<typename Value>
     std::optional<Result> Filter(const GradientResult<Value> &gradient) const
     {
@@ -249,18 +381,25 @@ public:
 
         canny.phasor = gradient.template GetPhasor<Float>();
 
+        // Copy the phasor for local modification.
+        auto phasor = canny.phasor;
+
         // Reduce the phase to 8 sectors
         typename Solver::Directions reducedPhase =
-            (canny.phasor.phase.array() / 45).round().template cast<int>();
+            (phasor.phase.array() / 45).round().template cast<int>();
 
         // 0 and 4 are the same direction,
         // as are 1 and 5, 2 and 6, and 3 and 7
         typename Solver::Directions directions = tau::Modulo(reducedPhase, 4);
 
-        Index rows = canny.phasor.magnitude.rows();
-        Index columns = canny.phasor.magnitude.cols();
+        Index rows = phasor.magnitude.rows();
+        Index columns = phasor.magnitude.cols();
 
         Matrix suppressed = Matrix::Zero(rows, columns);
+
+#ifdef LOG_REPEAT_SUPPRESSION
+        size_t repeatCount = 0;
+#endif
 
         // Non-maximum Suppression
         // Ignore the 1 pixel border to reduce branching inside the loop.
@@ -270,24 +409,61 @@ public:
             {
                 auto point = Point(column, row);
 
-                Float value = canny.phasor.magnitude(point.y, point.x);
+                Float value = phasor.GetMagnitude(point);
                 int direction = directions(point.y, point.x);
                 auto neighbors = point.GetNeighbors(direction);
+                auto previous = neighbors.first;
+                auto next = neighbors.second;
 
-                Float compare0 = canny.phasor.magnitude(
-                    neighbors.first.y,
-                    neighbors.first.x);
+                Float previousValue = phasor.GetMagnitude(previous);
+                Float nextValue = phasor.GetMagnitude(next);
 
-                Float compare1 = canny.phasor.magnitude(
-                    neighbors.second.y,
-                    neighbors.second.x);
-
-                if ((value >= compare0) && (value >= compare1))
+                if ((value > previousValue) && (value > nextValue))
                 {
                     suppressed(point.y, point.x) = value;
                 }
+                else if ((value == previousValue) || value == nextValue)
+                {
+#ifdef LOG_REPEAT_SUPPRESSION
+                    if (
+                        LocateCenterPoint(
+                            direction,
+                            phasor,
+                            suppressed,
+                            previous,
+                            point,
+                            next)
+                        )
+                    {
+                        ++repeatCount;
+                    }
+#else
+                    LocateCenterPoint(
+                        direction,
+                        phasor,
+                        suppressed,
+                        previous,
+                        point,
+                        next);
+#endif
+                }
             }
         }
+
+#ifdef LOG_REPEAT_SUPPRESSION
+        auto suppressedCount = (suppressed.array() > 0).count();
+        auto totalCount = (columns - 1) * (rows - 1);
+
+        std::cout << "suppressed count: " << suppressedCount << std::endl;
+        std::cout << "total count: " << totalCount << std::endl;
+        std::cout << "repeated count: " << repeatCount << std::endl;
+
+        std::cout << "repeated rate: "
+            << 100.0 * static_cast<double>(repeatCount)
+                / static_cast<double>(suppressedCount)
+            << " %"
+            << std::endl;
+#endif
 
         std::vector<std::future<Matrix>> threadResults;
 

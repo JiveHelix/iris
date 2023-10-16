@@ -7,6 +7,7 @@
 #include <tau/eigen.h>
 #include <tau/planar.h>
 #include <tau/color.h>
+#include <tau/vector2d.h>
 #include <tau/percentile.h>
 #include <tau/color_maps/rgb.h>
 
@@ -32,6 +33,16 @@ struct Phasor
 
     Matrix magnitude;
     Matrix phase;
+
+    Float & GetMagnitude(const tau::Point2d<Eigen::Index> &point)
+    {
+        return this->magnitude(point.y, point.x);
+    }
+
+    Float & GetPhase(const tau::Point2d<Eigen::Index> &point)
+    {
+        return this->phase(point.y, point.x);
+    }
 };
 
 
