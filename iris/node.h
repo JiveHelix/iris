@@ -6,6 +6,12 @@
 #include <pex/endpoint.h>
 #include "iris/default.h"
 
+// #define ENABLE_NODE_CHRONO
+
+#ifdef ENABLE_NODE_CHRONO
+#include <chrono>
+#include <iostream>
+#endif
 
 
 #ifdef ENABLE_NODE_LOG
@@ -292,7 +298,20 @@ public:
             }
         }
 
+#ifdef ENABLE_NODE_CHRONO
+        using Period = std::chrono::duration<double, std::micro>;
+        using Clock = std::chrono::steady_clock;
+        using TimePoint = std::chrono::time_point<Clock, Period>;
+
+        TimePoint start = Clock::now();
+#endif
+
         auto result = filter.Filter(*input);
+
+#ifdef ENABLE_NODE_CHRONO
+        TimePoint end = Clock::now();
+        std::cout << this->name_ << ": " << (end - start).count() << " µs\n";
+#endif
 
         std::lock_guard lock(this->mutex_);
 
