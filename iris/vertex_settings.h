@@ -48,8 +48,8 @@ struct VertexSettings
 {
     static VertexSettings Default()
     {
-        static constexpr Eigen::Index defaultWindow = 50;
-        static constexpr Eigen::Index defaultCount = 2;
+        static constexpr Eigen::Index defaultWindow = 40;
+        static constexpr Eigen::Index defaultCount = 4;
         static constexpr size_t defaultThreads = 4;
 
         return {{true, defaultWindow, defaultCount, defaultThreads}};

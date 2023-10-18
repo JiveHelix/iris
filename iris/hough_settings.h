@@ -27,6 +27,7 @@ struct HoughFields
         fields::Field(&T::suppress, "suppress"),
         fields::Field(&T::window, "window"),
         fields::Field(&T::threshold, "threshold"),
+        fields::Field(&T::includeEdges, "includeEdges"),
         fields::Field(&T::threads, "threads"));
 
     static constexpr auto fieldsTypeName = "Hough";
@@ -59,6 +60,7 @@ struct HoughTemplate
         T<bool> suppress;
         T<WindowRange> window;
         T<ThresholdRange<Float>> threshold;
+        T<bool> includeEdges;
         T<size_t> threads;
 
         static constexpr auto fields = HoughFields<Template>::fields;
@@ -100,6 +102,7 @@ struct HoughSettings:
             true,
             defaultWindow,
             defaultThreshold,
+            false,
             defaultThreads}};
 
         return settings;

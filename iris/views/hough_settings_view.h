@@ -81,6 +81,11 @@ public:
                 controls.threshold,
                 controls.threshold.value));
 
+        auto includeEdges = wxpex::LabeledWidget(
+            panel,
+            "Include edges",
+            new wxpex::CheckBox(panel, "", controls.includeEdges));
+
         auto threads = wxpex::LabeledWidget(
             panel,
             "Threads",
@@ -96,6 +101,7 @@ public:
             suppress,
             window,
             threshold,
+            includeEdges,
             threads);
 
         this->ConfigureTopSizer(std::move(sizer));

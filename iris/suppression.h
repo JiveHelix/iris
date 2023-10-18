@@ -146,6 +146,7 @@ private:
             // Create chunks along the columns
             auto chunks = chunk::MakeChunks(this->threadCount_, this->columns_);
             assert(chunks.back().count >= chunks.at(0).count);
+
             return chunks;
         }
         else
@@ -153,6 +154,7 @@ private:
             // Create chunks along the rows
             auto chunks = chunk::MakeChunks(this->threadCount_, this->rows_);
             assert(chunks.back().count >= chunks.at(0).count);
+
             return chunks;
         }
     }

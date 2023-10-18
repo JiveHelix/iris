@@ -11,7 +11,6 @@
 
 #include "iris/chess/chess_log.h"
 #include "iris/chess/chess_error.h"
-#include "iris/chess/line_from_points.h"
 
 
 namespace iris

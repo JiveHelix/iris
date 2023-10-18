@@ -32,7 +32,6 @@ target_sources(
     chess/find_vertex.cpp
     chess/group_functions.cpp
     chess/named_vertex.cpp
-    chess/line_from_points.cpp
     chess/line_group.cpp
     chess.cpp
     chess_chain.cpp

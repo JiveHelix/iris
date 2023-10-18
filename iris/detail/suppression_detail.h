@@ -90,12 +90,12 @@ struct Suppressor
             return;
         }
 
-        // There is a localMaximum
-
         if (this->nextMaximum.value > this->localMaximum->value)
         {
             // Zero the previous maximum
-            this->result(this->localMaximum->row, this->localMaximum->column) = 0.0;
+            this->result(
+                this->localMaximum->row,
+                this->localMaximum->column) = 0.0;
 
             // Restore the value of the new maximum
             this->result(this->nextMaximum.row, this->nextMaximum.column) =
@@ -226,11 +226,7 @@ void SuppressColumnMajor(
 
             suppressor.nextMaximum.column += column;
 
-            // We only need to zero the bottom right pixel. The other
-            // non-maximum pixels have already been zeroed.
-            result(
-                row + windowSize - 1,
-                column + windowSize - 1) = 0;
+            rowVector.array() = 0;
 
             suppressor.ResetLocalMaximum(row);
             suppressor.UpdateLocalMaximum();
@@ -311,9 +307,7 @@ void SuppressRowMajor(
 
             suppressor.nextMaximum.row += row;
 
-            // We only need to zero the bottom right pixel. The other
-            // non-maximum pixels have already been zeroed.
-            result(row + windowSize - 1, column + windowSize - 1) = 0;
+            columnVector.array() = 0;
 
             suppressor.ResetLocalMaximum(column);
             suppressor.UpdateLocalMaximum();
@@ -367,8 +361,10 @@ public:
 
         // Limit the bounds of the operation so that the window never exceeds
         // the bounds of data_;
-        Index limitRow = rows.count - windowSize + 1;
-        Index limitColumn = columns.count - windowSize + 1;
+        // Add +1 because we are limiting the starting index of the windowed
+        // operation.
+        Index limitRow = (rows.count - windowSize) + 1;
+        Index limitColumn = (columns.count - windowSize) + 1;
 
         this->result_ = std::async(
             std::launch::async,

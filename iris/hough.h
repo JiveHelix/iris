@@ -345,9 +345,11 @@ public:
             this->space_ = space;
         }
 
-        std::vector<tau::Line2d<Float>> GetLines(Float threshold)
+        void GetLinesWithEdges(
+            std::vector<tau::Line2d<Float>> &result,
+            const HoughSettings<Float> &settings)
         {
-            std::vector<tau::Line2d<Float>> result;
+            auto threshold = settings.threshold;
 
             for (
                 Index rowIndex = 0;
@@ -369,6 +371,74 @@ public:
                         result.emplace_back(rho, degrees);
                     }
                 }
+            }
+        }
+
+        void GetLinesWithoutEdges(
+            std::vector<tau::Line2d<Float>> &result,
+            const HoughSettings<Float> &settings)
+        {
+            auto verticalLimit = settings.imageSize.height / 2;
+            auto horizontalLimit = settings.imageSize.width / 2;
+            auto threshold = settings.threshold;
+
+            for (
+                Index rowIndex = 0;
+                rowIndex < this->space_.rows();
+                ++rowIndex)
+            {
+                for (
+                    Index columnIndex = 0;
+                    columnIndex < this->space_.cols();
+                    ++columnIndex)
+                {
+                    if (this->space_(rowIndex, columnIndex) <= threshold)
+                    {
+                        continue;
+                    }
+
+                    auto rho = this->ToRho(rowIndex);
+
+                    auto degrees =
+                        tau::ToDegrees(this->ToTheta(columnIndex));
+
+                    // Checks both +90 and -90
+                    auto verticalCheck =
+                        std::abs(std::abs(degrees) - 90);
+
+                    if (
+                        verticalCheck < 0.5
+                        && std::abs(rho - verticalLimit) < 2)
+                    {
+                        continue;
+                    }
+
+                    auto horizontalCheck = std::abs(degrees);
+
+                    if (
+                        horizontalCheck < 0.5
+                        && std::abs(rho - horizontalLimit) < 2)
+                    {
+                        continue;
+                    }
+
+                    result.emplace_back(rho, degrees);
+                }
+            }
+        }
+
+        std::vector<tau::Line2d<Float>> GetLines(
+            const HoughSettings<Float> &settings)
+        {
+            std::vector<tau::Line2d<Float>> result{};
+
+            if (settings.includeEdges)
+            {
+                this->GetLinesWithEdges(result, settings);
+            }
+            else
+            {
+                this->GetLinesWithoutEdges(result, settings);
             }
 
             // Shift the lines so they are relative to the image origin.
@@ -510,7 +580,7 @@ public:
                 suppressedSeam.rightCols(windowSize).colwise().reverse();
 
             accumulator.SetSpace(hough.space);
-            hough.lines = accumulator.GetLines(this->settings_.threshold);
+            hough.lines = accumulator.GetLines(this->settings_);
         }
         else
         {

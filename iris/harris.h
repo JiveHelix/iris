@@ -85,10 +85,12 @@ public:
 
         if (this->settings_.suppress)
         {
-            return Suppression(
+            Result result = Suppression(
                 this->settings_.threads,
                 this->settings_.window,
                 threshold);
+
+            return result;
         }
 
         return threshold;

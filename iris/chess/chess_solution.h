@@ -3,7 +3,6 @@
 #include <tau/vector2d.h>
 #include "iris/vertex.h"
 #include "iris/chess_settings.h"
-#include "iris/chess/line_from_points.h"
 #include "iris/chess/line_group.h"
 #include "iris/chess/groups.h"
 #include "iris/chess/named_vertex.h"

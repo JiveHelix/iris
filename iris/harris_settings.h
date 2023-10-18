@@ -30,7 +30,7 @@ struct HarrisRanges
     using AlphaHigh = pex::Limit<0, 25, 100>;
 
     using SigmaLow = pex::Limit<0, 25, 100>;
-    using SigmaHigh = pex::Limit<8>;
+    using SigmaHigh = pex::Limit<10>;
 
     using ThresholdLow = pex::Limit<0>;
     using ThresholdHigh = pex::Limit<0, 25, 100>;
@@ -107,9 +107,9 @@ struct HarrisSettings
 {
     static HarrisSettings Default()
     {
-        static constexpr Float defaultAlpha = static_cast<Float>(0.21);
-        static constexpr Float defaultSigma = static_cast<Float>(6.3);
-        static constexpr Float defaultThreshold = static_cast<Float>(0.14);
+        static constexpr Float defaultAlpha = static_cast<Float>(0.220);
+        static constexpr Float defaultSigma = static_cast<Float>(8.0);
+        static constexpr Float defaultThreshold = static_cast<Float>(0.021);
         static constexpr Eigen::Index defaultWindow = 8;
         static constexpr size_t defaultThreads = 4;
 

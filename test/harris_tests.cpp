@@ -50,4 +50,6 @@ TEST_CASE("Use suppression filter with count = 1", "[harris]")
         { 0,  0,  0,  0,  5}};
 
     Matrix filtered = iris::Suppression(1, 3, m);
+
+    std::cout << "filtered: " << filtered << std::endl;
 }
