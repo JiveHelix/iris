@@ -28,6 +28,7 @@ struct HoughFields
         fields::Field(&T::window, "window"),
         fields::Field(&T::threshold, "threshold"),
         fields::Field(&T::includeEdges, "includeEdges"),
+        fields::Field(&T::edgeTolerance, "edgeTolerance"),
         fields::Field(&T::threads, "threads"));
 
     static constexpr auto fieldsTypeName = "Hough";
@@ -61,6 +62,7 @@ struct HoughTemplate
         T<WindowRange> window;
         T<ThresholdRange<Float>> threshold;
         T<bool> includeEdges;
+        T<Float> edgeTolerance;
         T<size_t> threads;
 
         static constexpr auto fields = HoughFields<Template>::fields;
@@ -86,7 +88,9 @@ struct HoughSettings:
     static constexpr Eigen::Index defaultWindow = 24;
 
     // Minimum value to be considered a line.
-    static constexpr size_t defaultThreshold = 96;
+    static constexpr size_t defaultThreshold = 110;
+
+    static constexpr size_t defaultEdgeTolerance = 4;
 
     static constexpr size_t defaultThreads = 4;
 
@@ -103,6 +107,7 @@ struct HoughSettings:
             defaultWindow,
             defaultThreshold,
             false,
+            defaultEdgeTolerance,
             defaultThreads}};
 
         return settings;

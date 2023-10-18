@@ -393,6 +393,8 @@ std::vector<LineGroup> LineGroup::SplitOnMissingLines(double ratioLimit) const
     sorted.SortByPosition(false);
     auto spacings = sorted.MakeSpacings(false);
 
+    CHESS_LOG(*this);
+
     CHESS_LOG("spacings:");
 
 #ifdef ENABLE_CHESS_LOG
@@ -404,17 +406,17 @@ std::vector<LineGroup> LineGroup::SplitOnMissingLines(double ratioLimit) const
 
     Eigen::VectorX<double> ratios(Index(spacings.size() - 1));
 
-    // CHESS_LOG("ratios:");
+    CHESS_LOG("ratios:");
 
     for (size_t i = 0; i < spacings.size() - 1; ++i)
     {
         ratios(Index(i)) = spacings[i + 1] / spacings[i];
-        // CHESS_LOG("\n  ", ratios(Index(i)));
+        CHESS_LOG("\n  ", ratios(Index(i)));
     }
 
     double median = tau::Percentile(ratios, 0.5);
 
-    // CHESS_LOG("median ratio: ", median);
+    CHESS_LOG("median ratio: ", median);
 
     std::vector<LineGroup> result;
 

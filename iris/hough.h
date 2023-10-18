@@ -380,6 +380,7 @@ public:
         {
             auto verticalLimit = settings.imageSize.height / 2;
             auto horizontalLimit = settings.imageSize.width / 2;
+            auto tolerance = settings.edgeTolerance;
             auto threshold = settings.threshold;
 
             for (
@@ -399,25 +400,28 @@ public:
 
                     auto rho = this->ToRho(rowIndex);
 
+                    auto rhoCheck = std::abs(rho);
+
                     auto degrees =
                         tau::ToDegrees(this->ToTheta(columnIndex));
 
-                    // Checks both +90 and -90
-                    auto verticalCheck =
-                        std::abs(std::abs(degrees) - 90);
+                    // degrees has the range 0 to 180.
+                    auto verticalCheck = std::abs(degrees - 90);
 
                     if (
                         verticalCheck < 0.5
-                        && std::abs(rho - verticalLimit) < 2)
+                        && std::abs(rhoCheck - verticalLimit) < tolerance)
                     {
                         continue;
                     }
 
-                    auto horizontalCheck = std::abs(degrees);
+                    // Remap degrees from -90 to 90
+                    auto remapped = std::fmod(degrees + 270, 180) - 90;
+                    auto horizontalCheck = std::abs(remapped);
 
                     if (
                         horizontalCheck < 0.5
-                        && std::abs(rho - horizontalLimit) < 2)
+                        && std::abs(rhoCheck - horizontalLimit) < tolerance)
                     {
                         continue;
                     }
