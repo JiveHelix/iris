@@ -16,9 +16,10 @@ namespace iris
 VertexSettingsView::VertexSettingsView(
     wxWindow *parent,
     VertexControl controls,
+    std::optional<NodeSettingsControl> nodeSettingsControl,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Vertex", borderStyle)
+    NodeSettingsView(parent, "Vertex", nodeSettingsControl)
 {
     using namespace wxpex;
 

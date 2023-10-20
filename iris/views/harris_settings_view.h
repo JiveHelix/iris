@@ -10,6 +10,7 @@
 
 #include "iris/harris_settings.h"
 #include "iris/views/defaults.h"
+#include "iris/views/node_settings_view.h"
 
 
 namespace iris
@@ -17,7 +18,7 @@ namespace iris
 
 
 template<typename Control>
-class HarrisSettingsView: public wxpex::Collapsible
+class HarrisSettingsView: public NodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -25,9 +26,10 @@ public:
     HarrisSettingsView(
         wxWindow *parent,
         Control controls,
+        std::optional<NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        wxpex::Collapsible(parent, "Harris", borderStyle)
+        NodeSettingsView(parent, "Harris", nodeSettingsControl)
     {
         using namespace wxpex;
 

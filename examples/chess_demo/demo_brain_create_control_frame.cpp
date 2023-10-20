@@ -6,5 +6,6 @@ wxWindow * DemoBrain::CreateControls(wxWindow *parent)
     return new DemoControls(
         parent,
         this->GetUserControls(),
-        DemoControl(this->demoModel_));
+        this->demoControl_,
+        this->demoControl_.nodeSettings);
 }

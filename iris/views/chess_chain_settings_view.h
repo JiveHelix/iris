@@ -1,9 +1,11 @@
 #pragma once
 
 
+#include <optional>
 #include <wxpex/labeled_widget.h>
 #include <wxpex/collapsible.h>
 #include "iris/chess_chain_settings.h"
+#include "iris/chess_chain_node_settings.h"
 
 
 namespace iris
@@ -17,7 +19,8 @@ public:
 
     ChessChainSettingsView(
         wxWindow *parent,
-        ChessChainControl controls,
+        ChessChainControl control,
+        std::optional<ChessChainNodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{});
 };
 

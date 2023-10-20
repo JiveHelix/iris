@@ -10,6 +10,7 @@
 #include <wxpex/button.h>
 
 #include "iris/gradient_settings.h"
+#include "iris/views/node_settings_view.h"
 
 
 namespace iris
@@ -17,7 +18,7 @@ namespace iris
 
 
 template<typename Value>
-class GradientSettingsView: public wxpex::Collapsible
+class GradientSettingsView: public NodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -25,9 +26,10 @@ public:
     GradientSettingsView(
         wxWindow *parent,
         GradientControl<Value> controls,
+        std::optional<NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        wxpex::Collapsible(parent, "Gradient")
+        NodeSettingsView(parent, "Gradient", nodeSettingsControl)
     {
         using namespace wxpex;
 

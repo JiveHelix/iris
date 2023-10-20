@@ -10,6 +10,7 @@
 
 #include "iris/canny_settings.h"
 #include "iris/views/defaults.h"
+#include "iris/views/node_settings_view.h"
 
 
 namespace iris
@@ -17,7 +18,7 @@ namespace iris
 
 
 template<typename Value>
-class CannySettingsView: public wxpex::Collapsible
+class CannySettingsView: public NodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -25,9 +26,10 @@ public:
     CannySettingsView(
         wxWindow *parent,
         CannyControl<Value> controls,
+        std::optional<NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        wxpex::Collapsible(parent, "Canny", borderStyle)
+        NodeSettingsView(parent, "Canny", nodeSettingsControl)
     {
         using namespace wxpex;
 

@@ -6,14 +6,15 @@ DemoBrain::DemoBrain()
     Brain<DemoBrain>(),
     observer_(this, UserControl(this->user_)),
     demoModel_(),
+    demoControl_(this->demoModel_),
 
     maskBrain_(
-        iris::MaskControl(this->demoModel_.chess.mask),
+        this->demoControl_.chess.mask,
         this->userControl_.pixelView),
 
-    demoEndpoint_(this, DemoControl(this->demoModel_), &DemoBrain::OnSettings_),
+    demoEndpoint_(this, this->demoControl_, &DemoBrain::OnSettings_),
     pngIsLoaded_(false),
-    filters_(DemoControl(this->demoModel_)),
+    filters_(this->demoControl_),
     mutex_(),
     condition_(),
     displayState_(DisplayState::waiting),

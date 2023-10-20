@@ -16,6 +16,7 @@ namespace iris
 CannyChainSettingsView::CannyChainSettingsView(
     wxWindow *parent,
     CannyChainControl controls,
+    std::optional<CannyChainNodeSettingsControl> nodeSettings,
     const LayoutOptions &layoutOptions)
     :
     wxpex::Collapsible(parent, "Canny Chain", borderStyle)
@@ -32,18 +33,21 @@ CannyChainSettingsView::CannyChainSettingsView(
             panel,
             "Gaussian Blur",
             controls.gaussian,
+            (nodeSettings) ? nodeSettings->gaussian : OptionalNodeSettings{},
             layoutOptions);
 
     auto gradient =
         new GradientSettingsView<int32_t>(
             panel,
             controls.gradient,
+            (nodeSettings) ? nodeSettings->gradient : OptionalNodeSettings{},
             layoutOptions);
 
     auto canny =
         new CannySettingsView<double>(
             panel,
             controls.canny,
+            (nodeSettings) ? nodeSettings->canny : OptionalNodeSettings{},
             layoutOptions);
 
     auto sizer = wxpex::LayoutItems(

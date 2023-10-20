@@ -5,6 +5,8 @@
 #include <draw/views/lines_shape_view.h>
 #include <draw/views/font_look_view.h>
 
+#include "iris/views/defaults.h"
+
 
 namespace iris
 {
@@ -15,7 +17,7 @@ ChessShapeView::ChessShapeView(
     ChessShapeControl controls,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Chess Shape")
+    wxpex::Collapsible(parent, "Chess Shape", borderStyle)
 {
     auto displayVertices =
         new wxpex::CheckBox(

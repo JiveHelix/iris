@@ -80,6 +80,7 @@ public:
         auto mask = new iris::MaskSettingsView(
             this,
             control.mask,
+            {},
             layoutOptions);
 
         mask->Expand();
@@ -87,6 +88,7 @@ public:
         auto color = new iris::ColorSettingsView<InProcess>(
             this,
             control.color,
+            {},
             layoutOptions);
 
         sizer->Add(fileSelector, 0, wxEXPAND | wxBOTTOM, 5);

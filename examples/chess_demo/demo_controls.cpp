@@ -4,11 +4,11 @@
 
 #include <wxpex/file_field.h>
 
-
 DemoControls::DemoControls(
     wxWindow *parent,
     UserControl userControl,
-    DemoControl control)
+    DemoControl control,
+    iris::ChessChainNodeSettingsControl nodeSettings)
     :
     wxPanel(parent, wxID_ANY)
 {
@@ -25,7 +25,8 @@ DemoControls::DemoControls(
 
     auto demoSettingsView = new DemoSettingsView(
         this,
-        control);
+        control,
+        nodeSettings);
 
     sizer->Add(fileSelector, 0, wxEXPAND | wxBOTTOM, 5);
     sizer->Add(demoSettingsView, 1, wxEXPAND);

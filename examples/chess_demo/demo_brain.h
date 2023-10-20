@@ -71,6 +71,7 @@ private:
 private:
     Observer<DemoBrain> observer_;
     DemoModel demoModel_;
+    DemoControl demoControl_;
     iris::MaskBrain maskBrain_;
     pex::Endpoint<DemoBrain, DemoControl> demoEndpoint_;
     bool pngIsLoaded_;

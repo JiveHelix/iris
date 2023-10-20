@@ -18,9 +18,10 @@ namespace iris
 MaskSettingsView::MaskSettingsView(
     wxWindow *parent,
     MaskControl controls,
+    std::optional<NodeSettingsControl> nodeSettingsControl,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Mask", borderStyle)
+    NodeSettingsView(parent, "Mask", nodeSettingsControl)
 {
     auto panel = this->GetPanel();
 
@@ -45,6 +46,7 @@ MaskSettingsView::MaskSettingsView(
             panel,
             "Feather",
             controls.feather,
+            {},
             layoutOptions);
 
     auto sizer = wxpex::LayoutItems(

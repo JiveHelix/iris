@@ -6,7 +6,6 @@
 #include <pex/endpoint.h>
 #include "iris/default.h"
 
-#define ENABLE_NODE_CHRONO
 
 #ifdef ENABLE_NODE_CHRONO
 #include <chrono>

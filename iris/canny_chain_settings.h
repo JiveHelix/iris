@@ -7,10 +7,46 @@
 #include "iris/gaussian_settings.h"
 #include "iris/gradient_settings.h"
 #include "iris/canny_settings.h"
+#include "iris/node_settings.h"
 
 
 namespace iris
 {
+
+
+template<typename T>
+struct CannyChainNodeSettingsFields
+{
+    static constexpr auto fields = std::make_tuple(
+        fields::Field(&T::gaussian, "gaussian"),
+        fields::Field(&T::gradient, "gradient"),
+        fields::Field(&T::canny, "canny"));
+};
+
+
+template<template<typename> typename T>
+struct CannyChainNodeSettingsTemplate
+{
+    T<NodeSettingsGroupMaker> gaussian;
+    T<NodeSettingsGroupMaker> gradient;
+    T<NodeSettingsGroupMaker> canny;
+};
+
+
+using CannyChainNodeSettingsGroup =
+    pex::Group
+    <
+        CannyChainNodeSettingsFields,
+        CannyChainNodeSettingsTemplate
+    >;
+
+
+using CannyChainNodeSettingsModel =
+    typename CannyChainNodeSettingsGroup::Model;
+
+using CannyChainNodeSettingsControl =
+    typename CannyChainNodeSettingsGroup::Control;
+
 
 
 template<typename T>

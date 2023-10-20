@@ -9,6 +9,7 @@
 
 #include "iris/hough_settings.h"
 #include "iris/views/defaults.h"
+#include "iris/views/node_settings_view.h"
 
 
 namespace iris
@@ -16,7 +17,7 @@ namespace iris
 
 
 template<typename Value>
-class HoughSettingsView: public wxpex::Collapsible
+class HoughSettingsView: public NodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -24,9 +25,10 @@ public:
     HoughSettingsView(
         wxWindow *parent,
         HoughControl<Value> controls,
+        std::optional<NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        wxpex::Collapsible(parent, "Hough", borderStyle)
+        NodeSettingsView(parent, "Hough", nodeSettingsControl)
     {
         using namespace wxpex;
 

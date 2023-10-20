@@ -8,6 +8,7 @@
 
 #include "iris/color_settings.h"
 #include "iris/views/defaults.h"
+#include "iris/views/node_settings_view.h"
 
 
 namespace iris
@@ -15,7 +16,7 @@ namespace iris
 
 
 template<typename Value>
-class ColorSettingsView: public wxpex::Collapsible
+class ColorSettingsView: public NodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -23,9 +24,10 @@ public:
     ColorSettingsView(
         wxWindow *parent,
         ColorControl<Value> control,
+        std::optional<NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        wxpex::Collapsible(parent, "Color", borderStyle)
+        NodeSettingsView(parent, "Color", nodeSettingsControl)
     {
         auto panel = this->GetPanel();
 

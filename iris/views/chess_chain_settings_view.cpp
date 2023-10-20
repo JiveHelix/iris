@@ -24,7 +24,8 @@ namespace iris
 
 ChessChainSettingsView::ChessChainSettingsView(
     wxWindow *parent,
-    ChessChainControl controls,
+    ChessChainControl control,
+    std::optional<ChessChainNodeSettingsControl> nodeSettings,
     const LayoutOptions &layoutOptions)
     :
     wxpex::Collapsible(parent, "Chess Chain", borderStyle)
@@ -34,81 +35,90 @@ ChessChainSettingsView::ChessChainSettingsView(
     auto panel = this->GetPanel();
 
     auto enable =
-        new wxpex::CheckBox(panel, "enable", controls.enable);
+        new wxpex::CheckBox(panel, "enable", control.enable);
 
     auto mask =
         new MaskSettingsView(
             panel,
-            controls.mask,
+            control.mask,
+            (nodeSettings) ? nodeSettings->mask : OptionalNodeSettings{},
             layoutOptions);
 
     auto level =
         new LevelSettingsView<int32_t>(
             panel,
             "Level",
-            controls.level,
+            control.level,
+            (nodeSettings) ? nodeSettings->level : OptionalNodeSettings{},
             layoutOptions);
 
     auto gaussian =
         new GaussianSettingsView<int32_t>(
             panel,
             "Gaussian Blur",
-            controls.gaussian,
+            control.gaussian,
+            (nodeSettings) ? nodeSettings->gaussian : OptionalNodeSettings{},
             layoutOptions);
 
     auto gradient =
         new GradientSettingsView<int32_t>(
             panel,
-            controls.gradient,
+            control.gradient,
+            (nodeSettings) ? nodeSettings->gradient : OptionalNodeSettings{},
             layoutOptions);
 
     auto canny =
         new CannySettingsView<double>(
             panel,
-            controls.canny,
+            control.canny,
+            (nodeSettings) ? nodeSettings->canny : OptionalNodeSettings{},
             layoutOptions);
 
     // Line detection
     auto hough =
         new HoughSettingsView<double>(
             panel,
-            controls.hough,
+            control.hough,
+            (nodeSettings) ? nodeSettings->hough : OptionalNodeSettings{},
             layoutOptions);
 
     auto linesShape = new draw::LinesShapeView(
         panel,
         "Lines Shape",
-        controls.linesShape,
+        control.linesShape,
         layoutOptions);
 
     // Vertex detection
     auto harris =
         new HarrisSettingsView(
             panel,
-            controls.harris,
+            control.harris,
+            (nodeSettings) ? nodeSettings->harris : OptionalNodeSettings{},
             layoutOptions);
 
     auto verticesSettings =
         new VertexSettingsView(
             panel,
-            controls.vertices,
+            control.vertices,
+            (nodeSettings) ? nodeSettings->vertices : OptionalNodeSettings{},
             layoutOptions);
 
     auto verticesShape =
         new draw::PointsShapeView(
             panel,
             "Vertex Shape",
-            controls.verticesShape,
+            control.verticesShape,
             layoutOptions);
 
     auto chess =
         new ChessSettingsView(
             panel,
-            controls.chess,
+            control.chess,
+            (nodeSettings) ? nodeSettings->chess : OptionalNodeSettings{},
             layoutOptions);
 
     auto autoDetect =
-        new wxpex::Button(panel, "Auto", controls.autoDetectSettings);
+        new wxpex::Button(panel, "Auto", control.autoDetectSettings);
 
     auto sizer = wxpex::LayoutItems(
         verticalItems,

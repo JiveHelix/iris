@@ -5,6 +5,7 @@
 #include <iris/level_settings.h>
 #include <iris/color_settings.h>
 #include <iris/chess_chain_settings.h>
+#include <iris/chess_chain_node_settings.h>
 #include <iris/views/chess_shape.h>
 
 
@@ -14,6 +15,7 @@ struct DemoFields
     static constexpr auto fields = std::make_tuple(
         fields::Field(&T::maximum, "maximum"),
         fields::Field(&T::imageSize, "imageSize"),
+        fields::Field(&T::nodeSettings, "nodeSettings"),
         fields::Field(&T::chess, "chess"),
         fields::Field(&T::chessShape, "chessShape"),
         fields::Field(&T::color, "color"));
@@ -28,6 +30,7 @@ struct DemoTemplate
 {
     T<iris::InProcess> maximum;
     T<pex::MakeGroup<draw::SizeGroup>> imageSize;
+    T<iris::ChessChainNodeSettingsGroupMaker> nodeSettings;
     T<iris::ChessChainGroupMaker> chess;
     T<iris::ChessShapeGroupMaker> chessShape;
     T<iris::ColorGroupMaker<int32_t>> color;

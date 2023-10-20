@@ -21,6 +21,7 @@ std::shared_ptr<draw::Pixels> DemoBrain::Process()
         this->demoModel_.chess.verticesShape.Get(),
         this->demoModel_.chessShape.Get(),
         this->filters_.color,
-        {});
+        {},
+        this->demoControl_.nodeSettings.Get());
 }
 

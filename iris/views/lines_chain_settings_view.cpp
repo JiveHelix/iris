@@ -16,6 +16,7 @@ namespace iris
 LinesChainSettingsView::LinesChainSettingsView(
     wxWindow *parent,
     LinesChainControl controls,
+    std::optional<LinesChainNodeSettingsControl> nodeSettings,
     const LayoutOptions &layoutOptions)
     :
     wxpex::Collapsible(parent, "Lines Chain", borderStyle)
@@ -30,12 +31,14 @@ LinesChainSettingsView::LinesChainSettingsView(
     auto cannyChain = new CannyChainSettingsView(
         panel,
         controls.cannyChain,
+        (nodeSettings) ? nodeSettings->cannyChain : std::optional<CannyChainNodeSettingsControl>{},
         layoutOptions);
 
     auto hough =
         new HoughSettingsView<double>(
             panel,
             controls.hough,
+            (nodeSettings) ? nodeSettings->hough : OptionalNodeSettings{},
             layoutOptions);
 
     auto linesShape = new draw::LinesShapeView(

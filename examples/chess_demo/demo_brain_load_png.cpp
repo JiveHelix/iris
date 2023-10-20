@@ -6,6 +6,9 @@ void DemoBrain::LoadPng(const draw::GrayPng<PngPixel> &png)
 {
     int32_t maximum = pngMaximum;
 
+    this->userControl_.pixelView.asyncShapes.Set(
+        draw::Shapes::MakeResetter());
+
     // Prevent drawing until new dimensions and source data are
     // synchronized.
     this->pngIsLoaded_ = false;

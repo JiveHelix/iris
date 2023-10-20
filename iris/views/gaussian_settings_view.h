@@ -10,6 +10,7 @@
 
 #include "iris/gaussian_settings.h"
 #include "iris/views/defaults.h"
+#include "iris/views/node_settings_view.h"
 
 
 namespace iris
@@ -17,7 +18,7 @@ namespace iris
 
 
 template<typename Value>
-class GaussianSettingsView: public wxpex::Collapsible
+class GaussianSettingsView: public NodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -26,9 +27,10 @@ public:
         wxWindow *parent,
         const std::string &name,
         GaussianControl<Value> controls,
+        std::optional<NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions)
         :
-        wxpex::Collapsible(parent, name, borderStyle)
+        NodeSettingsView(parent, name, nodeSettingsControl)
     {
         auto panel = this->GetPanel();
 

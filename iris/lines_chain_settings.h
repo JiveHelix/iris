@@ -13,6 +13,38 @@ namespace iris
 
 
 template<typename T>
+struct LinesChainNodeSettingsFields
+{
+    static constexpr auto fields = std::make_tuple(
+        fields::Field(&T::vertices, "cannyChain"),
+        fields::Field(&T::chess, "hough"));
+};
+
+
+template<template<typename> typename T>
+struct LinesChainNodeSettingsTemplate
+{
+    T<pex::MakeGroup<CannyChainNodeSettingsGroup>> cannyChain;
+    T<NodeSettingsGroupMaker> hough;
+};
+
+
+using LinesChainNodeSettingsGroup =
+    pex::Group
+    <
+        LinesChainNodeSettingsFields,
+        LinesChainNodeSettingsTemplate
+    >;
+
+
+using LinesChainNodeSettingsModel =
+    typename LinesChainNodeSettingsGroup::Model;
+
+using LinesChainNodeSettingsControl =
+    typename LinesChainNodeSettingsGroup::Control;
+
+
+template<typename T>
 struct LinesChainFields
 {
     static constexpr auto fields = std::make_tuple(

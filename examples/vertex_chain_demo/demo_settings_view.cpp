@@ -18,6 +18,7 @@ DemoSettingsView::DemoSettingsView(
     auto mask = new iris::MaskSettingsView(
         this,
         control.mask,
+        {},
         layoutOptions);
 
     mask->Expand();
@@ -26,11 +27,13 @@ DemoSettingsView::DemoSettingsView(
         this,
         "Level",
         control.level,
+        {},
         layoutOptions);
 
     auto vertexSettings = new iris::VertexChainSettingsView(
         this,
         control.vertexChain,
+        {},
         layoutOptions);
 
     vertexSettings->Expand();
@@ -38,6 +41,7 @@ DemoSettingsView::DemoSettingsView(
     auto color = new iris::ColorSettingsView<int32_t>(
         this,
         control.color,
+        {},
         layoutOptions);
 
     auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);

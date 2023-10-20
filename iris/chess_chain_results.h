@@ -15,6 +15,7 @@
 #include "iris/hough.h"
 #include "iris/vertex.h"
 #include "iris/chess.h"
+#include "iris/chess_chain_node_settings.h"
 
 #include "iris/views/chess_shape.h"
 
@@ -70,11 +71,25 @@ struct ChessChainResults
         const draw::LinesShapeSettings &linesShapeSettings,
         const draw::PointsShapeSettings &pointsShapeSettings,
         const ChessShapeSettings &chessShapeSettings,
-        ThreadsafeColor<InProcess> &color,
+        ThreadsafeColor<int32_t> &color,
+        std::optional<HoughControl> houghControl,
+        std::optional<ChessChainNodeSettings> nodeSettings) const;
+
+    std::shared_ptr<draw::Pixels> DisplayNode(
+        ChessChainNodeSettings nodeSettings,
+        draw::ShapesControl shapesControl,
+        const draw::LinesShapeSettings &linesShapeSettings,
+        const draw::PointsShapeSettings &pointsShapeSettings,
+        const ChessShapeSettings &chessShapeSettings,
+        ThreadsafeColor<int32_t> &color,
         std::optional<HoughControl> houghControl) const;
 
 private:
     std::shared_ptr<draw::Pixels> GetPreprocessedPixels_(
+        ThreadsafeColor<int32_t> &color) const;
+
+    std::shared_ptr<draw::Pixels> GetNodePixels_(
+        ChessChainNodeSettings nodeSettings,
         ThreadsafeColor<int32_t> &color) const;
 
     void DrawHoughResults_(

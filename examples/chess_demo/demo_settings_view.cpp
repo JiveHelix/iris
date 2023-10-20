@@ -7,7 +7,8 @@
 
 DemoSettingsView::DemoSettingsView(
     wxWindow *parent,
-    DemoControl control)
+    DemoControl control,
+    iris::ChessChainNodeSettingsControl nodeSettings)
     :
     wxpex::Scrolled(parent)
 {
@@ -17,6 +18,7 @@ DemoSettingsView::DemoSettingsView(
     auto chess = new iris::ChessChainSettingsView(
         this,
         control.chess,
+        nodeSettings,
         layoutOptions);
 
     chess->Expand();
@@ -29,6 +31,7 @@ DemoSettingsView::DemoSettingsView(
     auto color = new iris::ColorSettingsView<int32_t>(
         this,
         control.color,
+        {},
         layoutOptions);
 
     auto sizer = wxpex::LayoutItems(

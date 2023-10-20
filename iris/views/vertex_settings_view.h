@@ -5,13 +5,14 @@
 #include <wxpex/collapsible.h>
 
 #include "iris/vertex_settings.h"
+#include "iris/views/node_settings_view.h"
 
 
 namespace iris
 {
 
 
-class VertexSettingsView: public wxpex::Collapsible
+class VertexSettingsView: public NodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -19,6 +20,7 @@ public:
     VertexSettingsView(
         wxWindow *parent,
         VertexControl controls,
+        std::optional<NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{});
 };
 

@@ -11,7 +11,8 @@ public:
     DemoControls(
         wxWindow *parent,
         UserControl userControl,
-        DemoControl control);
+        DemoControl control,
+        iris::ChessChainNodeSettingsControl nodeSettings);
 
 private:
     std::unique_ptr<wxpex::MenuShortcuts> shortcuts_;

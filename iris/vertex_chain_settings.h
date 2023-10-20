@@ -7,10 +7,47 @@
 #include "iris/gradient_settings.h"
 #include "iris/harris_settings.h"
 #include "iris/vertex_settings.h"
+#include "iris/node_settings.h"
 
 
 namespace iris
 {
+
+
+template<typename T>
+struct VertexChainNodeSettingsFields
+{
+    static constexpr auto fields = std::make_tuple(
+        fields::Field(&T::gaussian, "gaussian"),
+        fields::Field(&T::gradient, "gradient"),
+        fields::Field(&T::harris, "harris"),
+        fields::Field(&T::vertex, "vertex"));
+};
+
+
+template<template<typename> typename T>
+struct VertexChainNodeSettingsTemplate
+{
+    T<NodeSettingsGroupMaker> gaussian;
+    T<NodeSettingsGroupMaker> gradient;
+    T<NodeSettingsGroupMaker> harris;
+    T<NodeSettingsGroupMaker> vertex;
+};
+
+
+using VertexChainNodeSettingsGroup =
+    pex::Group
+    <
+        VertexChainNodeSettingsFields,
+        VertexChainNodeSettingsTemplate
+    >;
+
+
+using VertexChainNodeSettingsModel =
+    typename VertexChainNodeSettingsGroup::Model;
+
+using VertexChainNodeSettingsControl =
+    typename VertexChainNodeSettingsGroup::Control;
 
 
 template<typename T>

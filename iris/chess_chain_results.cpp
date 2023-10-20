@@ -27,7 +27,8 @@ ChessChainResults::ChessChainResults(
 }
 
 
-std::shared_ptr<draw::Pixels> ChessChainResults::Display(
+std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
+    ChessChainNodeSettings nodeSettings,
     draw::ShapesControl shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
     const draw::PointsShapeSettings &pointsShapeSettings,
@@ -35,16 +36,80 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
     ThreadsafeColor<int32_t> &color,
     std::optional<HoughControl> houghControl) const
 {
-    if (!this->mask)
+    auto pixels = this->GetNodePixels_(nodeSettings, color);
+
+    if (!pixels)
     {
-        // There's nothing to display if the first filter in the chain has no
-        // result.
-        return {};
+        pixels = this->GetPreprocessedPixels_(color);
     }
+
+    if (nodeSettings.vertices.highlight && this->vertices)
+    {
+        this->DrawVerticesResults_(
+            shapesControl,
+            pointsShapeSettings,
+            color);
+
+        return pixels;
+    }
+
+    if (nodeSettings.hough.highlight && this->hough)
+    {
+        this->DrawHoughResults_(
+            shapesControl,
+            linesShapeSettings,
+            color,
+            houghControl);
+
+        return pixels;
+    }
+
+    if (nodeSettings.chess.highlight && this->chess)
+    {
+        draw::Shapes shapes(this->chessShapesId_);
+
+        shapes.EmplaceBack<iris::ChessShape>(
+            chessShapeSettings,
+            *this->chess);
+
+        shapesControl.Set(shapes);
+
+        return pixels;
+    }
+
+    return pixels;
+}
+
+
+std::shared_ptr<draw::Pixels> ChessChainResults::Display(
+    draw::ShapesControl shapesControl,
+    const draw::LinesShapeSettings &linesShapeSettings,
+    const draw::PointsShapeSettings &pointsShapeSettings,
+    const ChessShapeSettings &chessShapeSettings,
+    ThreadsafeColor<int32_t> &color,
+    std::optional<HoughControl> houghControl,
+    std::optional<ChessChainNodeSettings> nodeSettings) const
+{
+    if (nodeSettings)
+    {
+        if (HasHighlight(*nodeSettings))
+        {
+            return this->DisplayNode(
+                *nodeSettings,
+                shapesControl,
+                linesShapeSettings,
+                pointsShapeSettings,
+                chessShapeSettings,
+                color,
+                houghControl);
+        }
+    }
+
+    auto pixels = this->GetPreprocessedPixels_(color);
 
     if (!this->level)
     {
-        return std::make_shared<draw::Pixels>(color.Filter(*this->mask));
+        return pixels;
     }
 
     if (this->chess)
@@ -57,10 +122,8 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
 
         shapesControl.Set(shapes);
 
-        return std::make_shared<draw::Pixels>(color.Filter(*this->level));
+        return pixels;
     }
-
-    auto preprocessed = this->GetPreprocessedPixels_(color);
 
     if (this->hough)
     {
@@ -70,7 +133,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
             color,
             houghControl);
 
-        return preprocessed;
+        return pixels;
     }
 
     if (this->vertices)
@@ -80,16 +143,21 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
             pointsShapeSettings,
             color);
 
-        return preprocessed;
+        return pixels;
     }
 
-    return preprocessed;
+    return pixels;
 }
 
 
 std::shared_ptr<draw::Pixels> ChessChainResults::GetPreprocessedPixels_(
     ThreadsafeColor<int32_t> &color) const
 {
+    if (this->chess)
+    {
+        return std::make_shared<draw::Pixels>(color.Filter(*this->level));
+    }
+
     if (this->canny)
     {
         return std::make_shared<draw::Pixels>(this->canny->Colorize());
@@ -117,8 +185,104 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetPreprocessedPixels_(
         return std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
     }
 
-    assert(this->level);
-    return std::make_shared<draw::Pixels>(color.Filter(*this->level));
+    if (this->level)
+    {
+        return std::make_shared<draw::Pixels>(color.Filter(*this->level));
+    }
+
+    if (this->mask)
+    {
+        return std::make_shared<draw::Pixels>(color.Filter(*this->mask));
+    }
+
+    return {};
+}
+
+
+std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
+    ChessChainNodeSettings nodeSettings,
+    ThreadsafeColor<int32_t> &color) const
+{
+    if (nodeSettings.mask.highlight)
+    {
+        if (!this->mask)
+        {
+            std::cout << "Cannot highlight a disabled node" << std::endl;
+            return {};
+        }
+
+        return std::make_shared<draw::Pixels>(color.Filter(*this->mask));
+    }
+
+    if (nodeSettings.level.highlight)
+    {
+        if (!this->level)
+        {
+            std::cout << "Cannot highlight a disabled node" << std::endl;
+            return {};
+        }
+
+        return std::make_shared<draw::Pixels>(color.Filter(*this->level));
+    }
+
+    if (nodeSettings.gaussian.highlight)
+    {
+        if (!this->gaussian)
+        {
+            std::cout << "Cannot highlight a disabled node" << std::endl;
+            return {};
+        }
+
+        return std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
+    }
+
+    if (nodeSettings.gradient.highlight)
+    {
+        if (!this->gradient)
+        {
+            std::cout << "Cannot highlight a disabled node" << std::endl;
+            return {};
+        }
+
+        return std::make_shared<draw::Pixels>(this->gradient->Colorize());
+    }
+
+    if (nodeSettings.harris.highlight)
+    {
+        if (!this->harris)
+        {
+            std::cout << "Cannot highlight a disabled node" << std::endl;
+            return {};
+        }
+
+        return std::make_shared<draw::Pixels>(
+            iris::ColorizeHarris(*this->harris));
+    }
+
+    if (nodeSettings.vertices.highlight)
+    {
+        if (!this->vertices)
+        {
+            std::cout << "Cannot highlight a disabled node" << std::endl;
+            return {};
+        }
+
+        // Display the gaussian output behind the vertices.
+        return std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
+    }
+
+    if (nodeSettings.canny.highlight)
+    {
+        if (!this->canny)
+        {
+            std::cout << "Cannot highlight a disabled node" << std::endl;
+            return {};
+        }
+
+        return std::make_shared<draw::Pixels>(this->canny->Colorize());
+    }
+
+    return {};
 }
 
 
