@@ -11,6 +11,17 @@
 namespace iris
 {
 
+/**
+ ** This frame can change its background color to a highlight color.  When the
+ ** highlight color is turned off, it clears the background color with
+ ** `SetBackgroundColour(wxColour())`, which reverts back to using the
+ ** background color of the parent(s).
+ **
+ ** If the background color is set exlicitly elsewhere in your code, it will
+ ** not be restored when the highlight color is turned off. This situation may
+ ** be remedied when wxWidgets corrects the inconsistent behavior of
+ ** `wxWindow::InheritsBackgroundColour()`.
+ **/
 
 class NodeSettingsView: public wxpex::Collapsible
 {

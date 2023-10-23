@@ -6,10 +6,6 @@
 #include <wx/settings.h>
 
 
-// Dark green
-static const auto darkGreen = wxColour(40, 92, 54);
-
-
 namespace iris
 {
 
@@ -54,8 +50,7 @@ void NodeSettingsView::OnHighlight_(bool isHighlighted)
     }
     else
     {
-        this->SetBackgroundColour(
-            wxSystemSettings::GetColour(wxSYS_COLOUR_FRAMEBK));
+        this->SetBackgroundColour(wxColour());
     }
 
     this->Refresh();
