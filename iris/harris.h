@@ -124,10 +124,12 @@ draw::Pixels ColorizeHarris(const Eigen::MatrixBase<Derived> &input)
 
     Derived response = input.derived();
 
-    // Scale the maximum value to 1.
+    // Scale the maximum value to 1
+    // and the minimum value to 0.4.
     Float maximum = response.maxCoeff();
-    response.array() /= maximum;
-    response = (response.array() > 0).select(1, response);
+    response.array() *= (0.6 / maximum);
+    response.array() += 0.4;
+    tau::Select(response) <= 0.4 = 0.0;
 
     tau::HsvPlanes<Float> hsv(response.rows(), response.cols());
 

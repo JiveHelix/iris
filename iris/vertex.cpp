@@ -10,7 +10,7 @@ namespace detail
 {
 
 
-std::optional<Vertex> GetCentroid(size_t count, const Points &points)
+std::optional<Vertex> GetCentroid(size_t count, const ValuePoints &points)
 {
     auto pointsSize = points.size();
 
@@ -44,13 +44,13 @@ std::optional<Vertex> GetCentroid(size_t count, const Points &points)
     return Vertex(
         centroidX / pointCount,
         centroidY / pointCount,
-        pointCount);
+        points);
 }
 
 
 Vertices PointGroups::GetVertices() const
 {
-    Vertices firstPass;
+    Vertices result;
 
     for (const auto &entry: this->pointGroupByPoint_)
     {
@@ -58,15 +58,15 @@ Vertices PointGroups::GetVertices() const
 
         if (centroid)
         {
-            firstPass.push_back(*centroid);
+            result.push_back(*centroid);
         }
     }
 
-    return firstPass;
+    return result;
 }
 
 
-void PointGroups::AddPoint_(const tau::Point2d<double> &point)
+void PointGroups::AddPoint_(const draw::ValuePoint<double> &point)
 {
     for (auto &entry: this->pointGroupByPoint_)
     {
@@ -104,13 +104,35 @@ std::vector<tau::Point2d<double>> VerticesToPoints(
 }
 
 
-Vertex::Vertex(double x, double y, double count_)
+ValuePoints VerticesToValuePoints(const Vertices &vertices)
+{
+    ValuePoints valuePoints;
+
+    for (const auto &vertex: vertices)
+    {
+        valuePoints.insert(
+            std::end(valuePoints),
+            std::begin(vertex.valuePoints),
+            std::end(vertex.valuePoints));
+    }
+
+    return valuePoints;
+}
+
+
+Vertex::Vertex(
+    double x,
+    double y,
+    const ValuePoints &valuePoints_)
     :
     point(x, y),
-    count(count_)
+    count(valuePoints_.size()),
+    valuePoints(valuePoints_)
 {
 
+
 }
+
 
 bool Vertex::operator>(const Vertex &other) const
 {

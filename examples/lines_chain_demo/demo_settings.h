@@ -54,18 +54,18 @@ struct DemoModel: public DemoGroup::Model
             draw::SizeControl(this->imageSize),
             &DemoModel::OnImageSize_)
     {
-        iris::InProcess maximum = pngMaximum;
-        this->level.range.high.SetMaximum(maximum);
-        this->level.range.high.Set(maximum);
-        this->level.maximum.Set(maximum);
-        this->color.range.high.SetMaximum(maximum);
-        this->color.range.high.Set(maximum);
-        this->color.maximum.Set(maximum);
+        iris::InProcess maximumValue = pngMaximum;
+        this->level.range.high.SetMaximum(maximumValue);
+        this->level.range.high.Set(maximumValue);
+        this->level.maximum.Set(maximumValue);
+        this->color.range.high.SetMaximum(maximumValue);
+        this->color.range.high.Set(maximumValue);
+        this->color.maximum.Set(maximumValue);
 
         this->lines.SetMaximumControl(iris::MaximumControl(this->maximum));
         this->lines.SetImageSizeControl(draw::SizeControl(this->imageSize));
 
-        this->maximum.Set(maximum);
+        this->maximum.Set(maximumValue);
     }
 
     void OnMaximum_(iris::InProcess maximumValue)

@@ -36,10 +36,12 @@ std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
     ThreadsafeColor<int32_t> &color,
     std::optional<HoughControl> houghControl) const
 {
+    std::cout << "DisplayNode GetNodePixels_" << std::endl;
     auto pixels = this->GetNodePixels_(nodeSettings, color);
 
     if (!pixels)
     {
+        std::cout << "DisplayNode fallback to GetPreprocessedPixels_" << std::endl;
         pixels = this->GetPreprocessedPixels_(color);
     }
 
@@ -211,6 +213,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
+        std::cout << "Creating mask pixels" << std::endl;
         return std::make_shared<draw::Pixels>(color.Filter(*this->mask));
     }
 
@@ -331,6 +334,18 @@ void ChessChainResults::DrawVerticesResults_(
     shapes.EmplaceBack<draw::PointsShape>(
         pointsShapeSettings,
         VerticesToPoints(*this->vertices));
+
+    auto valuePointsShapeSettings = pointsShapeSettings;
+    valuePointsShapeSettings.look.strokeEnable = true;
+    valuePointsShapeSettings.look.strokeColor.hue = 120.0;
+    valuePointsShapeSettings.look.strokeColor.saturation = 1.0;
+    valuePointsShapeSettings.look.fillEnable = true;
+    valuePointsShapeSettings.look.fillColor.hue = 120.0;
+    valuePointsShapeSettings.look.fillColor.saturation = 1.0;
+
+    shapes.EmplaceBack<draw::ValuePointsShape>(
+        valuePointsShapeSettings,
+        VerticesToValuePoints(*this->vertices));
 
     shapesControl.Set(shapes);
 }

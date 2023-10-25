@@ -95,7 +95,7 @@ struct Suppressor
             // Zero the previous maximum
             this->result(
                 this->localMaximum->row,
-                this->localMaximum->column) = 0.0;
+                this->localMaximum->column) = 0;
 
             // Restore the value of the new maximum
             this->result(this->nextMaximum.row, this->nextMaximum.column) =

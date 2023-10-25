@@ -6,6 +6,8 @@
 #include <pex/range.h>
 #include <tau/eigen.h>
 #include <tau/vector2d.h>
+#include <tau/percentile.h>
+#include <draw/point.h>
 #include "iris/image.h"
 #include "iris/vertex_settings.h"
 #include "iris/threadsafe_filter.h"
@@ -15,12 +17,16 @@ namespace iris
 {
 
 
+using ValuePoints = std::vector<draw::ValuePoint<double>>;
+
+
 struct Vertex
 {
     tau::Point2d<double> point;
     double count;
+    ValuePoints valuePoints;
 
-    Vertex(double x, double y, double count_);
+    Vertex(double x, double y, const ValuePoints &valuePoints_);
 
     bool operator>(const Vertex &other) const;
 
@@ -36,45 +42,17 @@ using Vertices = std::vector<Vertex>;
 
 
 std::vector<tau::Point2d<double>> VerticesToPoints(const Vertices &);
+ValuePoints VerticesToValuePoints(const Vertices &);
 
 
 std::ostream & operator<<(std::ostream &, const Vertex &);
-
-
-template<typename T>
-Vertices GetVertices(const ImageMatrix<T> &input)
-{
-    using Eigen::Index;
-
-    Vertices vertices;
-    static_assert(tau::MatrixTraits<ImageMatrix<T>>::isRowMajor);
-
-    for (Index row = 0; row < input.rows(); ++row)
-    {
-        for (Index column = 0; column < input.cols(); ++column)
-        {
-            if (input(row, column) != 0)
-            {
-                vertices.emplace_back(
-                    static_cast<double>(column),
-                    static_cast<double>(row),
-                    1);
-            }
-        }
-    }
-
-    return vertices;
-}
 
 
 namespace detail
 {
 
 
-using Points = tau::Point2dCollection<double>;
-
-
-std::optional<Vertex> GetCentroid(size_t count, const Points &points);
+std::optional<Vertex> GetCentroid(size_t count, const ValuePoints &points);
 
 
 class PointGroups
@@ -93,7 +71,7 @@ public:
     void AddMatrix(const ImageMatrix<T> &input)
     {
         // Create a vector of all of the non-zero values.
-        Points points;
+        ValuePoints points;
         points.reserve(static_cast<size_t>((input.array() > 0).count()));
 
         using Index = Eigen::Index;
@@ -102,11 +80,14 @@ public:
         {
             for (Index column = 0; column < input.cols(); ++column)
             {
-                if (input(row, column) != 0)
+                T value = input(row, column);
+
+                if (value != 0)
                 {
                     points.emplace_back(
                         static_cast<double>(column),
-                        static_cast<double>(row));
+                        static_cast<double>(row),
+                        static_cast<double>(value));
                 }
             }
         }
@@ -115,17 +96,48 @@ public:
         {
             this->AddPoint_(point);
         }
+
+        for (auto & [key, group]: this->pointGroupByPoint_)
+        {
+            if (group.size() > 4)
+            {
+                // Retain the top 4 values.
+                std::sort(
+                    group.begin(),
+                    group.end(),
+                    [](const auto &first, const auto &second)
+                    {
+                        return first.value > second.value;
+                    });
+
+                group.resize(4);
+            }
+
+            assert(!group.empty());
+            auto it = std::begin(group);
+            double maximumValue = it->value;
+
+            while (it != std::end(group))
+            {
+                maximumValue = std::max(maximumValue, (it++)->value);
+            }
+
+            for (auto &point: group)
+            {
+                point.value /= maximumValue;
+            }
+        }
     }
 
     Vertices GetVertices() const;
 
 private:
-    void AddPoint_(const tau::Point2d<double> &point);
+    void AddPoint_(const draw::ValuePoint<double> &point);
 
     double radiusSquared_;
     size_t count_;
 
-    std::map<tau::Point2d<double>, Points> pointGroupByPoint_;
+    std::map<tau::Point2d<double>, ValuePoints> pointGroupByPoint_;
 };
 
 

@@ -107,10 +107,10 @@ struct HarrisSettings
 {
     static HarrisSettings Default()
     {
-        static constexpr Float defaultAlpha = static_cast<Float>(0.220);
-        static constexpr Float defaultSigma = static_cast<Float>(8.0);
-        static constexpr Float defaultThreshold = static_cast<Float>(0.021);
-        static constexpr Eigen::Index defaultWindow = 8;
+        static constexpr Float defaultAlpha = static_cast<Float>(0.21);
+        static constexpr Float defaultSigma = static_cast<Float>(3.85);
+        static constexpr Float defaultThreshold = static_cast<Float>(0.01);
+        static constexpr Eigen::Index defaultWindow = 6;
         static constexpr size_t defaultThreads = 4;
 
         return {{
