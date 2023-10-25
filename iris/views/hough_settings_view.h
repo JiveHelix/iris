@@ -28,7 +28,7 @@ public:
         std::optional<NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        NodeSettingsView(parent, "Hough", nodeSettingsControl)
+        NodeSettingsView(parent, "Hough Lines", nodeSettingsControl)
     {
         using namespace wxpex;
 

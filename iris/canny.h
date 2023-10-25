@@ -195,7 +195,7 @@ public:
         {
             Float value = this->suppressed_(check.y, check.x);
 
-            if (value < this->low_)
+            if (value <= this->low_)
             {
                 return;
             }
@@ -311,12 +311,6 @@ public:
             }
 
             previousValue = phasor.GetMagnitude(previous);
-
-            if (previousValue > value)
-            {
-                // We are done
-                break;
-            }
         }
 
         // Collect all next values that match.
@@ -331,12 +325,6 @@ public:
             }
 
             nextValue = phasor.GetMagnitude(next);
-
-            if (nextValue > value)
-            {
-                // We are done
-                break;
-            }
         }
 
         // Choose the middle point to pass through the suppression filter.
@@ -410,6 +398,12 @@ public:
                 auto point = Point(column, row);
 
                 Float value = phasor.GetMagnitude(point);
+
+                if (value <= canny.rangeLow)
+                {
+                    continue;
+                }
+
                 int direction = directions(point.y, point.x);
                 auto neighbors = point.GetNeighbors(direction);
                 auto previous = neighbors.first;

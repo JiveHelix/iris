@@ -6,6 +6,7 @@
 #include <pex/endpoint.h>
 #include "iris/default.h"
 
+// #define ENABLE_NODE_CHRONO
 
 #ifdef ENABLE_NODE_CHRONO
 #include <chrono>
@@ -309,7 +310,7 @@ public:
 
 #ifdef ENABLE_NODE_CHRONO
         TimePoint end = Clock::now();
-        std::cout << this->name_ << ": " << (end - start).count() << " µs\n";
+        std::cout << this->name_ << ": " << (end - start).count() << " us\n";
 #endif
 
         std::lock_guard lock(this->mutex_);

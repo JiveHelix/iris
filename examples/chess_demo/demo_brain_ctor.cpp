@@ -23,5 +23,5 @@ DemoBrain::DemoBrain()
     displayThread_(
         std::bind(&DemoBrain::DisplayLoop_, this))
 {
-
+    this->demoModel_.color.turbo.Set(false);
 }

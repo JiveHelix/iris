@@ -41,7 +41,8 @@ std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
 
     if (!pixels)
     {
-        std::cout << "DisplayNode fallback to GetPreprocessedPixels_" << std::endl;
+        std::cout << "DisplayNode fallback to GetPreprocessedPixels_"
+            << std::endl;
         pixels = this->GetPreprocessedPixels_(color);
     }
 
@@ -155,7 +156,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
 std::shared_ptr<draw::Pixels> ChessChainResults::GetPreprocessedPixels_(
     ThreadsafeColor<int32_t> &color) const
 {
-    if (this->chess)
+    if (this->chess && this->level)
     {
         return std::make_shared<draw::Pixels>(color.Filter(*this->level));
     }
@@ -165,7 +166,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetPreprocessedPixels_(
         return std::make_shared<draw::Pixels>(this->canny->Colorize());
     }
 
-    if (this->vertices)
+    if (this->vertices && this->gaussian)
     {
         // Display the gaussian output behind the vertices.
         return std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
@@ -264,7 +265,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
 
     if (nodeSettings.vertices.highlight)
     {
-        if (!this->vertices)
+        if (!this->vertices || !this->gaussian)
         {
             std::cout << "Cannot highlight a disabled node" << std::endl;
             return {};

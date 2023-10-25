@@ -60,13 +60,7 @@ add_executable(
     chess_demo
     chess_demo/chess_demo.cpp
     chess_demo/demo_brain.cpp
-    chess_demo/demo_brain_process.cpp
-    chess_demo/demo_brain_display_loop.cpp
-    chess_demo/demo_brain_load_png.cpp
     chess_demo/demo_brain_ctor.cpp
-    chess_demo/demo_brain_create_control_frame.cpp
-    chess_demo/demo_brain_shutdown.cpp
-    chess_demo/demo_brain_display.cpp
     chess_demo/filters.cpp
     chess_demo/demo_controls.cpp
     chess_demo/demo_settings_view.cpp)
