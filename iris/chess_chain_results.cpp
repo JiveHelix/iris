@@ -27,6 +27,18 @@ ChessChainResults::ChessChainResults(
 }
 
 
+void ChessChainResults::ClearShapes_(draw::ShapesControl shapesControl) const
+{
+    draw::Shapes chessShapes(this->chessShapesId_);
+    draw::Shapes linesShapes(this->linesShapesId_);
+    draw::Shapes verticesShapes(this->verticesShapesId_);
+
+    shapesControl.Set(chessShapes);
+    shapesControl.Set(linesShapes);
+    shapesControl.Set(verticesShapes);
+}
+
+
 std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
     ChessChainNodeSettings nodeSettings,
     draw::ShapesControl shapesControl,
@@ -36,13 +48,12 @@ std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
     ThreadsafeColor<int32_t> &color,
     std::optional<HoughControl> houghControl) const
 {
-    std::cout << "DisplayNode GetNodePixels_" << std::endl;
+    this->ClearShapes_(shapesControl);
+
     auto pixels = this->GetNodePixels_(nodeSettings, color);
 
     if (!pixels)
     {
-        std::cout << "DisplayNode fallback to GetPreprocessedPixels_"
-            << std::endl;
         pixels = this->GetPreprocessedPixels_(color);
     }
 
@@ -107,6 +118,8 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
                 houghControl);
         }
     }
+
+    this->ClearShapes_(shapesControl);
 
     auto pixels = this->GetPreprocessedPixels_(color);
 

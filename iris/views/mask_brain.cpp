@@ -49,5 +49,4 @@ void MaskBrain::OnMask_(const MaskSettings &maskSettings)
 }
 
 
-
 } // end namespace iris

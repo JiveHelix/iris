@@ -85,6 +85,8 @@ struct ChessChainResults
         std::optional<HoughControl> houghControl) const;
 
 private:
+    void ClearShapes_(draw::ShapesControl) const;
+
     std::shared_ptr<draw::Pixels> GetPreprocessedPixels_(
         ThreadsafeColor<int32_t> &color) const;
 
