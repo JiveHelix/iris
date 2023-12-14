@@ -21,7 +21,7 @@ MaskBrain::MaskBrain(
 
 void MaskBrain::UpdateDisplay()
 {
-    this->OnMask_(this->maskEndpoint_.control.Get());
+    this->OnMask_(this->maskEndpoint_.Get());
 }
 
 

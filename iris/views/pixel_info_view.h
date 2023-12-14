@@ -34,12 +34,12 @@ public:
 
     void OnValues_(const Values &values)
     {
-        this->Display(values, this->point_.control.Get());
+        this->Display(values, this->point_.Get());
     }
 
     void OnPoint_(const draw::Point &point)
     {
-        this->Display(this->values_.control.Get(), point);
+        this->Display(this->values_.Get(), point);
     }
 
     void Display(const Values &values, const draw::Point &point)
@@ -55,8 +55,8 @@ public:
         }
     }
 
-    pex::EndpointControl<PixelValue, ValuesControl> values_;
-    pex::EndpointControl<PixelValue, draw::PointControl> point_;
+    pex::Endpoint<PixelValue, ValuesControl> values_;
+    pex::Endpoint<PixelValue, draw::PointControl> point_;
 };
 
 

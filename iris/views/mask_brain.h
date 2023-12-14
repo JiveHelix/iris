@@ -26,7 +26,7 @@ private:
 
     draw::ShapesId shapesId_;
     draw::PolygonBrain polygonBrain_;
-    pex::EndpointControl<MaskBrain, MaskControl> maskEndpoint_;
+    pex::Endpoint<MaskBrain, MaskControl> maskEndpoint_;
     draw::PixelViewControl pixelViewControl_;
 };
 

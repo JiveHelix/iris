@@ -40,7 +40,6 @@ struct NodeSettings: public NodeSettingsTemplate<pex::Identity>
             {},
             false,
             darkGreen}};
-
     }
 };
 
