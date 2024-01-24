@@ -256,6 +256,9 @@ std::vector<LineGroup> LineGroup::SplitOnSpacing(
 
     auto perpendicular = this->GetPerpendicular(false);
 
+    CHESS_LOG("minimumSpacing: ", minimumSpacing);
+    CHESS_LOG("maximumSpacing: ", maximumSpacing);
+
     for (size_t i = 0; i < this->lines.size() - 1; ++i)
     {
         const Line &first = this->lines[i];
@@ -264,6 +267,8 @@ std::vector<LineGroup> LineGroup::SplitOnSpacing(
         auto spacing = std::abs(
             perpendicular.DistanceToIntersection(second)
             - perpendicular.DistanceToIntersection(first));
+
+        CHESS_LOG("spacing: ", spacing);
 
         if (spacing < minimumSpacing)
         {

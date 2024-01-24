@@ -8,9 +8,9 @@
 #include <wxpex/check_box.h>
 #include <wxpex/view.h>
 
+#include <draw/views/node_settings_view.h>
 #include "iris/canny_settings.h"
 #include "iris/views/defaults.h"
-#include "iris/views/node_settings_view.h"
 
 
 namespace iris
@@ -18,7 +18,7 @@ namespace iris
 
 
 template<typename Value>
-class CannySettingsView: public NodeSettingsView
+class CannySettingsView: public draw::NodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -26,10 +26,10 @@ public:
     CannySettingsView(
         wxWindow *parent,
         CannyControl<Value> controls,
-        std::optional<NodeSettingsControl> nodeSettingsControl,
+        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        NodeSettingsView(parent, "Canny", nodeSettingsControl)
+        draw::NodeSettingsView(parent, "Canny", nodeSettingsControl)
     {
         using namespace wxpex;
 

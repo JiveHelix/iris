@@ -56,7 +56,7 @@ struct ColorTemplate
     struct Template
     {
         T<bool> turbo;
-        T<typename LevelRanges<Value>::GroupMaker> range;
+        T<typename LevelRanges<Value>::Group> range;
         T<Value> maximum;
 
         static constexpr auto fields = ColorFields<Template>::fields;
@@ -79,6 +79,38 @@ struct ColorSettings:
 };
 
 
+template<typename Value>
+struct ColorCustom
+{
+    using Plain = ColorSettings<Value>;
+
+    template<typename ModelBase>
+    struct Model: public ModelBase
+    {
+    public:
+        using MaximumTerminus =
+            pex::Terminus<Model, pex::model::Value<Value>>;
+
+        Model()
+            :
+            ModelBase(),
+            maximumTerminus_(this, this->maximum)
+        {
+            this->maximumTerminus_.Connect(&Model::OnMaximum_);
+        }
+
+    private:
+        void OnMaximum_(Value maximum_)
+        {
+            this->range.SetMaximumValue(maximum_);
+        }
+
+    private:
+        MaximumTerminus maximumTerminus_;
+    };
+};
+
+
 TEMPLATE_EQUALITY_OPERATORS(ColorSettings)
 TEMPLATE_OUTPUT_STREAM(ColorSettings)
 
@@ -89,51 +121,22 @@ using ColorGroup =
     <
         ColorFields,
         ColorTemplate<Value>::template Template,
-        ColorSettings<Value>
+        ColorCustom<Value>
     >;
 
-
 template<typename Value>
-struct ColorModel: public ColorGroup<Value>::Model
-{
-public:
-    using MaximumTerminus =
-        pex::Terminus<ColorModel, pex::model::Value<Value>>;
-
-    ColorModel()
-        :
-        ColorGroup<Value>::Model(),
-        maximumTerminus_(this, this->maximum)
-    {
-        this->maximumTerminus_.Connect(&ColorModel::OnMaximum_);
-    }
-
-private:
-    void OnMaximum_(Value maximum_)
-    {
-        this->range.SetMaximumValue(maximum_);
-    }
-
-private:
-    MaximumTerminus maximumTerminus_;
-};
-
+using ColorModel = typename ColorGroup<Value>::Model;
 
 template<typename Value>
 using ColorControl = typename ColorGroup<Value>::Control;
 
 
-template<typename Value>
-using ColorGroupMaker = pex::MakeGroup<ColorGroup<Value>, ColorModel<Value>>;
-
-
 } // end namespace iris
-
 
 
 extern template struct pex::Group
     <
         iris::ColorFields,
         iris::ColorTemplate<int32_t>::template Template,
-        iris::ColorSettings<int32_t>
+        iris::ColorCustom<int32_t>
     >;

@@ -133,7 +133,7 @@ using HarrisGroup = pex::Group
     <
         HarrisFields,
         HarrisTemplate<Float, Ranges>::template Template,
-        HarrisSettings<Float>
+        pex::PlainT<HarrisSettings<Float>>
     >;
 
 template<typename Float, typename Ranges = HarrisRanges>
@@ -144,24 +144,19 @@ using HarrisControl =
     typename HarrisGroup<Float, Ranges>::Control;
 
 
-template<typename Float>
-using HarrisGroupMaker = pex::MakeGroup<HarrisGroup<Float>>;
-
-
 } // end namespace iris
-
 
 
 extern template struct pex::Group
     <
         iris::HarrisFields,
         iris::HarrisTemplate<float, iris::HarrisRanges>::template Template,
-        iris::HarrisSettings<float>
+        pex::PlainT<iris::HarrisSettings<float>>
     >;
 
 extern template struct pex::Group
     <
         iris::HarrisFields,
         iris::HarrisTemplate<double, iris::HarrisRanges>::template Template,
-        iris::HarrisSettings<double>
+        pex::PlainT<iris::HarrisSettings<double>>
     >;

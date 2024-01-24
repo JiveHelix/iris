@@ -42,46 +42,62 @@ struct VertexTemplate
 };
 
 
-struct VertexSettings
-    :
-    public VertexTemplate<pex::Identity>
+struct VertexCustom
 {
-    static VertexSettings Default()
+    template<typename Base>
+    struct Plain: public Base
     {
         static constexpr Eigen::Index defaultWindow = 40;
         static constexpr Eigen::Index defaultCount = 4;
         static constexpr size_t defaultThreads = 4;
 
-        return {{true, defaultWindow, defaultCount, defaultThreads}};
-    }
+        Plain()
+            :
+            Base{
+                true,
+                defaultWindow,
+                defaultCount,
+                defaultThreads}
+        {
+
+        }
+
+        static Plain Default()
+        {
+            return Plain();
+        }
+    };
+
+    template<typename ModelBase>
+    class Model: public ModelBase
+    {
+    public:
+        Model()
+            :
+            ModelBase()
+        {
+            this->count.SetChoices({2, 4});
+        }
+    };
 };
 
-
-DECLARE_EQUALITY_OPERATORS(VertexSettings)
 
 
 using VertexGroup = pex::Group
     <
         VertexFields,
         VertexTemplate,
-        VertexSettings
+        VertexCustom
     >;
 
 
-struct VertexModel: public VertexGroup::Model
-{
-    VertexModel()
-        :
-        VertexGroup::Model()
-    {
-        this->count.SetChoices({2, 4});
-    }
-};
-
-
+using VertexSettings = typename VertexGroup::Plain;
+using VertexModel = typename VertexGroup::Model;
 using VertexControl = typename VertexGroup::Control;
 
-using VertexGroupMaker = pex::MakeGroup<VertexGroup, VertexModel>;
+
+DECLARE_OUTPUT_STREAM_OPERATOR(VertexSettings)
+DECLARE_EQUALITY_OPERATORS(VertexSettings)
 
 
 } // end namespace iris
@@ -91,5 +107,5 @@ extern template struct pex::Group
     <
         iris::VertexFields,
         iris::VertexTemplate,
-        iris::VertexSettings
+        iris::VertexCustom
     >;

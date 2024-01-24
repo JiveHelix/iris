@@ -25,7 +25,7 @@ struct HomographyFields
 template<template<typename> typename T>
 struct HomographyTemplate
 {
-    T<pex::MakeGroup<tau::SizeGroup<double>>> sensorSize_pixels;
+    T<tau::SizeGroup<double>> sensorSize_pixels;
     T<double> pixelSize_microns;
     T<double> squareSize_mm;
 
@@ -56,11 +56,14 @@ DECLARE_OUTPUT_STREAM_OPERATOR(HomographySettings)
 
 
 using HomographyGroup =
-    pex::Group<HomographyFields, HomographyTemplate, HomographySettings>;
+    pex::Group
+    <
+        HomographyFields,
+        HomographyTemplate,
+        pex::PlainT<HomographySettings>
+    >;
 
 using HomographyControl = typename HomographyGroup::Control;
-
-using HomographyGroupMaker = pex::MakeGroup<HomographyGroup>;
 
 
 } // end namespace iris
@@ -70,5 +73,5 @@ extern template struct pex::Group
     <
         iris::HomographyFields,
         iris::HomographyTemplate,
-        iris::HomographySettings
+        pex::PlainT<iris::HomographySettings>
     >;

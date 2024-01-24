@@ -53,18 +53,27 @@ template<typename Value>
 struct GaussianSettings:
     public GaussianTemplate<Value>::template Template<pex::Identity>
 {
-    static GaussianSettings Default()
-    {
-        static constexpr double defaultSigma = 1.0;
-        static constexpr double defaultThreshold = 0.01;
-        static constexpr size_t defaultThreads = 4;
+    using Base = GaussianTemplate<Value>::template Template<pex::Identity>;
 
-        return {{
+    static constexpr double defaultSigma = 1.0;
+    static constexpr double defaultThreshold = 0.01;
+    static constexpr size_t defaultThreads = 4;
+
+    GaussianSettings()
+        :
+        Base{
             true,
             defaultSigma,
             defaultThreshold,
             defaultThreads,
-            defaultMaximum}};
+            defaultMaximum}
+    {
+
+    }
+
+    static GaussianSettings Default()
+    {
+        return GaussianSettings();
     }
 };
 
@@ -78,12 +87,9 @@ using GaussianGroup = pex::Group
 <
     GaussianFields,
     GaussianTemplate<Value>::template Template,
-    GaussianSettings<Value>
+    pex::PlainT<GaussianSettings<Value>>
 >;
 
-
-template<typename Value>
-using GaussianGroupMaker = pex::MakeGroup<GaussianGroup<Value>>;
 
 template<typename Value>
 using GaussianModel = typename GaussianGroup<Value>::Model;
@@ -102,5 +108,5 @@ extern template struct pex::Group
 <
     iris::GaussianFields,
     iris::GaussianTemplate<int32_t>::template Template,
-    iris::GaussianSettings<int32_t>
+    pex::PlainT<iris::GaussianSettings<int32_t>>
 >;

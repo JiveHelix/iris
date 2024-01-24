@@ -17,7 +17,28 @@ template class Node<Source<ProcessMatrix>, Mask<int32_t>, MaskControl>;
 
 MaskMatrix CreateMask(const MaskSettings &maskSettings)
 {
-    if (maskSettings.polygon.points.size() < 3)
+    draw::Polygon polygon;
+
+    if (maskSettings.polygons.empty())
+    {
+        return MaskMatrix::Zero(
+            maskSettings.imageSize.height,
+            maskSettings.imageSize.width).array() + 1.0;
+    }
+
+    const auto &value = maskSettings.polygons[0];
+
+    auto valueBase = value.GetValueBase();
+    auto shape = dynamic_cast<const PolygonShape *>(valueBase.get());
+
+    if (!shape)
+    {
+        throw std::logic_error("Expected only polygons");
+    }
+
+    polygon = shape->shape;
+
+    if (polygon.points.size() < 3)
     {
         return MaskMatrix::Zero(
             maskSettings.imageSize.height,
@@ -40,7 +61,7 @@ MaskMatrix CreateMask(const MaskSettings &maskSettings)
     {
         wxpex::GraphicsContext context(dc);
         draw::ConfigureLook(context, look);
-        draw::DrawPolygon(context, maskSettings.polygon.GetPoints());
+        draw::DrawPolygon(context, polygon.GetPoints());
     }
 
     dc.SelectObject(wxNullBitmap);

@@ -36,7 +36,7 @@ template struct pex::Group
     <
         iris::CannyFields,
         iris::CannyTemplate<float>::template Template,
-        iris::CannySettings<float>
+        pex::PlainT<iris::CannySettings<float>>
     >;
 
 
@@ -44,5 +44,5 @@ template struct pex::Group
     <
         iris::CannyFields,
         iris::CannyTemplate<double>::template Template,
-        iris::CannySettings<double>
+        pex::PlainT<iris::CannySettings<double>>
     >;

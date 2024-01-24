@@ -41,10 +41,10 @@ using InProcess = int32_t;
 template<template<typename> typename T>
 struct DemoTemplate
 {
-    T<iris::GaussianGroupMaker<InProcess>> gaussian;
-    T<iris::GradientGroupMaker<InProcess>> gradient;
-    T<iris::CannyGroupMaker<float>> canny;
-    T<iris::ColorGroupMaker<InProcess>> color;
+    T<iris::GaussianGroup<InProcess>> gaussian;
+    T<iris::GradientGroup<InProcess>> gradient;
+    T<iris::CannyGroup<float>> canny;
+    T<iris::ColorGroup<InProcess>> color;
 };
 
 

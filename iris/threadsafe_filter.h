@@ -50,7 +50,7 @@ public:
 
     Settings GetSettings() const
     {
-        return this->endpoint_.GetUpstream().Get();
+        return this->endpoint_.Get();
     }
 
 private:
@@ -59,9 +59,8 @@ private:
         mutex_(),
         endpoint_(
             this,
-            other.endpoint_.GetUpstream(),
-            &ThreadsafeFilter::OnSettings_),
-        filter_(this->endpoint_.GetUpstream().Get())
+            other.endpoint_),
+        filter_(this->endpoint_.Get())
     {
 
     }

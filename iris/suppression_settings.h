@@ -73,11 +73,10 @@ using SuppressionGroup =
     <
         SuppressionFields,
         SuppressionTemplate<>::template Template,
-        SuppressionSettings
+        pex::PlainT<SuppressionSettings>
     >;
 
 using SuppressionModel = typename SuppressionGroup::Model;
-
 using SuppressionControl = typename SuppressionGroup::Control;
 
 

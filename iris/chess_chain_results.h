@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <draw/pixels.h>
+#include <draw/node_settings.h>
 #include <draw/views/pixel_view.h>
 
 #include "iris/color.h"

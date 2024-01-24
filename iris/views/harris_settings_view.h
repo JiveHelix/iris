@@ -8,9 +8,9 @@
 #include <wxpex/check_box.h>
 #include <wxpex/view.h>
 
+#include <draw/views/node_settings_view.h>
 #include "iris/harris_settings.h"
 #include "iris/views/defaults.h"
-#include "iris/views/node_settings_view.h"
 
 
 namespace iris
@@ -18,7 +18,7 @@ namespace iris
 
 
 template<typename Control>
-class HarrisSettingsView: public NodeSettingsView
+class HarrisSettingsView: public draw::NodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -26,10 +26,10 @@ public:
     HarrisSettingsView(
         wxWindow *parent,
         Control controls,
-        std::optional<NodeSettingsControl> nodeSettingsControl,
+        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        NodeSettingsView(parent, "Harris", nodeSettingsControl)
+        draw::NodeSettingsView(parent, "Harris", nodeSettingsControl)
     {
         using namespace wxpex;
 

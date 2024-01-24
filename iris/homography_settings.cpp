@@ -6,5 +6,5 @@ template struct pex::Group
     <
         iris::HomographyFields,
         iris::HomographyTemplate,
-        iris::HomographySettings
+        pex::PlainT<iris::HomographySettings>
     >;

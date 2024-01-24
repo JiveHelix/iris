@@ -37,9 +37,9 @@ using InProcess = int32_t;
 template<template<typename> typename T>
 struct DemoTemplate
 {
-    T<iris::GaussianGroupMaker<InProcess>> gaussian;
-    T<iris::GradientGroupMaker<InProcess>> gradient;
-    T<iris::ColorGroupMaker<InProcess>> color;
+    T<iris::GaussianGroup<InProcess>> gaussian;
+    T<iris::GradientGroup<InProcess>> gradient;
+    T<iris::ColorGroup<InProcess>> color;
 };
 
 

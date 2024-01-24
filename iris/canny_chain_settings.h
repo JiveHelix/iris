@@ -3,11 +3,11 @@
 #include <fields/fields.h>
 #include <pex/group.h>
 #include <pex/endpoint.h>
+#include <draw/node_settings.h>
 #include "iris/default.h"
 #include "iris/gaussian_settings.h"
 #include "iris/gradient_settings.h"
 #include "iris/canny_settings.h"
-#include "iris/node_settings.h"
 
 
 namespace iris
@@ -27,9 +27,9 @@ struct CannyChainNodeSettingsFields
 template<template<typename> typename T>
 struct CannyChainNodeSettingsTemplate
 {
-    T<NodeSettingsGroupMaker> gaussian;
-    T<NodeSettingsGroupMaker> gradient;
-    T<NodeSettingsGroupMaker> canny;
+    T<draw::NodeSettingsGroup> gaussian;
+    T<draw::NodeSettingsGroup> gradient;
+    T<draw::NodeSettingsGroup> canny;
 };
 
 
@@ -64,89 +64,93 @@ template<template<typename> typename T>
 struct CannyChainTemplate
 {
     T<bool> enable;
-    T<GaussianGroupMaker<int32_t>> gaussian;
-    T<GradientGroupMaker<int32_t>> gradient;
-    T<CannyGroupMaker<double>> canny;
+    T<GaussianGroup<int32_t>> gaussian;
+    T<GradientGroup<int32_t>> gradient;
+    T<CannyGroup<double>> canny;
 
     static constexpr auto fields = CannyChainFields<CannyChainTemplate>::fields;
     static constexpr auto fieldsTypeName = "CannyChain";
 };
 
 
-struct CannyChainSettings
-    :
-    public CannyChainTemplate<pex::Identity>
+struct CannyChainCustom
 {
-    static CannyChainSettings Default()
+    template<typename PlainBase>
+    struct Plain: public PlainBase
     {
-        auto defaultGaussian = GaussianSettings<int32_t>::Default();
-        defaultGaussian.sigma = 2.0;
+        Plain()
+            :
+            PlainBase{
+                true,
+                GaussianSettings<int32_t>::Default(),
+                GradientSettings<int32_t>::Default(),
+                CannySettings<double>::Default()}
+        {
+            this->gaussian.sigma = 2.0;
+        }
 
-        return {{
-            true,
-            defaultGaussian,
-            GradientSettings<int32_t>::Default(),
-            CannySettings<double>::Default()}};
-    }
+        static Plain Default()
+        {
+            return Plain();
+        }
+    };
+
+    template<typename ModelBase>
+    struct Model: public ModelBase
+    {
+    public:
+        Model()
+            :
+            ModelBase(),
+            maximumEndpoint_(this)
+        {
+
+        }
+
+        void SetMaximumControl(const MaximumControl &maximumControl)
+        {
+            this->maximumEndpoint_.ConnectUpstream(
+                maximumControl,
+                &Model::OnMaximum_);
+        }
+
+    private:
+        void OnMaximum_(InProcess maximum)
+        {
+            auto deferGaussian = pex::MakeDefer(this->gaussian.maximum);
+            auto deferGradient = pex::MakeDefer(this->gradient.maximum);
+            deferGaussian.Set(maximum);
+            deferGradient.Set(maximum);
+        }
+
+    private:
+        pex::Endpoint<Model, MaximumControl> maximumEndpoint_;
+    };
 };
-
-
-DECLARE_EQUALITY_OPERATORS(CannyChainSettings)
 
 
 using CannyChainGroup = pex::Group
     <
         CannyChainFields,
         CannyChainTemplate,
-        CannyChainSettings
+        CannyChainCustom
     >;
 
-
-struct CannyChainModel: public CannyChainGroup::Model
-{
-public:
-    CannyChainModel()
-        :
-        CannyChainGroup::Model(),
-        maximumEndpoint_(this)
-    {
-
-    }
-
-    void SetMaximumControl(const MaximumControl &maximumControl)
-    {
-        this->maximumEndpoint_.ConnectUpstream(
-            maximumControl,
-            &CannyChainModel::OnMaximum_);
-    }
-
-private:
-    void OnMaximum_(InProcess maximum)
-    {
-        auto deferGaussian = pex::MakeDefer(this->gaussian.maximum);
-        auto deferGradient = pex::MakeDefer(this->gradient.maximum);
-        deferGaussian.Set(maximum);
-        deferGradient.Set(maximum);
-    }
-
-private:
-    pex::Endpoint<CannyChainModel, MaximumControl> maximumEndpoint_;
-};
-
-
+using CannyChainSettings = typename CannyChainGroup::Plain;
 using CannyChainControl = typename CannyChainGroup::Control;
+using CannyChainModel = typename CannyChainGroup::Model;
 
 
-using CannyChainGroupMaker = pex::MakeGroup<CannyChainGroup, CannyChainModel>;
+DECLARE_OUTPUT_STREAM_OPERATOR(CannyChainSettings)
+DECLARE_EQUALITY_OPERATORS(CannyChainSettings)
 
 
 } // end namespace iris
-
 
 
 extern template struct pex::Group
     <
         iris::CannyChainFields,
         iris::CannyChainTemplate,
-        iris::CannyChainSettings
+        iris::CannyChainCustom
     >;

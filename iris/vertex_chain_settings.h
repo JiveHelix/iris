@@ -3,11 +3,11 @@
 #include <fields/fields.h>
 #include <pex/group.h>
 #include <draw/points_shape.h>
+#include <draw/node_settings.h>
 #include "iris/gaussian_settings.h"
 #include "iris/gradient_settings.h"
 #include "iris/harris_settings.h"
 #include "iris/vertex_settings.h"
-#include "iris/node_settings.h"
 
 
 namespace iris
@@ -28,10 +28,10 @@ struct VertexChainNodeSettingsFields
 template<template<typename> typename T>
 struct VertexChainNodeSettingsTemplate
 {
-    T<NodeSettingsGroupMaker> gaussian;
-    T<NodeSettingsGroupMaker> gradient;
-    T<NodeSettingsGroupMaker> harris;
-    T<NodeSettingsGroupMaker> vertex;
+    T<draw::NodeSettingsGroup> gaussian;
+    T<draw::NodeSettingsGroup> gradient;
+    T<draw::NodeSettingsGroup> harris;
+    T<draw::NodeSettingsGroup> vertex;
 };
 
 
@@ -67,11 +67,11 @@ template<template<typename> typename T>
 struct VertexChainTemplate
 {
     T<bool> enable;
-    T<GaussianGroupMaker<int32_t>> gaussian;
-    T<GradientGroupMaker<int32_t>> gradient;
-    T<HarrisGroupMaker<double>> harris;
-    T<VertexGroupMaker> vertex;
-    T<draw::PointsShapeGroupMaker> shape;
+    T<GaussianGroup<int32_t>> gaussian;
+    T<GradientGroup<int32_t>> gradient;
+    T<HarrisGroup<double>> harris;
+    T<VertexGroup> vertex;
+    T<draw::PointsShapeGroup> shape;
 
     static constexpr auto fields =
         VertexChainFields<VertexChainTemplate>::fields;
@@ -80,87 +80,85 @@ struct VertexChainTemplate
 };
 
 
-struct VertexChainSettings
-    :
-    public VertexChainTemplate<pex::Identity>
+struct VertexChainCustom
 {
-    static VertexChainSettings Default()
+    template<typename Base>
+    struct Plain: public Base
     {
-        auto defaultGaussian = GaussianSettings<int32_t>::Default();
-        defaultGaussian.sigma = 2.0;
+        Plain()
+            :
+            Base{
+                true,
+                GaussianSettings<int32_t>::Default(),
+                GradientSettings<int32_t>::Default(),
+                HarrisSettings<double>::Default(),
+                VertexSettings::Default(),
+                draw::PointsShapeSettings::Default()}
+        {
+            this->gaussian.sigma = 2.0;
+        }
 
-        return {{
-            true,
-            defaultGaussian,
-            GradientSettings<int32_t>::Default(),
-            HarrisSettings<double>::Default(),
-            VertexSettings::Default(),
-            draw::PointsShapeSettings::Default()}};
-    }
+        static Plain Default()
+        {
+            return Plain();
+        }
+    };
+
+    template<typename ModelBase>
+    struct Model: public ModelBase
+    {
+    public:
+        Model()
+            :
+            ModelBase(),
+            maximumEndpoint_(this)
+        {
+
+        }
+
+        void SetMaximumControl(const MaximumControl &maximumControl)
+        {
+            this->maximumEndpoint_.ConnectUpstream(
+                maximumControl,
+                &Model::OnMaximum_);
+        }
+
+    private:
+        void OnMaximum_(int32_t maximum)
+        {
+            auto deferGaussian = pex::MakeDefer(this->gaussian.maximum);
+            auto deferGradient = pex::MakeDefer(this->gradient.maximum);
+            deferGaussian.Set(maximum);
+            deferGradient.Set(maximum);
+        }
+
+        pex::Endpoint<Model, MaximumControl> maximumEndpoint_;
+    };
 };
-
-
-DECLARE_EQUALITY_OPERATORS(VertexChainSettings)
 
 
 using VertexChainGroup = pex::Group
     <
         VertexChainFields,
         VertexChainTemplate,
-        VertexChainSettings
+        VertexChainCustom
     >;
 
 
-struct VertexChainModel: public VertexChainGroup::Model
-{
-public:
-    VertexChainModel()
-        :
-        VertexChainGroup::Model(),
-        maximumEndpoint_(this)
-    {
-
-    }
-
-    void SetMaximumControl(const MaximumControl &maximumControl)
-    {
-        this->maximumEndpoint_.ConnectUpstream(
-            maximumControl,
-            &VertexChainModel::OnMaximum_);
-    }
-
-private:
-    void OnMaximum_(int32_t maximum)
-    {
-        auto deferGaussian = pex::MakeDefer(this->gaussian.maximum);
-        auto deferGradient = pex::MakeDefer(this->gradient.maximum);
-        deferGaussian.Set(maximum);
-        deferGradient.Set(maximum);
-    }
-
-    pex::Endpoint<VertexChainModel, MaximumControl> maximumEndpoint_;
-};
-
+using VertexChainSettings = typename VertexChainGroup::Plain;
+using VertexChainModel = typename VertexChainGroup::Model;
 using VertexChainControl = typename VertexChainGroup::Control;
 
-using VertexChainGroupMaker =
-    pex::MakeGroup<VertexChainGroup, VertexChainModel>;
+DECLARE_EQUALITY_OPERATORS(VertexChainSettings)
+DECLARE_OUTPUT_STREAM_OPERATOR(VertexChainSettings)
 
 
 } // end namespace iris
-
 
 
 extern template struct pex::Group
     <
         iris::VertexChainFields,
         iris::VertexChainTemplate,
-        iris::VertexChainSettings
-    >;
-
-
-extern template struct pex::MakeGroup
-    <
-        iris::VertexChainGroup,
-        iris::VertexChainModel
+        iris::VertexChainCustom
     >;

@@ -42,91 +42,129 @@ template<template<typename> typename T>
 struct ChessChainTemplate
 {
     T<bool> enable;
-    T<MaskGroupMaker> mask;
-    T<LevelGroupMaker<int32_t>> level;
+    T<MaskGroup> mask;
+    T<LevelGroup<int32_t>> level;
 
-    T<GaussianGroupMaker<int32_t>> gaussian;
-    T<GradientGroupMaker<int32_t>> gradient;
+    T<GaussianGroup<int32_t>> gaussian;
+    T<GradientGroup<int32_t>> gradient;
 
-    T<CannyGroupMaker<double>> canny;
-    T<HoughGroupMaker<double>> hough;
-    T<draw::LinesShapeGroupMaker> linesShape;
+    T<CannyGroup<double>> canny;
+    T<HoughGroup<double>> hough;
+    T<draw::LinesShapeGroup> linesShape;
 
-    T<HarrisGroupMaker<double>> harris;
-    T<VertexGroupMaker> vertices;
-    T<draw::PointsShapeGroupMaker> verticesShape;
+    T<HarrisGroup<double>> harris;
+    T<VertexGroup> vertices;
+    T<draw::PointsShapeGroup> verticesShape;
 
-    T<ChessGroupMaker> chess;
+    T<ChessGroup> chess;
     T<pex::MakeSignal> autoDetectSettings;
 
     static constexpr auto fields = ChessChainFields<ChessChainTemplate>::fields;
 };
 
 
-// using ChessChainSettings = typename ChessChainGroup::Plain;
-struct ChessChainSettings
-    :
-    public ChessChainTemplate<pex::Identity>
+struct ChessChainCustom
 {
-    static ChessChainSettings Default()
+    template<typename Base>
+    struct Plain: public Base
     {
-        auto defaultGaussian = GaussianSettings<int32_t>::Default();
-        defaultGaussian.sigma = 2.0;
+        Plain()
+            :
+            Base{
+                true,
+                MaskSettings::Default(),
+                LevelSettings<int32_t>::Default(),
 
-        return {{
-            true,
-            MaskSettings::Default(),
-            LevelSettings<int32_t>::Default(),
+                GaussianSettings<int32_t>::Default(),
+                GradientSettings<int32_t>::Default(),
 
-            defaultGaussian,
-            GradientSettings<int32_t>::Default(),
+                CannySettings<double>::Default(),
+                HoughSettings<double>::Default(),
+                draw::LinesShapeSettings::Default(),
 
-            CannySettings<double>::Default(),
-            HoughSettings<double>::Default(),
-            draw::LinesShapeSettings::Default(),
+                HarrisSettings<double>::Default(),
+                VertexSettings::Default(),
+                draw::PointsShapeSettings::Default(),
 
-            HarrisSettings<double>::Default(),
-            VertexSettings::Default(),
-            draw::PointsShapeSettings::Default(),
+                ChessSettings::Default(),
+                {}}
+        {
+            this->gaussian.sigma = 2.0;
+        }
 
-            ChessSettings::Default(),
-            {}}};
-    }
+        static Plain<Base> Default()
+        {
+            return Plain<Base>();
+        }
+    };
+
+    template<typename ModelBase>
+    struct Model
+        :
+        public ModelBase
+    {
+    public:
+        Model()
+            :
+            ModelBase(),
+            imageSizeEndpoint_(this),
+            maximumEndpoint_(this)
+        {
+
+        }
+
+        void SetImageSizeControl(const draw::SizeControl &sizeControl)
+        {
+            this->imageSizeEndpoint_.ConnectUpstream(
+                sizeControl,
+                &Model::OnImageSize_);
+        }
+
+        void SetMaximumControl(const MaximumControl &maximumControl)
+        {
+            this->maximumEndpoint_.ConnectUpstream(
+                maximumControl,
+                &Model::OnMaximum_);
+        }
+
+    private:
+        void OnMaximum_(InProcess maximum)
+        {
+            auto deferLevel = pex::MakeDefer(this->level.maximum);
+            auto deferGaussian = pex::MakeDefer(this->gaussian.maximum);
+            auto deferGradient = pex::MakeDefer(this->gradient.maximum);
+
+            deferLevel.Set(maximum);
+            deferGaussian.Set(maximum);
+            deferGradient.Set(maximum);
+        }
+
+        void OnImageSize_(const draw::Size &size)
+        {
+            auto deferMask = pex::MakeDefer(this->mask.imageSize);
+            auto deferHough = pex::MakeDefer(this->hough.imageSize);
+            deferMask.Set(size);
+            deferHough.Set(size);
+        }
+
+    private:
+        pex::Endpoint<Model, draw::SizeControl> imageSizeEndpoint_;
+        pex::Endpoint<Model, MaximumControl> maximumEndpoint_;
+    };
 };
-
-
-DECLARE_EQUALITY_OPERATORS(ChessChainSettings)
 
 
 using ChessChainGroup =
-    pex::Group<ChessChainFields, ChessChainTemplate, ChessChainSettings>;
+    pex::Group<ChessChainFields, ChessChainTemplate, ChessChainCustom>;
 
-
-struct ChessChainModel: public ChessChainGroup::Model
-{
-public:
-    ChessChainModel();
-
-    void SetImageSizeControl(const draw::SizeControl &sizeControl);
-
-    void SetMaximumControl(const MaximumControl &maximumControl);
-
-private:
-    void OnMaximum_(InProcess maximum);
-
-    void OnImageSize_(const draw::Size &size);
-
-private:
-    pex::Endpoint<ChessChainModel, draw::SizeControl> imageSizeEndpoint_;
-    pex::Endpoint<ChessChainModel, MaximumControl> maximumEndpoint_;
-};
-
+using ChessChainSettings = typename ChessChainGroup::Plain;
 using ChessChainControl = typename ChessChainGroup::Control;
+using ChessChainModel = typename ChessChainGroup::Model;
 
-using ChessChainGroupMaker = pex::MakeGroup<ChessChainGroup, ChessChainModel>;
 
-
+DECLARE_EQUALITY_OPERATORS(ChessChainSettings)
 DECLARE_OUTPUT_STREAM_OPERATOR(ChessChainSettings)
+
 
 
 } // end namespace iris
@@ -136,5 +174,5 @@ extern template struct pex::Group
     <
         iris::ChessChainFields,
         iris::ChessChainTemplate,
-        iris::ChessChainSettings
+        iris::ChessChainCustom
     >;

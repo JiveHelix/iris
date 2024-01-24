@@ -16,10 +16,10 @@ namespace iris
 VertexSettingsView::VertexSettingsView(
     wxWindow *parent,
     VertexControl controls,
-    std::optional<NodeSettingsControl> nodeSettingsControl,
+    std::optional<draw::NodeSettingsControl> nodeSettingsControl,
     const LayoutOptions &layoutOptions)
     :
-    NodeSettingsView(parent, "Vertex", nodeSettingsControl)
+    draw::NodeSettingsView(parent, "Vertex", nodeSettingsControl)
 {
     using namespace wxpex;
 

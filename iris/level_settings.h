@@ -61,7 +61,7 @@ struct LevelTemplate
     struct Template
     {
         T<bool> enable;
-        T<typename LevelRanges<Value>::GroupMaker> range;
+        T<typename LevelRanges<Value>::Group> range;
         T<pex::Filtered<Value, MaximumFilter<Value>>> maximum;
         T<pex::MakeSignal> autoDetectSettings;
 
@@ -97,52 +97,56 @@ TEMPLATE_EQUALITY_OPERATORS(LevelSettings)
 
 
 template<typename Value>
+struct LevelCustom
+{
+    using Plain = LevelSettings<Value>;
+
+    template<typename ModelBase>
+    struct Model: public ModelBase
+    {
+    public:
+        Model()
+            :
+            ModelBase(),
+            maximumEndpoint_(this, this->maximum, &Model::OnMaximum_)
+        {
+
+        }
+
+    private:
+        void OnMaximum_(Value maximumValue)
+        {
+            this->range.SetMaximumValue(maximumValue);
+        }
+
+    private:
+        using MaximumEndpoint =
+            pex::Endpoint
+            <
+                Model,
+                decltype(Model::maximum)
+            >;
+
+        MaximumEndpoint maximumEndpoint_;
+    };
+};
+
+
+template<typename Value>
 using LevelGroup =
     pex::Group
     <
         LevelFields,
         LevelTemplate<Value>::template Template,
-        LevelSettings<Value>
+        LevelCustom<Value>
     >;
 
 
 template<typename Value>
+using LevelModel = typename LevelGroup<Value>::Model;
+
+template<typename Value>
 using LevelControl = typename LevelGroup<Value>::Control;
-
-
-template<typename Value>
-struct LevelModel: public LevelGroup<Value>::Model
-{
-public:
-    LevelModel()
-        :
-        LevelGroup<Value>::Model(),
-        maximumEndpoint_(this, this->maximum, &LevelModel::OnMaximum_)
-    {
-
-    }
-
-private:
-    void OnMaximum_(Value maximumValue)
-    {
-        this->range.SetMaximumValue(maximumValue);
-    }
-
-private:
-    using MaximumEndpoint =
-        pex::Endpoint
-        <
-            LevelModel,
-            decltype(LevelControl<Value>::maximum)
-        >;
-
-    MaximumEndpoint maximumEndpoint_;
-};
-
-
-template<typename Value>
-using LevelGroupMaker = pex::MakeGroup<LevelGroup<Value>, LevelModel<Value>>;
-
 
 
 extern template struct LevelSettings<int32_t>;
@@ -155,12 +159,5 @@ extern template struct pex::Group
     <
         iris::LevelFields,
         iris::LevelTemplate<int32_t>::template Template,
-        iris::LevelSettings<int32_t>
-    >;
-
-
-extern template struct pex::MakeGroup
-    <
-        iris::LevelGroup<int32_t>,
-        iris::LevelModel<int32_t>
+        iris::LevelCustom<int32_t>
     >;

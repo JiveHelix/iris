@@ -7,8 +7,8 @@
 #include <wxpex/button.h>
 #include <wxpex/check_box.h>
 
+#include <draw/views/node_settings_view.h>
 #include "iris/level_settings.h"
-#include "iris/views/node_settings_view.h"
 
 
 namespace iris
@@ -16,7 +16,7 @@ namespace iris
 
 
 template<typename Value>
-class LevelSettingsView: public NodeSettingsView
+class LevelSettingsView: public draw::NodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -25,10 +25,10 @@ public:
         wxWindow *parent,
         const std::string &name,
         LevelControl<Value> control,
-        std::optional<NodeSettingsControl> nodeSettingsControl,
+        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        NodeSettingsView(parent, name, nodeSettingsControl)
+        draw::NodeSettingsView(parent, name, nodeSettingsControl)
     {
         auto detect = new wxpex::Button(
             this->GetPanel(),

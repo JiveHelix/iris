@@ -8,9 +8,9 @@
 #include <wxpex/slider.h>
 #include <wxpex/view.h>
 
+#include <draw/views/node_settings_view.h>
 #include "iris/gaussian_settings.h"
 #include "iris/views/defaults.h"
-#include "iris/views/node_settings_view.h"
 
 
 namespace iris
@@ -18,7 +18,7 @@ namespace iris
 
 
 template<typename Value>
-class GaussianSettingsView: public NodeSettingsView
+class GaussianSettingsView: public draw::NodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -27,10 +27,10 @@ public:
         wxWindow *parent,
         const std::string &name,
         GaussianControl<Value> controls,
-        std::optional<NodeSettingsControl> nodeSettingsControl,
+        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions)
         :
-        NodeSettingsView(parent, name, nodeSettingsControl)
+        draw::NodeSettingsView(parent, name, nodeSettingsControl)
     {
         auto panel = this->GetPanel();
 

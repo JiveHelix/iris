@@ -33,21 +33,27 @@ CannyChainSettingsView::CannyChainSettingsView(
             panel,
             "Gaussian Blur",
             controls.gaussian,
-            (nodeSettings) ? nodeSettings->gaussian : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->gaussian
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto gradient =
         new GradientSettingsView<int32_t>(
             panel,
             controls.gradient,
-            (nodeSettings) ? nodeSettings->gradient : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->gradient
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto canny =
         new CannySettingsView<double>(
             panel,
             controls.canny,
-            (nodeSettings) ? nodeSettings->canny : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->canny
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto sizer = wxpex::LayoutItems(

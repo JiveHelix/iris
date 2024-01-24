@@ -5,6 +5,8 @@
 #include <pex/group.h>
 #include <draw/polygon.h>
 #include <draw/size.h>
+#include <draw/shapes.h>
+#include <draw/polygon_shape.h>
 #include "iris/gaussian.h"
 #include "iris/default.h"
 
@@ -20,20 +22,31 @@ struct MaskFields
         fields::Field(&T::imageSize, "imageSize"),
         fields::Field(&T::enable, "enable"),
         fields::Field(&T::showOutline, "showOutline"),
-        fields::Field(&T::polygon, "polygon"),
+        fields::Field(&T::polygons, "polygons"),
         fields::Field(&T::feather, "feather"));
 };
+
+
+using MaskShapePolyValue =
+    pex::poly::Value<draw::Shape, draw::PolygonShapeTemplate>;
+
+using MaskShapePolyGroup = draw::PolygonShapePolyGroup<MaskShapePolyValue>;
+using MaskShapeValue = typename MaskShapePolyGroup::PolyValue;
+using PolygonShape = typename MaskShapePolyGroup::Derived;
+
+using MaskShapeListMaker =
+    pex::MakePolyList<MaskShapePolyValue, draw::ShapeTemplates<void>>;
 
 
 template<template<typename> typename T>
 class MaskTemplate
 {
 public:
-    T<draw::SizeGroupMaker> imageSize;
+    T<draw::SizeGroup> imageSize;
     T<bool> enable;
     T<bool> showOutline;
-    T<draw::PolygonGroupMaker> polygon;
-    T<GaussianGroupMaker<double>> feather;
+    T<MaskShapeListMaker> polygons;
+    T<GaussianGroup<double>> feather;
 
     static constexpr auto fields =
         MaskFields<MaskTemplate>::fields;
@@ -54,7 +67,7 @@ public:
             defaultImageSize,
             true,
             true,
-            draw::Polygon::Default(),
+            {},
             defaultGaussian}};
     }
 };
@@ -68,15 +81,12 @@ using MaskGroup = pex::Group
 <
     MaskFields,
     MaskTemplate,
-    MaskSettings
+    pex::PlainT<MaskSettings>
 >;
 
 
 using MaskModel = typename MaskGroup::Model;
 using MaskControl = typename MaskGroup::Control;
-
-
-using MaskGroupMaker = pex::MakeGroup<MaskGroup>;
 
 
 } // end namespace iris
@@ -86,5 +96,5 @@ extern template struct pex::Group
 <
     iris::MaskFields,
     iris::MaskTemplate,
-    iris::MaskSettings
+    pex::PlainT<iris::MaskSettings>
 >;

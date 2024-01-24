@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <draw/node_settings.h>
 #include <wxpex/labeled_widget.h>
 #include <wxpex/collapsible.h>
 #include "iris/lines_chain_settings.h"

@@ -38,7 +38,7 @@ LinesChainSettingsView::LinesChainSettingsView(
         new HoughSettingsView<double>(
             panel,
             controls.hough,
-            (nodeSettings) ? nodeSettings->hough : OptionalNodeSettings{},
+            (nodeSettings) ? nodeSettings->hough : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto linesShape = new draw::LinesShapeView(

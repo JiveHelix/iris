@@ -32,7 +32,7 @@ struct HoughUserFields
 template<template<typename> typename T>
 struct HoughUserTemplate
 {
-    T<draw::PixelViewGroupMaker> houghView;
+    T<draw::PixelViewGroup> houghView;
 };
 
 

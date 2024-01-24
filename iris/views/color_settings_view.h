@@ -5,10 +5,10 @@
 #include <wxpex/labeled_widget.h>
 #include <wxpex/slider.h>
 #include <wxpex/check_box.h>
+#include <draw/views/node_settings_view.h>
 
 #include "iris/color_settings.h"
 #include "iris/views/defaults.h"
-#include "iris/views/node_settings_view.h"
 
 
 namespace iris
@@ -16,7 +16,7 @@ namespace iris
 
 
 template<typename Value>
-class ColorSettingsView: public NodeSettingsView
+class ColorSettingsView: public draw::NodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -24,10 +24,10 @@ public:
     ColorSettingsView(
         wxWindow *parent,
         ColorControl<Value> control,
-        std::optional<NodeSettingsControl> nodeSettingsControl,
+        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        NodeSettingsView(parent, "Color", nodeSettingsControl)
+        draw::NodeSettingsView(parent, "Color", nodeSettingsControl)
     {
         auto panel = this->GetPanel();
 

@@ -5,5 +5,5 @@ template struct pex::Group
     <
         iris::CannyChainFields,
         iris::CannyChainTemplate,
-        iris::CannyChainSettings
+        iris::CannyChainCustom
     >;

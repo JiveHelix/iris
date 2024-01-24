@@ -48,32 +48,50 @@ struct GradientTemplate
 
 
 template<typename Value>
-struct GradientSettings:
-    public GradientTemplate<Value>::template Template<pex::Identity>
+struct GradientCustom
 {
-    static constexpr iris::DerivativeSize::Size defaultSize =
-        DerivativeSize::Size::three;
-
-    static constexpr Value defaultScale = 1;
-    static constexpr size_t defaultThreads = 4;
-    static constexpr double defaultPercentile = 0.995;
-
-    static GradientSettings Default()
+    template<typename Base>
+    struct Plain: public Base
     {
-        return {{
-            true,
-            defaultMaximum,
-            defaultSize,
-            defaultScale,
-            defaultThreads,
-            {},
-            defaultPercentile}};
-    }
+        static constexpr iris::DerivativeSize::Size defaultSize =
+            DerivativeSize::Size::three;
+
+        static constexpr Value defaultScale = 1;
+        static constexpr size_t defaultThreads = 4;
+        static constexpr double defaultPercentile = 0.995;
+
+        Plain()
+            :
+            Base{
+                true,
+                defaultMaximum,
+                defaultSize,
+                defaultScale,
+                defaultThreads,
+                {},
+                defaultPercentile}
+        {
+
+        }
+
+        static Plain Default()
+        {
+            return Plain();
+        }
+    };
+
+    template<typename ModelBase>
+    class Model: public ModelBase
+    {
+    public:
+        Model()
+            :
+            ModelBase()
+        {
+            this->size.SetChoices(iris::DerivativeSize::GetValidSizes());
+        }
+    };
 };
-
-
-TEMPLATE_OUTPUT_STREAM(GradientSettings)
-TEMPLATE_EQUALITY_OPERATORS(GradientSettings)
 
 
 template<typename Value>
@@ -82,32 +100,21 @@ using GradientGroup =
     <
         GradientFields,
         GradientTemplate<Value>::template Template,
-        GradientSettings<Value>
+        GradientCustom<Value>
     >;
 
-
 template<typename Value>
-struct GradientModel: public GradientGroup<Value>::Model
-{
-    GradientModel()
-        :
-        GradientGroup<Value>::Model()
-    {
-        this->size.SetChoices(iris::DerivativeSize::GetValidSizes());
-    }
-};
+using GradientModel = typename GradientGroup<Value>::Model;
 
 template<typename Value>
 using GradientControl = typename GradientGroup<Value>::Control;
 
-
 template<typename Value>
-using GradientGroupMaker =
-    pex::MakeGroup<GradientGroup<Value>, GradientModel<Value>>;
+using GradientSettings = typename GradientGroup<Value>::Plain;
 
 
-extern template struct GradientSettings<int32_t>;
-extern template struct GradientModel<int32_t>;
+DECLARE_OUTPUT_STREAM_OPERATOR(GradientSettings<int32_t>)
+DECLARE_EQUALITY_OPERATORS(GradientSettings<int32_t>)
 
 
 } // end namespace iris
@@ -117,13 +124,5 @@ extern template struct pex::Group
     <
         iris::GradientFields,
         iris::GradientTemplate<int32_t>::template Template,
-        iris::GradientSettings<int32_t>
+        iris::GradientCustom<int32_t>
     >;
-
-
-extern template struct pex::MakeGroup
-    <
-        iris::GradientGroup<int32_t>,
-        iris::GradientModel<int32_t>
-    >;
-

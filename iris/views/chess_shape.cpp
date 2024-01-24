@@ -100,5 +100,5 @@ template struct pex::Group
 <
     iris::ChessShapeFields,
     iris::ChessShapeTemplate,
-    iris::ChessShapeSettings
+    pex::PlainT<iris::ChessShapeSettings>
 >;

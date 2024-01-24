@@ -29,46 +29,48 @@ template<template<typename> typename T>
 struct DemoTemplate
 {
     T<iris::InProcess> maximum;
-    T<pex::MakeGroup<draw::SizeGroup>> imageSize;
-    T<iris::ChessChainNodeSettingsGroupMaker> nodeSettings;
-    T<iris::ChessChainGroupMaker> chess;
-    T<iris::ChessShapeGroupMaker> chessShape;
-    T<iris::ColorGroupMaker<int32_t>> color;
+    T<draw::SizeGroup> imageSize;
+    T<iris::ChessChainNodeSettingsGroup> nodeSettings;
+    T<iris::ChessChainGroup> chess;
+    T<iris::ChessShapeGroup> chessShape;
+    T<iris::ColorGroup<int32_t>> color;
 
     static constexpr auto fields = DemoFields<DemoTemplate>::fields;
 };
 
 
-using DemoGroup = pex::Group<DemoFields, DemoTemplate>;
-using DemoSettings = typename DemoGroup::Plain;
-
-
-struct DemoModel: public DemoGroup::Model
+struct DemoCustom
 {
-public:
-    DemoModel()
-        :
-        DemoGroup::Model(),
-        maximumEndpoint_(
-            this,
-            iris::MaximumControl(this->maximum),
-            &DemoModel::OnMaximum_)
+    template<typename ModelBase>
+    struct Model: public ModelBase
     {
-        this->chess.SetImageSizeControl(draw::SizeControl(this->imageSize));
-        this->chess.SetMaximumControl(iris::MaximumControl(this->maximum));
-    }
+    public:
+        Model()
+            :
+            ModelBase(),
+            maximumEndpoint_(
+                this,
+                iris::MaximumControl(this->maximum),
+                &Model::OnMaximum_)
+        {
+            this->chess.SetImageSizeControl(draw::SizeControl(this->imageSize));
+            this->chess.SetMaximumControl(iris::MaximumControl(this->maximum));
+        }
 
-private:
-    void OnMaximum_(iris::InProcess maximumValue)
-    {
-        this->color.maximum.Set(maximumValue);
-    }
+    private:
+        void OnMaximum_(iris::InProcess maximumValue)
+        {
+            this->color.maximum.Set(maximumValue);
+        }
 
-    pex::Endpoint<DemoModel, iris::MaximumControl> maximumEndpoint_;
+        pex::Endpoint<Model, iris::MaximumControl> maximumEndpoint_;
+    };
 };
 
 
-
+using DemoGroup = pex::Group<DemoFields, DemoTemplate, DemoCustom>;
+using DemoSettings = typename DemoGroup::Plain;
+using DemoModel = typename DemoGroup::Model;
 using DemoControl = typename DemoGroup::Control;
 
 

@@ -4,6 +4,7 @@
 #include <wxpex/check_box.h>
 #include <wxpex/button.h>
 #include <wxpex/indent_sizer.h>
+#include <draw/node_settings.h>
 #include <draw/views/lines_shape_view.h>
 #include <draw/views/points_shape_view.h>
 #include "iris/views/mask_settings_view.h"
@@ -41,7 +42,7 @@ ChessChainSettingsView::ChessChainSettingsView(
         new MaskSettingsView(
             panel,
             control.mask,
-            (nodeSettings) ? nodeSettings->mask : OptionalNodeSettings{},
+            (nodeSettings) ? nodeSettings->mask : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto level =
@@ -49,7 +50,7 @@ ChessChainSettingsView::ChessChainSettingsView(
             panel,
             "Level",
             control.level,
-            (nodeSettings) ? nodeSettings->level : OptionalNodeSettings{},
+            (nodeSettings) ? nodeSettings->level : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto gaussian =
@@ -57,21 +58,27 @@ ChessChainSettingsView::ChessChainSettingsView(
             panel,
             "Gaussian Blur",
             control.gaussian,
-            (nodeSettings) ? nodeSettings->gaussian : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->gaussian
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto gradient =
         new GradientSettingsView<int32_t>(
             panel,
             control.gradient,
-            (nodeSettings) ? nodeSettings->gradient : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->gradient
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto canny =
         new CannySettingsView<double>(
             panel,
             control.canny,
-            (nodeSettings) ? nodeSettings->canny : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->canny
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     // Line detection
@@ -79,7 +86,9 @@ ChessChainSettingsView::ChessChainSettingsView(
         new HoughSettingsView<double>(
             panel,
             control.hough,
-            (nodeSettings) ? nodeSettings->hough : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->hough
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto linesShape = new draw::LinesShapeView(
@@ -93,14 +102,18 @@ ChessChainSettingsView::ChessChainSettingsView(
         new HarrisSettingsView(
             panel,
             control.harris,
-            (nodeSettings) ? nodeSettings->harris : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->harris
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto verticesSettings =
         new VertexSettingsView(
             panel,
             control.vertices,
-            (nodeSettings) ? nodeSettings->vertices : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->vertices
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto verticesShape =
@@ -114,7 +127,9 @@ ChessChainSettingsView::ChessChainSettingsView(
         new ChessSettingsView(
             panel,
             control.chess,
-            (nodeSettings) ? nodeSettings->chess : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->chess
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto autoDetect =

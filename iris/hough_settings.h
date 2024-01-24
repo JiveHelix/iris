@@ -53,7 +53,7 @@ struct HoughTemplate
     struct Template
     {
         T<bool> enable;
-        T<draw::SizeGroupMaker> imageSize;
+        T<draw::SizeGroup> imageSize;
         T<size_t> rhoCount;
         T<size_t> thetaCount;
         T<pex::MakeRange<Float, AngleRangeLow, AngleRangeHigh>> angleRange;
@@ -71,52 +71,130 @@ struct HoughTemplate
 
 
 template<typename Float>
-struct HoughSettings:
-    public HoughTemplate<Float>::template Template<pex::Identity>
+struct HoughCustom
 {
-    // About half-pixel resolution in 1920x1080 image.
-    // static constexpr size_t defaultRhoCount = 2200;
-    static constexpr size_t defaultRhoCount = 1024;
-
-    // 10ths of a degree
-    static constexpr size_t defaultThetaCount = 1024;
-
-    // How far to search beyond the detected edge angle.
-    static constexpr Float defaultAngleRange = 15;
-
-    // The size of the non-maximum suppression window.
-    static constexpr Eigen::Index defaultWindow = 24;
-
-    // Minimum value to be considered a line.
-    static constexpr size_t defaultThreshold = 110;
-
-    static constexpr size_t defaultEdgeTolerance = 4;
-
-    static constexpr size_t defaultThreads = 4;
-
-    static HoughSettings Default()
+    template<typename Base>
+    struct Plain: public Base
     {
-        HoughSettings settings{{
-            true,
-            defaultImageSize,
-            defaultRhoCount,
-            defaultThetaCount,
-            defaultAngleRange,
-            true,
-            true,
-            defaultWindow,
-            defaultThreshold,
-            false,
-            defaultEdgeTolerance,
-            defaultThreads}};
+        // About half-pixel resolution in 1920x1080 image.
+        static constexpr size_t defaultRhoCount = 2200;
 
-        return settings;
-    }
+        // 10ths of a degree
+        static constexpr size_t defaultThetaCount = 1024;
+
+        // How far to search beyond the detected edge angle.
+        static constexpr Float defaultAngleRange = 15;
+
+        // The size of the non-maximum suppression window.
+        static constexpr Eigen::Index defaultWindow = 24;
+
+        // Minimum value to be considered a line.
+        static constexpr size_t defaultThreshold = 110;
+
+        static constexpr size_t defaultEdgeTolerance = 4;
+
+        static constexpr size_t defaultThreads = 4;
+
+        Plain()
+            :
+            Base{
+                true,
+                defaultImageSize,
+                defaultRhoCount,
+                defaultThetaCount,
+                defaultAngleRange,
+                true,
+                true,
+                defaultWindow,
+                defaultThreshold,
+                false,
+                defaultEdgeTolerance,
+                defaultThreads}
+        {
+
+        }
+
+        static Plain Default()
+        {
+            return Plain();
+        }
+    };
+
+    template<typename ModelBase>
+    struct Model: public ModelBase
+    {
+        using This = Model<ModelBase>;
+
+        using WindowEndpoint =
+            typename pex::Endpoint<This, decltype(This::window)>;
+
+        using RhoCountEndpoint =
+            typename pex::Endpoint<This, decltype(This::rhoCount)>;
+
+        using ThetaCountEndpoint =
+            typename pex::Endpoint<This, decltype(This::thetaCount)>;
+
+    public:
+        Model()
+            :
+            ModelBase(),
+            windowEndpoint_(
+                this,
+                this->window,
+                &Model::OnWindow_),
+            rhoCountEndpoint_(
+                this,
+                this->rhoCount,
+                &Model::OnRhoCount_),
+            thetaCountEndpoint_(
+                this,
+                this->thetaCount,
+                &Model::OnThetaCount_)
+        {
+
+        }
+
+    private:
+        using Index = typename Eigen::Index;
+
+        void OnWindow_(Index windowSize)
+        {
+            auto maximumWindowSize = Index(
+                std::min(this->thetaCount.Get(), this->rhoCount.Get()));
+
+            if (windowSize > maximumWindowSize)
+            {
+                this->window.Set(maximumWindowSize);
+            }
+        }
+
+        void OnRhoCount_(size_t rhoCount_)
+        {
+            auto maximumWindowSize =
+                Index(std::min(this->thetaCount.Get(), rhoCount_));
+
+            if (this->window.Get() > maximumWindowSize)
+            {
+                this->window.Set(maximumWindowSize);
+            }
+        }
+
+        void OnThetaCount_(size_t thetaCount_)
+        {
+            auto maximumWindowSize =
+                Index(std::min(thetaCount_, this->rhoCount.Get()));
+
+            if (this->window.Get() > maximumWindowSize)
+            {
+                this->window.Set(maximumWindowSize);
+            }
+        }
+
+        WindowEndpoint windowEndpoint_;
+        RhoCountEndpoint rhoCountEndpoint_;
+        ThetaCountEndpoint thetaCountEndpoint_;
+    };
 };
-
-
-TEMPLATE_EQUALITY_OPERATORS(HoughSettings)
-TEMPLATE_OUTPUT_STREAM(HoughSettings)
 
 
 template<typename Float>
@@ -125,112 +203,35 @@ using HoughGroup =
     <
         HoughFields,
         HoughTemplate<Float>::template Template,
-        HoughSettings<Float>
+        HoughCustom<Float>
     >;
 
 
 template<typename Float>
+using HoughModel = typename HoughGroup<Float>::Model;
+
+template<typename Float>
 using HoughControl = typename HoughGroup<Float>::Control;
 
-
 template<typename Float>
-struct HoughModel: public HoughGroup<Float>::Model
-{
-    using This = HoughModel<Float>;
-    using Control = HoughControl<Float>;
-
-    using WindowEndpoint =
-        typename pex::Endpoint<This, decltype(Control::window)>;
-
-    using RhoCountEndpoint =
-        typename pex::Endpoint<This, decltype(Control::rhoCount)>;
-
-    using ThetaCountEndpoint =
-        typename pex::Endpoint<This, decltype(Control::thetaCount)>;
-
-public:
-    HoughModel()
-        :
-        HoughGroup<Float>::Model(),
-        windowEndpoint_(
-            this,
-            this->window,
-            &HoughModel::OnWindow_),
-        rhoCountEndpoint_(
-            this,
-            this->rhoCount,
-            &HoughModel::OnRhoCount_),
-        thetaCountEndpoint_(
-            this,
-            this->thetaCount,
-            &HoughModel::OnThetaCount_)
-    {
-
-    }
-
-private:
-    using Index = typename Eigen::Index;
-
-    void OnWindow_(Index windowSize)
-    {
-        auto maximumWindowSize = Index(
-            std::min(this->thetaCount.Get(), this->rhoCount.Get()));
-
-        if (windowSize > maximumWindowSize)
-        {
-            this->window.Set(maximumWindowSize);
-        }
-    }
-
-    void OnRhoCount_(size_t rhoCount_)
-    {
-        auto maximumWindowSize =
-            Index(std::min(this->thetaCount.Get(), rhoCount_));
-
-        if (this->window.Get() > maximumWindowSize)
-        {
-            this->window.Set(maximumWindowSize);
-        }
-    }
-
-    void OnThetaCount_(size_t thetaCount_)
-    {
-        auto maximumWindowSize =
-            Index(std::min(thetaCount_, this->rhoCount.Get()));
-
-        if (this->window.Get() > maximumWindowSize)
-        {
-            this->window.Set(maximumWindowSize);
-        }
-    }
-
-    WindowEndpoint windowEndpoint_;
-    RhoCountEndpoint rhoCountEndpoint_;
-    ThetaCountEndpoint thetaCountEndpoint_;
-};
+using HoughSettings = typename HoughGroup<Float>::Plain;
 
 
+DECLARE_EQUALITY_OPERATORS(HoughSettings<float>)
+DECLARE_OUTPUT_STREAM_OPERATOR(HoughSettings<float>)
 
-template<typename Float>
-using HoughGroupMaker = pex::MakeGroup<HoughGroup<Float>, HoughModel<Float>>;
-
-
-extern template struct HoughSettings<float>;
-extern template struct HoughSettings<double>;
-
-extern template struct HoughModel<float>;
-extern template struct HoughModel<double>;
+DECLARE_EQUALITY_OPERATORS(HoughSettings<double>)
+DECLARE_OUTPUT_STREAM_OPERATOR(HoughSettings<double>)
 
 
 } // end namespace iris
-
 
 
 extern template struct pex::Group
     <
         iris::HoughFields,
         iris::HoughTemplate<float>::template Template,
-        iris::HoughSettings<float>
+        iris::HoughCustom<float>
     >;
 
 
@@ -238,5 +239,5 @@ extern template struct pex::Group
     <
         iris::HoughFields,
         iris::HoughTemplate<double>::template Template,
-        iris::HoughSettings<double>
+        iris::HoughCustom<double>
     >;

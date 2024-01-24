@@ -35,28 +35,36 @@ VertexChainSettingsView::VertexChainSettingsView(
             panel,
             "Gaussian Blur",
             controls.gaussian,
-            (nodeSettings) ? nodeSettings->gaussian : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->gaussian
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto gradient =
         new GradientSettingsView<int32_t>(
             panel,
             controls.gradient,
-            (nodeSettings) ? nodeSettings->gradient : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->gradient
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto harris =
         new HarrisSettingsView(
             panel,
             controls.harris,
-            (nodeSettings) ? nodeSettings->harris : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->harris
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto vertexSettings =
         new VertexSettingsView(
             panel,
             controls.vertex,
-            (nodeSettings) ? nodeSettings->vertex : OptionalNodeSettings{},
+            (nodeSettings)
+                ? nodeSettings->vertex
+                : draw::OptionalNodeSettings{},
             layoutOptions);
 
     auto pointsShape =

@@ -27,62 +27,67 @@ template<template<typename> typename T>
 struct DemoTemplate
 {
     T<iris::InProcess> maximum;
-    T<pex::MakeGroup<draw::SizeGroup>> imageSize;
-    T<iris::MaskGroupMaker> mask;
-    T<iris::LevelGroupMaker<int32_t>> level;
-    T<iris::LinesChainGroupMaker> lines;
-    T<iris::ColorGroupMaker<int32_t>> color;
+    T<draw::SizeGroup> imageSize;
+    T<iris::MaskGroup> mask;
+    T<iris::LevelGroup<int32_t>> level;
+    T<iris::LinesChainGroup> lines;
+    T<iris::ColorGroup<int32_t>> color;
 
     static constexpr auto fields = DemoFields<DemoTemplate>::fields;
 };
 
 
-using DemoGroup = pex::Group<DemoFields, DemoTemplate>;
-using DemoSettings = typename DemoGroup::Plain;
-
-struct DemoModel: public DemoGroup::Model
+struct DemoCustom
 {
-    DemoModel()
-        :
-        DemoGroup::Model(),
-        maximumEndpoint_(
-            this,
-            iris::MaximumControl(this->maximum),
-            &DemoModel::OnMaximum_),
-        imageSizeEndpoint_(
-            this,
-            draw::SizeControl(this->imageSize),
-            &DemoModel::OnImageSize_)
+    template<typename ModelBase>
+    struct Model: public ModelBase
     {
-        iris::InProcess maximumValue = pngMaximum;
-        this->level.range.high.SetMaximum(maximumValue);
-        this->level.range.high.Set(maximumValue);
-        this->level.maximum.Set(maximumValue);
-        this->color.range.high.SetMaximum(maximumValue);
-        this->color.range.high.Set(maximumValue);
-        this->color.maximum.Set(maximumValue);
+        Model()
+            :
+            ModelBase(),
+            maximumEndpoint_(
+                this,
+                iris::MaximumControl(this->maximum),
+                &Model::OnMaximum_),
+            imageSizeEndpoint_(
+                this,
+                draw::SizeControl(this->imageSize),
+                &Model::OnImageSize_)
+        {
+            iris::InProcess maximumValue = pngMaximum;
+            this->level.range.high.SetMaximum(maximumValue);
+            this->level.range.high.Set(maximumValue);
+            this->level.maximum.Set(maximumValue);
+            this->color.range.high.SetMaximum(maximumValue);
+            this->color.range.high.Set(maximumValue);
+            this->color.maximum.Set(maximumValue);
 
-        this->lines.SetMaximumControl(iris::MaximumControl(this->maximum));
-        this->lines.SetImageSizeControl(draw::SizeControl(this->imageSize));
+            this->lines.SetMaximumControl(iris::MaximumControl(this->maximum));
+            this->lines.SetImageSizeControl(draw::SizeControl(this->imageSize));
 
-        this->maximum.Set(maximumValue);
-    }
+            this->maximum.Set(maximumValue);
+        }
 
-    void OnMaximum_(iris::InProcess maximumValue)
-    {
-        this->level.maximum.Set(maximumValue);
-    }
+        void OnMaximum_(iris::InProcess maximumValue)
+        {
+            this->level.maximum.Set(maximumValue);
+        }
 
-    void OnImageSize_(const draw::Size &size)
-    {
-        this->mask.imageSize.Set(size);
-    }
+        void OnImageSize_(const draw::Size &size)
+        {
+            this->mask.imageSize.Set(size);
+        }
 
-private:
-    pex::Endpoint<DemoModel, iris::MaximumControl> maximumEndpoint_;
-    pex::Endpoint<DemoModel, draw::SizeControl> imageSizeEndpoint_;
+    private:
+        pex::Endpoint<Model, iris::MaximumControl> maximumEndpoint_;
+        pex::Endpoint<Model, draw::SizeControl> imageSizeEndpoint_;
+    };
 };
 
+
+using DemoGroup = pex::Group<DemoFields, DemoTemplate, DemoCustom>;
+using DemoSettings = typename DemoGroup::Plain;
+using DemoModel = typename DemoGroup::Model;
 using DemoControl = typename DemoGroup::Control;
 
 

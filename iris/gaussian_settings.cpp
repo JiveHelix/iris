@@ -15,5 +15,5 @@ template struct pex::Group
 <
     iris::GaussianFields,
     iris::GaussianTemplate<int32_t>::template Template,
-    iris::GaussianSettings<int32_t>
+    pex::PlainT<iris::GaussianSettings<int32_t>>
 >;

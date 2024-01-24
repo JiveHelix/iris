@@ -48,37 +48,44 @@ struct ChessTemplate
 };
 
 
-struct ChessSettings
-    :
-    public ChessTemplate::template Template<pex::Identity>
+struct ChessCustom
 {
-    static ChessSettings Default()
+    template<typename Base>
+    struct Plain
+        :
+        public Base
     {
         static constexpr double defaultLineSeparation = 4.0;
         static constexpr size_t defaultMinimumLinesPerGroup = 3;
-        static constexpr double defaultSpacingLimit = 150.0;
+        static constexpr double defaultSpacingLimit = 200.0;
         static constexpr double defaultSpacingRatioThreshold = 0.1;
         static constexpr size_t defaultRowCount = 16;
         static constexpr size_t defaultColumnCount = 16;
         static constexpr size_t defaultGroupSeparation_degrees = 20;
         static constexpr double defaultMaximumVertexDistance = 4.0;
 
-        return {{
-            true,
-            defaultLineSeparation,
-            defaultGroupSeparation_degrees,
-            defaultMinimumLinesPerGroup,
-            defaultSpacingLimit,
-            defaultSpacingRatioThreshold,
-            defaultRowCount,
-            defaultColumnCount,
-            defaultMaximumVertexDistance}};
-    }
+        Plain()
+            :
+            Base{
+                true,
+                defaultLineSeparation,
+                defaultGroupSeparation_degrees,
+                defaultMinimumLinesPerGroup,
+                defaultSpacingLimit,
+                defaultSpacingRatioThreshold,
+                defaultRowCount,
+                defaultColumnCount,
+                defaultMaximumVertexDistance}
+        {
+
+        }
+
+        static Plain Default()
+        {
+            return Plain();
+        }
+    };
 };
-
-
-DECLARE_OUTPUT_STREAM_OPERATOR(ChessSettings)
-DECLARE_EQUALITY_OPERATORS(ChessSettings)
 
 
 using ChessGroup =
@@ -86,14 +93,15 @@ using ChessGroup =
     <
         ChessFields,
         ChessTemplate::template Template,
-        ChessSettings
+        ChessCustom
     >;
 
+using ChessSettings = typename ChessGroup::Plain;
 using ChessModel = typename ChessGroup::Model;
-
 using ChessControl = typename ChessGroup::Control;
 
-using ChessGroupMaker = pex::MakeGroup<ChessGroup>;
+DECLARE_OUTPUT_STREAM_OPERATOR(ChessSettings)
+DECLARE_EQUALITY_OPERATORS(ChessSettings)
 
 
 } // end namespace iris
@@ -103,5 +111,5 @@ extern template struct pex::Group
     <
         iris::ChessFields,
         iris::ChessTemplate::template Template,
-        iris::ChessSettings
+        iris::ChessCustom
     >;

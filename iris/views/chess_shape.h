@@ -36,10 +36,10 @@ struct ChessShapeTemplate
     T<bool> labelVertices;
     T<bool> displayHorizontals;
     T<bool> displayVerticals;
-    T<draw::PointsShapeGroupMaker> verticesShape;
-    T<draw::FontLookGroupMaker> labelsLook;
-    T<draw::LinesShapeGroupMaker> horizontalsShape;
-    T<draw::LinesShapeGroupMaker> verticalsShape;
+    T<draw::PointsShapeGroup> verticesShape;
+    T<draw::FontLookGroup> labelsLook;
+    T<draw::LinesShapeGroup> horizontalsShape;
+    T<draw::LinesShapeGroup> verticalsShape;
 
     static constexpr auto fields =
         ChessShapeFields<ChessShapeTemplate>::fields;
@@ -60,7 +60,7 @@ DECLARE_OUTPUT_STREAM_OPERATOR(ChessShapeSettings)
 
 class ChessShape
     :
-    public draw::Shape
+    public draw::DrawnShape
 {
 public:
     ChessShape() = default;
@@ -80,14 +80,11 @@ using ChessShapeGroup = pex::Group
 <
     ChessShapeFields,
     ChessShapeTemplate,
-    ChessShapeSettings
+    pex::PlainT<ChessShapeSettings>
 >;
 
 using ChessShapeModel = typename ChessShapeGroup::Model;
 using ChessShapeControl = typename ChessShapeGroup::Control;
-
-
-using ChessShapeGroupMaker = pex::MakeGroup<ChessShapeGroup>;
 
 
 } // end namespace iris
@@ -98,5 +95,5 @@ extern template struct pex::Group
 <
     iris::ChessShapeFields,
     iris::ChessShapeTemplate,
-    iris::ChessShapeSettings
+    pex::PlainT<iris::ChessShapeSettings>
 >;

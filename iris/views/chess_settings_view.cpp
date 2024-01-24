@@ -13,10 +13,10 @@ namespace iris
 ChessSettingsView::ChessSettingsView(
     wxWindow *parent,
     ChessControl controls,
-    std::optional<NodeSettingsControl> nodeSettingsControl,
+    std::optional<draw::NodeSettingsControl> nodeSettingsControl,
     const LayoutOptions &layoutOptions)
     :
-    NodeSettingsView(parent, "Chess", nodeSettingsControl)
+    draw::NodeSettingsView(parent, "Chess", nodeSettingsControl)
 {
     using namespace wxpex;
 

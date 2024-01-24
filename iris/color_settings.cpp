@@ -5,5 +5,5 @@ template struct pex::Group
     <
         iris::ColorFields,
         iris::ColorTemplate<int32_t>::template Template,
-        iris::ColorSettings<int32_t>
+        iris::ColorCustom<int32_t>
     >;

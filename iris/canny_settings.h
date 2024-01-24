@@ -49,7 +49,7 @@ struct CannyTemplate
     struct Template
     {
         T<bool> enable;
-        T<typename CannyRanges<Float>::GroupMaker> range;
+        T<typename CannyRanges<Float>::Group> range;
         T<size_t> depth;
         T<size_t> threads;
 
@@ -88,7 +88,7 @@ using CannyGroup =
     <
         CannyFields,
         CannyTemplate<Float>::template Template,
-        CannySettings<Float>
+        pex::PlainT<CannySettings<Float>>
     >;
 
 
@@ -98,16 +98,12 @@ using CannyModel = typename CannyGroup<Float>::Model;
 template<typename Float>
 using CannyControl = typename CannyGroup<Float>::Control;
 
-template<typename Float>
-using CannyGroupMaker = pex::MakeGroup<CannyGroup<Float>>;
-
 
 extern template struct CannySettings<float>;
 extern template struct CannySettings<double>;
 
 
 } // end namespace iris
-
 
 
 extern template struct pex::LinkedRanges
@@ -134,7 +130,7 @@ extern template struct pex::Group
     <
         iris::CannyFields,
         iris::CannyTemplate<float>::template Template,
-        iris::CannySettings<float>
+        pex::PlainT<iris::CannySettings<float>>
     >;
 
 
@@ -142,5 +138,5 @@ extern template struct pex::Group
     <
         iris::CannyFields,
         iris::CannyTemplate<double>::template Template,
-        iris::CannySettings<double>
+        pex::PlainT<iris::CannySettings<double>>
     >;

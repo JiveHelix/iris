@@ -11,7 +11,7 @@ MaskBrain::MaskBrain(
     draw::PixelViewControl pixelViewControl)
     :
     shapesId_(),
-    polygonBrain_(maskControl.polygon, pixelViewControl),
+    maskShapesBrain_(maskControl.polygons, pixelViewControl),
     maskEndpoint_(this, maskControl, &MaskBrain::OnMask_),
     pixelViewControl_(pixelViewControl)
 {
@@ -35,16 +35,11 @@ void MaskBrain::OnMask_(const MaskSettings &maskSettings)
         return;
     }
 
-    // Show the mask outline in magenta.
-    auto look = draw::Look::Default();
-    look.strokeEnable = true;
-    look.fillEnable = false;
-    look.strokeColor.hue = 300.0;
-    look.strokeColor.saturation = 1.0;
-    look.strokeColor.value = 1.0;
-    look.antialias = true;
+    for (const auto &shapeValue: maskSettings.polygons)
+    {
+        shapes.Append(*shapeValue.GetValueBase());
+    }
 
-    shapes.EmplaceBack<draw::PolygonShape>(maskSettings.polygon, look);
     this->pixelViewControl_.asyncShapes.Set(shapes);
 }
 

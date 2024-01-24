@@ -5,5 +5,5 @@ template struct pex::Group
 <
     iris::MaskFields,
     iris::MaskTemplate,
-    iris::MaskSettings
+    pex::PlainT<iris::MaskSettings>
 >;

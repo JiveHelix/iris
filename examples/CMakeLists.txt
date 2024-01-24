@@ -52,7 +52,6 @@ target_link_libraries(
     PRIVATE
     project_warnings
     project_options
-    iris
     common)
 
 
@@ -70,7 +69,6 @@ target_link_libraries(
     PRIVATE
     project_warnings
     project_options
-    iris
     common)
 
 
@@ -86,7 +84,6 @@ target_link_libraries(
     PRIVATE
     project_warnings
     project_options
-    iris
     common)
 
 
@@ -97,7 +94,6 @@ target_link_libraries(
     PRIVATE
     project_warnings
     project_options
-    iris
     common)
 
 
@@ -108,7 +104,6 @@ target_link_libraries(
     PRIVATE
     project_warnings
     project_options
-    iris
     common)
 
 

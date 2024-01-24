@@ -23,41 +23,47 @@ template<template<typename> typename T>
 struct DemoTemplate
 {
     T<iris::InProcess> maximum;
-    T<iris::MaskGroupMaker> mask;
-    T<iris::LevelGroupMaker<int32_t>> level;
-    T<iris::VertexChainGroupMaker> vertexChain;
-    T<iris::ColorGroupMaker<int32_t>> color;
+    T<iris::MaskGroup> mask;
+    T<iris::LevelGroup<int32_t>> level;
+    T<iris::VertexChainGroup> vertexChain;
+    T<iris::ColorGroup<int32_t>> color;
 
     static constexpr auto fields = DemoFields<DemoTemplate>::fields;
 };
 
 
-using DemoGroup = pex::Group<DemoFields, DemoTemplate>;
-using DemoSettings = typename DemoGroup::Plain;
-
-struct DemoModel: public DemoGroup::Model
+struct DemoCustom
 {
-    DemoModel()
-        :
-        DemoGroup::Model(),
-        maximumEndpoint_(
-            this,
-            iris::MaximumControl(this->maximum),
-            &DemoModel::OnMaximum_)
+    template<typename ModelBase>
+    struct Model: public ModelBase
     {
-        this->vertexChain.SetMaximumControl(
-            iris::MaximumControl(this->maximum));
-    }
+        Model()
+            :
+            ModelBase(),
+            maximumEndpoint_(
+                this,
+                iris::MaximumControl(this->maximum),
+                &Model::OnMaximum_)
+        {
+            this->vertexChain.SetMaximumControl(
+                iris::MaximumControl(this->maximum));
+        }
 
-    void OnMaximum_(iris::InProcess maximumValue)
-    {
-        this->level.maximum.Set(maximumValue);
-    }
+        void OnMaximum_(iris::InProcess maximumValue)
+        {
+            this->level.maximum.Set(maximumValue);
+        }
 
-private:
-    pex::Endpoint<DemoModel, iris::MaximumControl> maximumEndpoint_;
+    private:
+        pex::Endpoint<Model, iris::MaximumControl> maximumEndpoint_;
+    };
 };
 
+
+using DemoGroup = pex::Group<DemoFields, DemoTemplate, DemoCustom>;
+
+using DemoSettings = typename DemoGroup::Plain;
+using DemoModel = typename DemoGroup::Model;
 using DemoControl = typename DemoGroup::Control;
 
 

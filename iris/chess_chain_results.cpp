@@ -57,7 +57,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
         pixels = this->GetPreprocessedPixels_(color);
     }
 
-    if (nodeSettings.vertices.highlight && this->vertices)
+    if (nodeSettings.vertices.isSelected && this->vertices)
     {
         this->DrawVerticesResults_(
             shapesControl,
@@ -67,7 +67,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
         return pixels;
     }
 
-    if (nodeSettings.hough.highlight && this->hough)
+    if (nodeSettings.hough.isSelected && this->hough)
     {
         this->DrawHoughResults_(
             shapesControl,
@@ -78,7 +78,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
         return pixels;
     }
 
-    if (nodeSettings.chess.highlight && this->chess)
+    if (nodeSettings.chess.isSelected && this->chess)
     {
         draw::Shapes shapes(this->chessShapesId_);
 
@@ -106,7 +106,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
 {
     if (nodeSettings)
     {
-        if (HasHighlight(*nodeSettings))
+        if (HasSelectedNode(*nodeSettings))
         {
             return this->DisplayNode(
                 *nodeSettings,
@@ -219,11 +219,11 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
     ChessChainNodeSettings nodeSettings,
     ThreadsafeColor<int32_t> &color) const
 {
-    if (nodeSettings.mask.highlight)
+    if (nodeSettings.mask.isSelected)
     {
         if (!this->mask)
         {
-            std::cout << "Cannot highlight a disabled node" << std::endl;
+            std::cout << "Cannot select a disabled node" << std::endl;
             return {};
         }
 
@@ -231,44 +231,44 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
         return std::make_shared<draw::Pixels>(color.Filter(*this->mask));
     }
 
-    if (nodeSettings.level.highlight)
+    if (nodeSettings.level.isSelected)
     {
         if (!this->level)
         {
-            std::cout << "Cannot highlight a disabled node" << std::endl;
+            std::cout << "Cannot select a disabled node" << std::endl;
             return {};
         }
 
         return std::make_shared<draw::Pixels>(color.Filter(*this->level));
     }
 
-    if (nodeSettings.gaussian.highlight)
+    if (nodeSettings.gaussian.isSelected)
     {
         if (!this->gaussian)
         {
-            std::cout << "Cannot highlight a disabled node" << std::endl;
+            std::cout << "Cannot select a disabled node" << std::endl;
             return {};
         }
 
         return std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
     }
 
-    if (nodeSettings.gradient.highlight)
+    if (nodeSettings.gradient.isSelected)
     {
         if (!this->gradient)
         {
-            std::cout << "Cannot highlight a disabled node" << std::endl;
+            std::cout << "Cannot select a disabled node" << std::endl;
             return {};
         }
 
         return std::make_shared<draw::Pixels>(this->gradient->Colorize());
     }
 
-    if (nodeSettings.harris.highlight)
+    if (nodeSettings.harris.isSelected)
     {
         if (!this->harris)
         {
-            std::cout << "Cannot highlight a disabled node" << std::endl;
+            std::cout << "Cannot select a disabled node" << std::endl;
             return {};
         }
 
@@ -276,11 +276,11 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             iris::ColorizeHarris(*this->harris));
     }
 
-    if (nodeSettings.vertices.highlight)
+    if (nodeSettings.vertices.isSelected)
     {
         if (!this->vertices || !this->gaussian)
         {
-            std::cout << "Cannot highlight a disabled node" << std::endl;
+            std::cout << "Cannot select a disabled node" << std::endl;
             return {};
         }
 
@@ -288,11 +288,11 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
         return std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
     }
 
-    if (nodeSettings.canny.highlight)
+    if (nodeSettings.canny.isSelected)
     {
         if (!this->canny)
         {
-            std::cout << "Cannot highlight a disabled node" << std::endl;
+            std::cout << "Cannot select a disabled node" << std::endl;
             return {};
         }
 

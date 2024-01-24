@@ -37,8 +37,8 @@ using InProcess = int32_t;
 template<template<typename> typename T>
 struct DemoTemplate
 {
-    T<iris::MaskGroupMaker> mask;
-    T<iris::ColorGroupMaker<InProcess>> color;
+    T<iris::MaskGroup> mask;
+    T<iris::ColorGroup<InProcess>> color;
 
     static constexpr auto fields = DemoFields<DemoTemplate>::fields;
 };

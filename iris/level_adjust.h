@@ -105,6 +105,15 @@ public:
 
         auto filtered = tau::RemoveZeros(*input);
 
+        if (filtered.size() < 2)
+        {
+            auto defer = pex::MakeDefer(this->control_);
+            defer.members.range.low.Set(0);
+            defer.members.range.high.Set(255);
+
+            return;
+        }
+
         // The input to this node may be a mask that sets masked values to zero.
         // Estimate the low and high percentile without considering the zeros.
         auto values = tau::Percentile(

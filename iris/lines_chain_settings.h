@@ -3,6 +3,7 @@
 #include <fields/fields.h>
 #include <pex/group.h>
 #include <draw/lines_shape.h>
+#include <draw/node_settings.h>
 #include "iris/default.h"
 #include "iris/canny_chain_settings.h"
 #include "iris/hough_settings.h"
@@ -24,8 +25,8 @@ struct LinesChainNodeSettingsFields
 template<template<typename> typename T>
 struct LinesChainNodeSettingsTemplate
 {
-    T<pex::MakeGroup<CannyChainNodeSettingsGroup>> cannyChain;
-    T<NodeSettingsGroupMaker> hough;
+    T<CannyChainNodeSettingsGroup> cannyChain;
+    T<draw::NodeSettingsGroup> hough;
 };
 
 
@@ -59,93 +60,93 @@ template<template<typename> typename T>
 struct LinesChainTemplate
 {
     T<bool> enable;
-    T<CannyChainGroupMaker> cannyChain;
-    T<HoughGroupMaker<double>> hough;
-    T<draw::LinesShapeGroupMaker> shape;
+    T<CannyChainGroup> cannyChain;
+    T<HoughGroup<double>> hough;
+    T<draw::LinesShapeGroup> shape;
 
     static constexpr auto fields = LinesChainFields<LinesChainTemplate>::fields;
     static constexpr auto fieldsTypeName = "LineChain";
 };
 
 
-struct LinesChainSettings
-    :
-    public LinesChainTemplate<pex::Identity>
+struct LinesChainCustom
 {
-    static LinesChainSettings Default()
+    template<typename Base>
+    struct Plain: public Base
     {
-        return {{
-            true,
-            CannyChainSettings::Default(),
-            HoughSettings<double>::Default(),
-            draw::LinesShapeSettings::Default()}};
-    }
+        Plain()
+            :
+            Base{
+                true,
+                CannyChainSettings::Default(),
+                HoughSettings<double>::Default(),
+                draw::LinesShapeSettings::Default()}
+        {
+
+        }
+
+        static Plain Default()
+        {
+            return Plain();
+        }
+    };
+
+    template<typename ModelBase>
+    struct Model: public ModelBase
+    {
+    public:
+        Model()
+            :
+            ModelBase(),
+            imageSizeEndpoint_(this)
+        {
+
+        }
+
+        void SetMaximumControl(const MaximumControl &maximumControl)
+        {
+            this->cannyChain.SetMaximumControl(maximumControl);
+        }
+
+        void SetImageSizeControl(const draw::SizeControl &sizeControl)
+        {
+            this->imageSizeEndpoint_.ConnectUpstream(
+                sizeControl,
+                &Model::SetImageSize);
+        }
+
+        void SetImageSize(const draw::Size &size)
+        {
+            this->hough.imageSize.Set(size);
+        }
+
+        pex::Endpoint<Model, draw::SizeControl> imageSizeEndpoint_;
+    };
 };
-
-
-DECLARE_EQUALITY_OPERATORS(LinesChainSettings)
 
 
 using LinesChainGroup = pex::Group
     <
         LinesChainFields,
         LinesChainTemplate,
-        LinesChainSettings
+        LinesChainCustom
     >;
 
 
-struct LinesChainModel: public LinesChainGroup::Model
-{
-public:
-    LinesChainModel()
-        :
-        LinesChainGroup::Model(),
-        imageSizeEndpoint_(this)
-    {
-
-    }
-
-    void SetMaximumControl(const MaximumControl &maximumControl)
-    {
-        this->cannyChain.SetMaximumControl(maximumControl);
-    }
-
-    void SetImageSizeControl(const draw::SizeControl &sizeControl)
-    {
-        this->imageSizeEndpoint_.ConnectUpstream(
-            sizeControl,
-            &LinesChainModel::SetImageSize);
-    }
-
-    void SetImageSize(const draw::Size &size)
-    {
-        this->hough.imageSize.Set(size);
-    }
-
-    pex::Endpoint<LinesChainModel, draw::SizeControl> imageSizeEndpoint_;
-};
-
-
+using LinesChainSettings = typename LinesChainGroup::Plain;
+using LinesChainModel = typename LinesChainGroup::Model;
 using LinesChainControl = typename LinesChainGroup::Control;
 
-
-using LinesChainGroupMaker = pex::MakeGroup<LinesChainGroup, LinesChainModel>;
+DECLARE_EQUALITY_OPERATORS(LinesChainSettings)
+DECLARE_OUTPUT_STREAM_OPERATOR(LinesChainSettings)
 
 
 } // end namespace iris
-
 
 
 extern template struct pex::Group
     <
         iris::LinesChainFields,
         iris::LinesChainTemplate,
-        iris::LinesChainSettings
-    >;
-
-
-extern template struct pex::MakeGroup
-    <
-        iris::LinesChainGroup,
-        iris::LinesChainModel
+        iris::LinesChainCustom
     >;
