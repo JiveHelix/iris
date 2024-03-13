@@ -5,6 +5,7 @@
 #include <wxpex/labeled_widget.h>
 #include <wxpex/file_field.h>
 #include <wxpex/slider.h>
+#include <wxpex/combo_box.h>
 #include <tau/pose.h>
 
 
@@ -32,52 +33,52 @@ public:
             "Yaw (z) (deg)",
             new FieldSlider(
                 this,
-                control.settings.angles.yaw,
-                control.settings.angles.yaw.value));
+                control.rotation.yaw,
+                control.rotation.yaw.value));
 
         auto pitch = LabeledWidget(
             this,
             "Pitch (y) (deg)",
             new FieldSlider(
                 this,
-                control.settings.angles.pitch,
-                control.settings.angles.pitch.value));
+                control.rotation.pitch,
+                control.rotation.pitch.value));
 
         auto roll = LabeledWidget(
             this,
             "Roll (x) (deg)",
             new FieldSlider(
                 this,
-                control.settings.angles.roll,
-                control.settings.angles.roll.value));
+                control.rotation.roll,
+                control.rotation.roll.value));
 
         auto axisOrder = LabeledWidget(
             this,
             "Axis Order",
-            MakeComboBox<AxisOrderConverter>(
+            MakeComboBox<tau::AxisOrderConverter>(
                 this,
-                control.settings.angles.axisOrder));
+                control.rotation.axisOrder));
 
         auto x_m = LabeledWidget(
             this,
             "x (m)",
             new Field(
                 this,
-                control.settings.x_m));
+                control.x_m));
 
         auto y_m = LabeledWidget(
             this,
             "y (m)",
             new Field(
                 this,
-                control.settings.y_m));
+                control.y_m));
 
         auto z_m = LabeledWidget(
             this,
             "z (m)",
             new Field(
                 this,
-                control.settings.z_m));
+                control.z_m));
 
         auto sizer = LayoutLabeled(
             layoutOptions,
