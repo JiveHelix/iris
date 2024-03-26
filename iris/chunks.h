@@ -83,7 +83,7 @@ struct RowFunctors
     {
         assert(kernel.rows() == 1);
 
-        return tau::DoConvolve(
+        return tau::DoConvolve2d(
                 data.block(chunk.index, 0, chunk.count, data.cols()).eval(),
                 kernel);
     }
@@ -123,7 +123,7 @@ struct ColumnFunctors
     {
         assert(kernel.cols() == 1);
 
-        return tau::DoConvolve(
+        return tau::DoConvolve2d(
             data.block(0, chunk.index, data.rows(), chunk.count).eval(),
             kernel);
     }

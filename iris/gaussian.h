@@ -246,14 +246,14 @@ Derived KernelConvolve(
     static constexpr bool isIntegral =
         std::is_integral_v<typename Kernel::Type>;
 
-    Derived partial = tau::DoConvolve(data, kernel.rowKernel);
+    Derived partial = tau::DoConvolve2d(data, kernel.rowKernel);
 
     if constexpr (isIntegral)
     {
         partial.array() /= kernel.sum;
     }
 
-    Derived result = tau::DoConvolve(partial, kernel.columnKernel);
+    Derived result = tau::DoConvolve2d(partial, kernel.columnKernel);
 
     if constexpr (isIntegral)
     {

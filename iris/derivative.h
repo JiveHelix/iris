@@ -197,13 +197,13 @@ struct Differentiate
     template<typename Data>
     Data X(const Eigen::MatrixBase<Data> &data) const
     {
-        return tau::DoConvolve(data, this->horizontal);
+        return tau::DoConvolve2d(data, this->horizontal);
     }
 
     template<typename Data>
     Data Y(const Eigen::MatrixBase<Data> &data) const
     {
-        return tau::DoConvolve(data, this->vertical);
+        return tau::DoConvolve2d(data, this->vertical);
     }
 
 private:
