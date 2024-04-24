@@ -41,6 +41,8 @@ ChessChain::ChessChain(
     CancelControl cancel)
     :
     Base("ChessChain", sourceNode, control, cancel),
+    linesShapesId_(),
+    verticesShapesId_(),
     chessShapesId_(),
     nodes_(sourceNode, control, cancel),
     autoDetectEndpoint_(
