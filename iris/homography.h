@@ -113,7 +113,7 @@ public:
 
     tau::Point2d<double> operator()(const tau::Point2d<size_t> &logical) const
     {
-        return logical.template Convert<double>() * this->chessSquareSize_m_;
+        return logical.template Cast<double>() * this->chessSquareSize_m_;
     }
 
 private:

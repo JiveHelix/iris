@@ -44,7 +44,7 @@ struct HomographySettings: public HomographyTemplate<pex::Identity>
     static HomographySettings Default()
     {
         return {{
-            defaultImageSize.template Convert<double>(),
+            defaultImageSize.template Cast<double>(),
             defaultPixelSize,
             defaultSquareSize}};
     }

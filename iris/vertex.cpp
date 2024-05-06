@@ -136,34 +136,34 @@ Vertex::Vertex(
 
 bool Vertex::operator>(const Vertex &other) const
 {
-    if (this->point.template Convert<int>()
-        == other.point.template Convert<int>())
+    if (this->point.template Cast<int>()
+        == other.point.template Cast<int>())
     {
         return this->count > other.count;
     }
 
-    return this->point.template Convert<int>()
-        > other.point.template Convert<int>();
+    return this->point.template Cast<int>()
+        > other.point.template Cast<int>();
 }
 
 bool Vertex::operator<(const Vertex &other) const
 {
-    if (this->point.template Convert<int>()
-        == other.point.template Convert<int>())
+    if (this->point.template Cast<int>()
+        == other.point.template Cast<int>())
     {
         return this->count < other.count;
     }
 
-    return (this->point.template Convert<int>()
-        < other.point.template Convert<int>());
+    return (this->point.template Cast<int>()
+        < other.point.template Cast<int>());
 }
 
 // For the purpose of determining unique vertices, vertices with the same
 // point compare equal, even if their counts differ.
 bool Vertex::operator==(const Vertex &other) const
 {
-    return (this->point.template Convert<int>()
-        == other.point.template Convert<int>());
+    return (this->point.template Cast<int>()
+        == other.point.template Cast<int>());
 }
 
 

@@ -205,7 +205,7 @@ public:
                 size_t thetaCount,
                 Float angleRange)
             :
-            center_(imageSize.ToPoint2d().template Convert<Float>() / 2),
+            center_(imageSize.ToPoint2d().template Cast<Float>() / 2),
             maximumRho_(this->center_.Magnitude()),
             rhoCount_(static_cast<Index>(rhoCount)),
 
@@ -276,7 +276,7 @@ public:
             Float weight,
             Float angle)
         {
-            auto point = pointIndex.template Convert<Float>();
+            auto point = pointIndex.template Cast<Float>();
             point -= this->center_;
 
             angle = std::fmod(angle, static_cast<Float>(180));
