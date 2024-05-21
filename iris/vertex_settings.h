@@ -21,6 +21,15 @@ struct VertexFields
 };
 
 
+struct VertexChoices
+{
+    static std::vector<Eigen::Index> GetChoices()
+    {
+        return {2, 4};
+    }
+};
+
+
 template<template<typename> typename T>
 struct VertexTemplate
 {
@@ -32,7 +41,7 @@ struct VertexTemplate
 
     T<bool> enable;
     T<pex::MakeRange<double, WindowLow, WindowHigh>> window;
-    T<pex::MakeSelect<Eigen::Index>> count;
+    T<pex::MakeSelect<Eigen::Index, VertexChoices>> count;
     T<size_t> threads;
 
     static constexpr auto fields =
@@ -65,18 +74,6 @@ struct VertexCustom
         static Plain Default()
         {
             return Plain();
-        }
-    };
-
-    template<typename ModelBase>
-    class Model: public ModelBase
-    {
-    public:
-        Model()
-            :
-            ModelBase()
-        {
-            this->count.SetChoices({2, 4});
         }
     };
 };

@@ -23,10 +23,16 @@ struct DerivativeSize
 
     using Index = Eigen::Index;
 
-    using Select = pex::model::Select<Size>;
+    struct SizeChoices
+    {
+        static std::vector<Size> GetChoices()
+        {
+            return {Size::three, Size::five, Size::seven};
+        }
+    };
 
-    using Control =
-        pex::control::Select<Select>;
+    using MakeSelect = pex::MakeSelect<Size, SizeChoices>;
+    using Control = pex::ControlSelector<MakeSelect>;
 
     static Index GetSize(Size size)
     {
@@ -56,7 +62,7 @@ struct DerivativeSize
 
     static std::vector<Size> GetValidSizes()
     {
-        return {Size::three, Size::five, Size::seven};
+        return SizeChoices::GetChoices();
     }
 
     template<typename T>

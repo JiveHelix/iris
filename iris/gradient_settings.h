@@ -36,7 +36,7 @@ struct GradientTemplate
     {
         T<bool> enable;
         T<Value> maximum;
-        T<pex::MakeSelect<iris::DerivativeSize::Size>> size;
+        T<DerivativeSize::MakeSelect> size;
         T<pex::MakeRange<Value, pex::Limit<1>, pex::Limit<10>>> scale;
         T<size_t> threads;
         T<pex::MakeSignal> autoDetectSettings;
@@ -77,18 +77,6 @@ struct GradientCustom
         static Plain Default()
         {
             return Plain();
-        }
-    };
-
-    template<typename ModelBase>
-    class Model: public ModelBase
-    {
-    public:
-        Model()
-            :
-            ModelBase()
-        {
-            this->size.SetChoices(iris::DerivativeSize::GetValidSizes());
         }
     };
 };
