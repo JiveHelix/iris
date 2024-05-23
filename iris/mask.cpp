@@ -61,7 +61,7 @@ MaskMatrix CreateMask(const MaskSettings &maskSettings)
     {
         wxpex::GraphicsContext context(dc);
         draw::ConfigureLook(context, look);
-        draw::DrawPolygon(context, polygon.GetPoints());
+        draw::DrawSegments(context, polygon.GetPoints());
     }
 
     dc.SelectObject(wxNullBitmap);
