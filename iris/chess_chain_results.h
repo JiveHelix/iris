@@ -56,9 +56,6 @@ struct ChessChainResults
 
     std::optional<typename Chess::Result> chess;
 
-    using ShapesControl =
-        typename draw::PixelViewControl::AsyncShapesControl;
-
     using HoughControl =
         typename draw::PixelViewControl::AsyncPixelsControl;
 
@@ -68,7 +65,7 @@ struct ChessChainResults
         ssize_t verticesShapesId);
 
     std::shared_ptr<draw::Pixels> Display(
-        draw::ShapesControl shapesControl,
+        draw::AsyncShapesControl shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
         const draw::PointsShapeSettings &pointsShapeSettings,
         const ChessShapeSettings &chessShapeSettings,
@@ -78,7 +75,7 @@ struct ChessChainResults
 
     std::shared_ptr<draw::Pixels> DisplayNode(
         ChessChainNodeSettings nodeSettings,
-        draw::ShapesControl shapesControl,
+        draw::AsyncShapesControl shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
         const draw::PointsShapeSettings &pointsShapeSettings,
         const ChessShapeSettings &chessShapeSettings,
@@ -86,7 +83,7 @@ struct ChessChainResults
         std::optional<HoughControl> houghControl) const;
 
 private:
-    void ClearShapes_(draw::ShapesControl) const;
+    void ClearShapes_(draw::AsyncShapesControl) const;
 
     std::shared_ptr<draw::Pixels> GetPreprocessedPixels_(
         ThreadsafeColor<int32_t> &color) const;
@@ -96,13 +93,13 @@ private:
         ThreadsafeColor<int32_t> &color) const;
 
     void DrawHoughResults_(
-        draw::ShapesControl shapesControl,
+        draw::AsyncShapesControl shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
         ThreadsafeColor<int32_t> &color,
         std::optional<HoughControl> houghControl) const;
 
     void DrawVerticesResults_(
-        draw::ShapesControl shapesControl,
+        draw::AsyncShapesControl shapesControl,
         const draw::PointsShapeSettings &pointsShapeSettings,
         ThreadsafeColor<int32_t> &color) const;
 

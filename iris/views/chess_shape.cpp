@@ -41,7 +41,7 @@ ChessShape::ChessShape(
 }
 
 
-void ChessShape::Draw(wxpex::GraphicsContext &context)
+void ChessShape::Draw(draw::DrawContext &context)
 {
     if (!this->chessSolution_.vertices.empty())
     {

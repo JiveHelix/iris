@@ -27,16 +27,13 @@ struct LinesChainResults
     std::optional<CannyChainResults> cannyChain;
     std::optional<typename Filters::HoughFilter::Result> hough;
 
-    using ShapesControl =
-        typename draw::PixelViewControl::AsyncShapesControl;
-
     using HoughControl =
         typename draw::PixelViewControl::AsyncPixelsControl;
 
     LinesChainResults(ssize_t shapesId);
 
     std::shared_ptr<draw::Pixels> Display(
-        ShapesControl shapesControl,
+        draw::AsyncShapesControl shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
         ThreadsafeColor<int32_t> &color,
         std::optional<HoughControl> houghControl) const;

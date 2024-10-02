@@ -43,7 +43,7 @@ public:
         settings->Expand();
 
         auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
-        
+
         sizer->Add(fileSelector, 0, wxEXPAND | wxBOTTOM, 5);
         sizer->Add(settings, 1, wxEXPAND | wxBOTTOM, 5);
         auto topSizer = std::make_unique<wxBoxSizer>(wxVERTICAL);

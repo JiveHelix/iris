@@ -11,7 +11,7 @@ namespace iris
 {
 
 
-class ChessSettingsView: public draw::NodeSettingsView
+class ChessSettingsView: public draw::CollapsibleNodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;

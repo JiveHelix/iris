@@ -18,7 +18,7 @@ namespace iris
 
 
 template<typename Value>
-class GradientSettingsView: public draw::NodeSettingsView
+class GradientSettingsView: public draw::CollapsibleNodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -29,7 +29,10 @@ public:
         std::optional<draw::NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        draw::NodeSettingsView(parent, "Gradient", nodeSettingsControl)
+        draw::CollapsibleNodeSettingsView(
+            parent,
+            "Gradient",
+            nodeSettingsControl)
     {
         using namespace wxpex;
 

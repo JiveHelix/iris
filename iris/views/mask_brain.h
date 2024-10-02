@@ -14,7 +14,7 @@ namespace iris
 
 struct CreateMaskPolygon
 {
-    std::optional<MaskShapeValue> operator()(
+    std::optional<draw::ShapeValue> operator()(
         const draw::Drag &drag,
         const tau::Point2d<int> position)
     {
@@ -38,17 +38,17 @@ struct CreateMaskPolygon
         look.strokeColor.value = 1.0;
         look.antialias = true;
 
-        return MaskShapeValue{
-            {0, polygon, look, draw::NodeSettings::Default()}};
+        return draw::ShapeValue::Create<draw::PolygonShape>(
+            0,
+            pex::Order{},
+            polygon,
+            look,
+            draw::NodeSettings::Default());
     }
 };
 
 
-using MaskShapesControl = decltype(MaskControl::polygons);
-
-
-using DragReplaceMaskPolygon =
-    draw::DragReplaceShape<MaskShapesControl, CreateMaskPolygon>;
+using DragReplaceMaskPolygon = draw::DragReplaceShape<CreateMaskPolygon>;
 
 
 class MaskBrain
@@ -65,11 +65,7 @@ private:
 
     draw::ShapesId shapesId_;
 
-    using MaskShapesBrain = draw::ShapeBrain
-    <
-        MaskShapesControl,
-        DragReplaceMaskPolygon
-    >;
+    using MaskShapesBrain = draw::ShapeBrain<DragReplaceMaskPolygon>;
 
     MaskShapesBrain maskShapesBrain_;
 

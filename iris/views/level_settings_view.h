@@ -16,7 +16,7 @@ namespace iris
 
 
 template<typename Value>
-class LevelSettingsView: public draw::NodeSettingsView
+class LevelSettingsView: public draw::CollapsibleNodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -28,7 +28,7 @@ public:
         std::optional<draw::NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        draw::NodeSettingsView(parent, name, nodeSettingsControl)
+        draw::CollapsibleNodeSettingsView(parent, name, nodeSettingsControl)
     {
         auto detect = new wxpex::Button(
             this->GetPanel(),

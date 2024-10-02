@@ -27,7 +27,8 @@ ChessChainResults::ChessChainResults(
 }
 
 
-void ChessChainResults::ClearShapes_(draw::ShapesControl shapesControl) const
+void ChessChainResults::ClearShapes_(
+    draw::AsyncShapesControl shapesControl) const
 {
     draw::Shapes chessShapes(this->chessShapesId_);
     draw::Shapes linesShapes(this->linesShapesId_);
@@ -41,7 +42,7 @@ void ChessChainResults::ClearShapes_(draw::ShapesControl shapesControl) const
 
 std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
     ChessChainNodeSettings nodeSettings,
-    draw::ShapesControl shapesControl,
+    draw::AsyncShapesControl shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
     const draw::PointsShapeSettings &pointsShapeSettings,
     const ChessShapeSettings &chessShapeSettings,
@@ -96,7 +97,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
 
 
 std::shared_ptr<draw::Pixels> ChessChainResults::Display(
-    draw::ShapesControl shapesControl,
+    draw::AsyncShapesControl shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
     const draw::PointsShapeSettings &pointsShapeSettings,
     const ChessShapeSettings &chessShapeSettings,
@@ -304,7 +305,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
 
 
 void ChessChainResults::DrawHoughResults_(
-    draw::ShapesControl shapesControl,
+    draw::AsyncShapesControl shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
     ThreadsafeColor<int32_t> &color,
     std::optional<HoughControl> houghControl) const
@@ -338,7 +339,7 @@ void ChessChainResults::DrawHoughResults_(
 
 
 void ChessChainResults::DrawVerticesResults_(
-    draw::ShapesControl shapesControl,
+    draw::AsyncShapesControl shapesControl,
     const draw::PointsShapeSettings &pointsShapeSettings,
     ThreadsafeColor<int32_t> &color) const
 {

@@ -21,7 +21,7 @@ MaskSettingsView::MaskSettingsView(
     std::optional<draw::NodeSettingsControl> nodeSettingsControl,
     const LayoutOptions &layoutOptions)
     :
-    draw::NodeSettingsView(parent, "Mask", nodeSettingsControl)
+    draw::CollapsibleNodeSettingsView(parent, "Mask", nodeSettingsControl)
 {
     auto panel = this->GetPanel();
 

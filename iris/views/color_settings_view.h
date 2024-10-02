@@ -16,7 +16,7 @@ namespace iris
 
 
 template<typename Value>
-class ColorSettingsView: public draw::NodeSettingsView
+class ColorSettingsView: public draw::CollapsibleNodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -27,7 +27,7 @@ public:
         std::optional<draw::NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        draw::NodeSettingsView(parent, "Color", nodeSettingsControl)
+        draw::CollapsibleNodeSettingsView(parent, "Color", nodeSettingsControl)
     {
         auto panel = this->GetPanel();
 

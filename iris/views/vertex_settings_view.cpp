@@ -19,7 +19,7 @@ VertexSettingsView::VertexSettingsView(
     std::optional<draw::NodeSettingsControl> nodeSettingsControl,
     const LayoutOptions &layoutOptions)
     :
-    draw::NodeSettingsView(parent, "Vertex", nodeSettingsControl)
+    draw::CollapsibleNodeSettingsView(parent, "Vertex", nodeSettingsControl)
 {
     using namespace wxpex;
 

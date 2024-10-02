@@ -37,7 +37,7 @@ void MaskBrain::OnMask_(const MaskSettings &maskSettings)
 
     for (const auto &shapeValue: maskSettings.polygons)
     {
-        shapes.Append(*shapeValue.GetValueBase());
+        shapes.Append(shapeValue.GetValueBase()->Copy());
     }
 
     this->pixelViewControl_.asyncShapes.Set(shapes);

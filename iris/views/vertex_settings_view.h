@@ -12,7 +12,7 @@ namespace iris
 {
 
 
-class VertexSettingsView: public draw::NodeSettingsView
+class VertexSettingsView: public draw::CollapsibleNodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;

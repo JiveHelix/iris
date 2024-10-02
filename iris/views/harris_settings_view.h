@@ -18,7 +18,7 @@ namespace iris
 
 
 template<typename Control>
-class HarrisSettingsView: public draw::NodeSettingsView
+class HarrisSettingsView: public draw::CollapsibleNodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -29,7 +29,7 @@ public:
         std::optional<draw::NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        draw::NodeSettingsView(parent, "Harris", nodeSettingsControl)
+        draw::CollapsibleNodeSettingsView(parent, "Harris", nodeSettingsControl)
     {
         using namespace wxpex;
 

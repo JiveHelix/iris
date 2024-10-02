@@ -108,8 +108,8 @@ public:
         if (filtered.size() < 2)
         {
             auto defer = pex::MakeDefer(this->control_);
-            defer.members.range.low.Set(0);
-            defer.members.range.high.Set(255);
+            defer.range.low.Set(0);
+            defer.range.high.Set(255);
 
             return;
         }
@@ -123,8 +123,8 @@ public:
                 1.0 - this->settings_.detectMargin));
 
         auto defer = pex::MakeDefer(this->control_);
-        defer.members.range.low.Set(values(0));
-        defer.members.range.high.Set(values(1));
+        defer.range.low.Set(values(0));
+        defer.range.high.Set(values(1));
     }
 
     using DetectEndpoint =

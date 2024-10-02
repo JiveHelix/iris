@@ -69,7 +69,7 @@ public:
         const ChessShapeSettings &settings,
         const ChessSolution &chessSolution);
 
-    void Draw(wxpex::GraphicsContext &context) override;
+    void Draw(draw::DrawContext &context) override;
 
     ChessShapeSettings settings_;
     ChessSolution chessSolution_;

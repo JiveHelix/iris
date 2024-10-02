@@ -29,7 +29,7 @@ MaskMatrix CreateMask(const MaskSettings &maskSettings)
     const auto &value = maskSettings.polygons[0];
 
     auto valueBase = value.GetValueBase();
-    auto shape = dynamic_cast<const PolygonShape *>(valueBase.get());
+    auto shape = dynamic_cast<const draw::PolygonShape *>(valueBase.get());
 
     if (!shape)
     {
@@ -59,8 +59,8 @@ MaskMatrix CreateMask(const MaskSettings &maskSettings)
     look.antialias = true;
 
     {
-        wxpex::GraphicsContext context(dc);
-        draw::ConfigureLook(context, look);
+        draw::DrawContext context(dc);
+        context.ConfigureLook(look);
         draw::DrawSegments(context, polygon.GetPoints());
     }
 

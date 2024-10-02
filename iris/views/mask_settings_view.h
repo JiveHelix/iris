@@ -12,7 +12,7 @@ namespace iris
 {
 
 
-class MaskSettingsView: public draw::NodeSettingsView
+class MaskSettingsView: public draw::CollapsibleNodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;

@@ -18,7 +18,7 @@ VertexChainResults::VertexChainResults(ssize_t shapesId)
 
 
 std::shared_ptr<draw::Pixels> VertexChainResults::Display(
-    draw::ShapesControl shapesControl,
+    draw::AsyncShapesControl shapesControl,
     const draw::PointsShapeSettings &pointsShapeSettings,
     ThreadsafeColor<int32_t> &color) const
 {

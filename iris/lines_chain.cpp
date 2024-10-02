@@ -17,7 +17,7 @@ LinesChainResults::LinesChainResults(ssize_t shapesId)
 
 
 std::shared_ptr<draw::Pixels> LinesChainResults::Display(
-    draw::ShapesControl shapesControl,
+    draw::AsyncShapesControl shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
     ThreadsafeColor<int32_t> &color,
     std::optional<HoughControl> houghControl) const

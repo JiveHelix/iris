@@ -55,47 +55,47 @@ struct ChessChainNodeSettingsCustom
             ModelBase(),
             maskEndpoint_(
                 this,
-                this->mask.select,
+                this->mask.toggleSelect,
                 &Model<ModelBase>::OnMask_),
 
             levelEndpoint_(
                 this,
-                this->level.select,
+                this->level.toggleSelect,
                 &Model<ModelBase>::OnLevel_),
 
             gaussianEndpoint_(
                 this,
-                this->gaussian.select,
+                this->gaussian.toggleSelect,
                 &Model<ModelBase>::OnGaussian_),
 
             gradientEndpoint_(
                 this,
-                this->gradient.select,
+                this->gradient.toggleSelect,
                 &Model<ModelBase>::OnGradient_),
 
             cannyEndpoint_(
                 this,
-                this->canny.select,
+                this->canny.toggleSelect,
                 &Model<ModelBase>::OnCanny_),
 
             houghEndpoint_(
                 this,
-                this->hough.select,
+                this->hough.toggleSelect,
                 &Model<ModelBase>::OnHough_),
 
             harrisEndpoint_(
                 this,
-                this->harris.select,
+                this->harris.toggleSelect,
                 &Model<ModelBase>::OnHarris_),
 
             verticesEndpoint_(
                 this,
-                this->vertices.select,
+                this->vertices.toggleSelect,
                 &Model<ModelBase>::OnVertices_),
 
             chessEndpoint_(
                 this,
-                this->chess.select,
+                this->chess.toggleSelect,
                 &Model<ModelBase>::OnChess_),
 
             selected_(nullptr)
@@ -171,11 +171,7 @@ struct ChessChainNodeSettingsCustom
         }
 
     private:
-        using Endpoint = pex::Endpoint
-            <
-                Model<ModelBase>,
-                draw::NodeSelectSignal
-            >;
+        using Endpoint = draw::NodeToggleSelectEndpoint<Model>;
 
         Endpoint maskEndpoint_;
         Endpoint levelEndpoint_;

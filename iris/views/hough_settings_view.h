@@ -17,7 +17,7 @@ namespace iris
 
 
 template<typename Value>
-class HoughSettingsView: public draw::NodeSettingsView
+class HoughSettingsView: public draw::CollapsibleNodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -28,7 +28,10 @@ public:
         std::optional<draw::NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        draw::NodeSettingsView(parent, "Hough Lines", nodeSettingsControl)
+        draw::CollapsibleNodeSettingsView(
+            parent,
+            "Hough Lines",
+            nodeSettingsControl)
     {
         using namespace wxpex;
 

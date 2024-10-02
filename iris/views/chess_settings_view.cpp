@@ -16,7 +16,7 @@ ChessSettingsView::ChessSettingsView(
     std::optional<draw::NodeSettingsControl> nodeSettingsControl,
     const LayoutOptions &layoutOptions)
     :
-    draw::NodeSettingsView(parent, "Chess", nodeSettingsControl)
+    draw::CollapsibleNodeSettingsView(parent, "Chess", nodeSettingsControl)
 {
     using namespace wxpex;
 

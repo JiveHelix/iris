@@ -27,17 +27,6 @@ struct MaskFields
 };
 
 
-using MaskShapePolyValue =
-    pex::poly::Value<draw::Shape, draw::PolygonShapeTemplate>;
-
-using MaskShapePolyGroup = draw::PolygonShapePolyGroup<MaskShapePolyValue>;
-using MaskShapeValue = typename MaskShapePolyGroup::PolyValue;
-using PolygonShape = typename MaskShapePolyGroup::Derived;
-
-using MaskShapeListMaker =
-    pex::MakePolyList<MaskShapePolyValue, draw::ShapeTemplates<void>>;
-
-
 template<template<typename> typename T>
 class MaskTemplate
 {
@@ -45,7 +34,7 @@ public:
     T<draw::SizeGroup> imageSize;
     T<bool> enable;
     T<bool> showOutline;
-    T<MaskShapeListMaker> polygons;
+    T<draw::OrderedShapes> polygons;
     T<GaussianGroup<double>> feather;
 
     static constexpr auto fields =

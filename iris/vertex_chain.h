@@ -36,13 +36,10 @@ struct VertexChainResults
     std::optional<typename Filters::HarrisFilter::Result> harris;
     std::optional<typename Filters::VertexFilter::Result> vertex;
 
-    using ShapesControl =
-        typename draw::PixelViewControl::AsyncShapesControl;
-
     VertexChainResults(ssize_t shapesId);
 
     std::shared_ptr<draw::Pixels> Display(
-        draw::ShapesControl shapesControl,
+        draw::AsyncShapesControl shapesControl,
         const draw::PointsShapeSettings &pointsShapeSettings,
         ThreadsafeColor<int32_t> &color) const;
 

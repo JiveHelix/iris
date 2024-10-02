@@ -18,7 +18,7 @@ namespace iris
 
 
 template<typename Value>
-class CannySettingsView: public draw::NodeSettingsView
+class CannySettingsView: public draw::CollapsibleNodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -29,7 +29,7 @@ public:
         std::optional<draw::NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
-        draw::NodeSettingsView(parent, "Canny", nodeSettingsControl)
+        draw::CollapsibleNodeSettingsView(parent, "Canny", nodeSettingsControl)
     {
         using namespace wxpex;
 

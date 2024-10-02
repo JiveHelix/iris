@@ -18,7 +18,7 @@ namespace iris
 
 
 template<typename Value>
-class GaussianSettingsView: public draw::NodeSettingsView
+class GaussianSettingsView: public draw::CollapsibleNodeSettingsView
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
@@ -30,7 +30,7 @@ public:
         std::optional<draw::NodeSettingsControl> nodeSettingsControl,
         const LayoutOptions &layoutOptions)
         :
-        draw::NodeSettingsView(parent, name, nodeSettingsControl)
+        draw::CollapsibleNodeSettingsView(parent, name, nodeSettingsControl)
     {
         auto panel = this->GetPanel();
 
