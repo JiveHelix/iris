@@ -151,7 +151,7 @@ ChessChainSettingsView::ChessChainSettingsView(
         chess);
 
     sizer->Add(autoDetect, 0, wxALIGN_CENTER | wxTOP, 5);
-    this->ConfigureTopSizer(std::move(sizer));
+    this->ConfigureSizer(std::move(sizer));
 }
 
 

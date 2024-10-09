@@ -61,7 +61,7 @@ MaskSettingsView::MaskSettingsView(
         // polygon,
         feather);
 
-    this->ConfigureTopSizer(std::move(sizer));
+    this->ConfigureSizer(std::move(sizer));
 }
 
 

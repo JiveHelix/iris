@@ -55,7 +55,7 @@ HomographySettingsView::HomographySettingsView(
         pixelSize,
         squareSize);
 
-    this->ConfigureTopSizer(std::move(sizer));
+    this->ConfigureSizer(std::move(sizer));
 }
 
 

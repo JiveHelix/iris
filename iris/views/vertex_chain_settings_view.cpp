@@ -83,7 +83,7 @@ VertexChainSettingsView::VertexChainSettingsView(
         vertexSettings,
         pointsShape);
 
-    this->ConfigureTopSizer(std::move(sizer));
+    this->ConfigureSizer(std::move(sizer));
 }
 
 

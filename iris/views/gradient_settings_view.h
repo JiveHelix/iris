@@ -91,7 +91,7 @@ public:
         topSizer->Add(sizer.release(), 0, wxEXPAND | wxBOTTOM, 3);
         topSizer->Add(detect, 0, wxALIGN_CENTER);
 
-        this->ConfigureTopSizer(std::move(topSizer));
+        this->ConfigureSizer(std::move(topSizer));
     }
 };
 

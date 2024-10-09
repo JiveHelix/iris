@@ -74,7 +74,7 @@ public:
         auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
         sizer->Add(detect, 0, wxBOTTOM);
         sizer->Add(rangeSizer.release(), 1, wxEXPAND);
-        this->ConfigureTopSizer(std::move(sizer));
+        this->ConfigureSizer(std::move(sizer));
     }
 };
 

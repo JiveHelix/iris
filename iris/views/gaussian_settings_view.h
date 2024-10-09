@@ -64,7 +64,7 @@ public:
             threshold,
             threads);
 
-        this->ConfigureTopSizer(std::move(sizer));
+        this->ConfigureSizer(std::move(sizer));
     }
 };
 

@@ -54,5 +54,5 @@ DemoSettingsView::DemoSettingsView(
     auto borderSizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
     borderSizer->Add(sizer.release(), 1, wxEXPAND | wxALL, 5);
 
-    this->ConfigureTopSizer(wxpex::verticalScrolled, std::move(borderSizer));
+    this->ConfigureSizer(wxpex::verticalScrolled, std::move(borderSizer));
 }

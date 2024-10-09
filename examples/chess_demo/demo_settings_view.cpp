@@ -40,7 +40,7 @@ DemoSettingsView::DemoSettingsView(
         chessShape,
         color);
 
-    this->ConfigureTopSizer(
+    this->ConfigureSizer(
         wxpex::verticalScrolled.MinimumHeight(600),
         std::move(sizer));
 };
