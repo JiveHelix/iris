@@ -48,15 +48,15 @@ MaskMatrix CreateMask(const MaskSettings &maskSettings)
     wxBitmap bitmap(wxpex::ToWxSize(maskSettings.imageSize));
     wxMemoryDC dc(bitmap);
 
-    auto look = draw::Look::Default();
-    look.strokeEnable = false;
-    look.fillEnable = true;
+    auto look = draw::Look{};
+    look.stroke.enable = false;
+    look.fill.enable = true;
 
     // Use the graphics context to fill the polygon with red pixels.
-    look.fillColor.hue = 0.0;
-    look.fillColor.saturation = 1.0;
-    look.fillColor.value = 1.0;
-    look.antialias = true;
+    look.fill.color.hue = 0.0;
+    look.fill.color.saturation = 1.0;
+    look.fill.color.value = 1.0;
+    look.stroke.antialias = true;
 
     {
         draw::DrawContext context(dc);

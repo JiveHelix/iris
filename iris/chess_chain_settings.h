@@ -72,29 +72,24 @@ struct ChessChainCustom
             :
             Base{
                 true,
-                MaskSettings::Default(),
-                LevelSettings<int32_t>::Default(),
+                MaskSettings{},
+                LevelSettings<int32_t>{},
 
-                GaussianSettings<int32_t>::Default(),
-                GradientSettings<int32_t>::Default(),
+                GaussianSettings<int32_t>{},
+                GradientSettings<int32_t>{},
 
-                CannySettings<double>::Default(),
-                HoughSettings<double>::Default(),
-                draw::LinesShapeSettings::Default(),
+                CannySettings<double>{},
+                HoughSettings<double>{},
+                draw::LinesShapeSettings{},
 
-                HarrisSettings<double>::Default(),
-                VertexSettings::Default(),
-                draw::PointsShapeSettings::Default(),
+                HarrisSettings<double>{},
+                VertexSettings{},
+                draw::PointsShapeSettings{},
 
-                ChessSettings::Default(),
+                ChessSettings{},
                 {}}
         {
             this->gaussian.sigma = 2.0;
-        }
-
-        static Plain<Base> Default()
-        {
-            return Plain<Base>();
         }
     };
 

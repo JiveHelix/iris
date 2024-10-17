@@ -47,17 +47,16 @@ public:
 class MaskSettings: public MaskTemplate<pex::Identity>
 {
 public:
-    static MaskSettings Default()
-    {
-        auto defaultGaussian = GaussianSettings<double>::Default();
-        defaultGaussian.sigma = 10.0;
-
-        return {{
+    MaskSettings()
+        :
+        MaskTemplate<pex::Identity>{
             defaultImageSize,
             true,
             true,
             {},
-            defaultGaussian}};
+            {}}
+    {
+        this->feather.sigma = 10.0;
     }
 };
 

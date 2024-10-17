@@ -351,12 +351,12 @@ void ChessChainResults::DrawVerticesResults_(
         VerticesToPoints(*this->vertices));
 
     auto valuePointsShapeSettings = pointsShapeSettings;
-    valuePointsShapeSettings.look.strokeEnable = true;
-    valuePointsShapeSettings.look.strokeColor.hue = 120.0;
-    valuePointsShapeSettings.look.strokeColor.saturation = 1.0;
-    valuePointsShapeSettings.look.fillEnable = true;
-    valuePointsShapeSettings.look.fillColor.hue = 120.0;
-    valuePointsShapeSettings.look.fillColor.saturation = 1.0;
+    valuePointsShapeSettings.look.stroke.enable = true;
+    valuePointsShapeSettings.look.stroke.color.hue = 120.0;
+    valuePointsShapeSettings.look.stroke.color.saturation = 1.0;
+    valuePointsShapeSettings.look.fill.enable = true;
+    valuePointsShapeSettings.look.fill.color.hue = 120.0;
+    valuePointsShapeSettings.look.fill.color.saturation = 1.0;
 
     shapes.EmplaceBack<draw::ValuePointsShape>(
         valuePointsShapeSettings,

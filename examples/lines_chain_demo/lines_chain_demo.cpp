@@ -250,7 +250,7 @@ private:
 
     void OnHoughSettings_(const iris::HoughSettings<double> &houghSettings)
     {
-        this->houghUser_.houghView.viewSettings.imageSize.Set(
+        this->houghUser_.houghView.canvas.viewSettings.imageSize.Set(
             draw::Size(
                 static_cast<int>(houghSettings.thetaCount),
                 static_cast<int>(houghSettings.rhoCount)));

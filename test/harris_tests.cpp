@@ -27,7 +27,7 @@ TEST_CASE("Create Harris vertex detection class", "[harris]")
         iris::Differentiate<float>(30, 1, iris::DerivativeSize::Size::three);
 
     auto gradient = iris::Gradient<float>(differentiate);
-    auto settings = iris::HarrisSettings<float>::Default();
+    auto settings = iris::HarrisSettings<float>{};
     settings.threads = 1;
     auto harris = iris::Harris<float>(settings);
 

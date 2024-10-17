@@ -30,20 +30,20 @@ struct CreateMaskPolygon
         polygon.center = drag.GetDragCenter(position);
 
         // Show the mask outline in magenta.
-        auto look = draw::Look::Default();
-        look.strokeEnable = true;
-        look.fillEnable = false;
-        look.strokeColor.hue = 300.0;
-        look.strokeColor.saturation = 1.0;
-        look.strokeColor.value = 1.0;
-        look.antialias = true;
+        auto look = draw::Look{};
+        look.stroke.enable = true;
+        look.fill.enable = false;
+        look.stroke.color.hue = 300.0;
+        look.stroke.color.saturation = 1.0;
+        look.stroke.color.value = 1.0;
+        look.stroke.antialias = true;
 
         return draw::ShapeValue::Create<draw::PolygonShape>(
             0,
             pex::Order{},
             polygon,
             look,
-            draw::NodeSettings::Default());
+            draw::NodeSettings{});
     }
 };
 

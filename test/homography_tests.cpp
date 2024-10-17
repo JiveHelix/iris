@@ -126,7 +126,7 @@ iris::NamedVertices CreateNamedVertices(
         {
             current.logical.y = j;
 
-            tau::Vector3<double> world(
+            tau::Vector3d<double> world(
                 x_m,
                 startingY - static_cast<double>(i) * squareSize_m,
                 startingZ - static_cast<double>(j) * squareSize_m);
@@ -234,7 +234,7 @@ TEST_CASE("HomographyMatrix round trip", "[homography]")
         1080.0_d / 2.0_d,
         0_d}};
 
-    auto homographySettings = iris::HomographySettings::Default();
+    auto homographySettings = iris::HomographySettings{};
 
     auto solution =
         SolutionCreator(
@@ -279,7 +279,7 @@ TEST_CASE("Solve for intrinsics", "[homography]")
         1080.0_d / 2.0_d,
         0_d}};
 
-    auto homographySettings = iris::HomographySettings::Default();
+    auto homographySettings = iris::HomographySettings{};
 
     auto solutions =
         CreateSolutions(homographySettings.squareSize_mm, intrinsics);

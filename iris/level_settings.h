@@ -80,14 +80,16 @@ template<typename Value>
 struct LevelSettings:
     public LevelTemplate<Value>::template Template<pex::Identity>
 {
-    static LevelSettings Default()
-    {
-        return {{
+    LevelSettings()
+        :
+        LevelTemplate<Value>::template Template<pex::Identity>{
             true,
-            LevelRanges<Value>::Settings::Default(),
+            typename LevelRanges<Value>::Settings{},
             defaultMaximum,
             {},
-            0.05}};
+            0.05}
+    {
+
     }
 };
 

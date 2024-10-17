@@ -11,7 +11,7 @@ MaskBrain::MaskBrain(
     draw::PixelViewControl pixelViewControl)
     :
     shapesId_(),
-    maskShapesBrain_(maskControl.polygons, pixelViewControl),
+    maskShapesBrain_(maskControl.polygons, pixelViewControl.canvas),
     maskEndpoint_(this, maskControl, &MaskBrain::OnMask_),
     pixelViewControl_(pixelViewControl)
 {

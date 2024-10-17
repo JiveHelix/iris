@@ -78,16 +78,11 @@ struct LinesChainCustom
             :
             Base{
                 true,
-                CannyChainSettings::Default(),
-                HoughSettings<double>::Default(),
-                draw::LinesShapeSettings::Default()}
+                CannyChainSettings{},
+                HoughSettings<double>{},
+                draw::LinesShapeSettings{}}
         {
 
-        }
-
-        static Plain Default()
-        {
-            return Plain();
         }
     };
 

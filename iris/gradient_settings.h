@@ -73,11 +73,6 @@ struct GradientCustom
         {
 
         }
-
-        static Plain Default()
-        {
-            return Plain();
-        }
     };
 };
 

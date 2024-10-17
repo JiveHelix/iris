@@ -89,18 +89,13 @@ struct VertexChainCustom
             :
             Base{
                 true,
-                GaussianSettings<int32_t>::Default(),
-                GradientSettings<int32_t>::Default(),
-                HarrisSettings<double>::Default(),
-                VertexSettings::Default(),
-                draw::PointsShapeSettings::Default()}
+                GaussianSettings<int32_t>{},
+                GradientSettings<int32_t>{},
+                HarrisSettings<double>{},
+                VertexSettings{},
+                draw::PointsShapeSettings{}}
         {
             this->gaussian.sigma = 2.0;
-        }
-
-        static Plain Default()
-        {
-            return Plain();
         }
     };
 

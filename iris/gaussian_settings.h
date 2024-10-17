@@ -70,11 +70,6 @@ struct GaussianSettings:
     {
 
     }
-
-    static GaussianSettings Default()
-    {
-        return GaussianSettings();
-    }
 };
 
 

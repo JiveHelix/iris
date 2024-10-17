@@ -41,12 +41,14 @@ struct HomographySettings: public HomographyTemplate<pex::Identity>
     static constexpr double defaultPixelSize = 10.0;
     static constexpr double defaultSquareSize = 25.0;
 
-    static HomographySettings Default()
-    {
-        return {{
+    HomographySettings()
+        :
+        HomographyTemplate<pex::Identity>{
             defaultImageSize.template Cast<double>(),
             defaultPixelSize,
-            defaultSquareSize}};
+            defaultSquareSize}
+    {
+
     }
 };
 

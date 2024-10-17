@@ -26,7 +26,7 @@ public:
 
     Mask()
         :
-        maskSettings_(MaskSettings::Default()),
+        maskSettings_(MaskSettings{}),
         mask_()
     {
 

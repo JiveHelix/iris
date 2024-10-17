@@ -82,16 +82,11 @@ struct CannyChainCustom
             :
             PlainBase{
                 true,
-                GaussianSettings<int32_t>::Default(),
-                GradientSettings<int32_t>::Default(),
-                CannySettings<double>::Default()}
+                GaussianSettings<int32_t>{},
+                GradientSettings<int32_t>{},
+                CannySettings<double>{}}
         {
             this->gaussian.sigma = 2.0;
-        }
-
-        static Plain Default()
-        {
-            return Plain();
         }
     };
 

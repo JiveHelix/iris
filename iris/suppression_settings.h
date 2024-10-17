@@ -55,12 +55,18 @@ struct SuppressionSettings
     public SuppressionTemplate<SuppressionRanges>
         ::template Template<pex::Identity>
 {
-    static SuppressionSettings Default()
-    {
-        static constexpr Eigen::Index defaultWindow = 3;
-        static constexpr Eigen::Index defaultCount = 1;
+    using Base =
+        SuppressionTemplate<SuppressionRanges>
+            ::template Template<pex::Identity>;
 
-        return {{defaultWindow, defaultCount}};
+    static constexpr Eigen::Index defaultWindow = 3;
+    static constexpr Eigen::Index defaultCount = 1;
+
+    SuppressionSettings()
+        :
+        Base{defaultWindow, defaultCount}
+    {
+
     }
 };
 

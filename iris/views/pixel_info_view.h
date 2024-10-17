@@ -105,7 +105,7 @@ public:
 
     PixelInfoView(
         wxWindow *parent,
-        draw::PixelViewControl control,
+        draw::CanvasControl control,
         const std::string &label = "");
 
 protected:

@@ -69,12 +69,14 @@ template<typename Value>
 struct ColorSettings:
     public ColorTemplate<Value>::template Template<pex::Identity>
 {
-    static ColorSettings Default()
-    {
-        return {{
+    ColorSettings()
+        :
+        ColorTemplate<Value>::template Template<pex::Identity>{
             true,
-            LevelRanges<Value>::Settings::Default(),
-            255}};
+            typename LevelRanges<Value>::Settings{},
+            255}
+    {
+
     }
 };
 

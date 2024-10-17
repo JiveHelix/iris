@@ -65,15 +65,15 @@ struct CannySettings:
     static constexpr size_t defaultDepth = 32;
     static constexpr size_t defaultThreads = 4;
 
-    static CannySettings Default()
-    {
-        CannySettings settings{{
+    CannySettings()
+        :
+        CannyTemplate<Float>::template Template<pex::Identity>{
             true,
-            CannyRanges<Float>::Settings::Default(),
+            typename CannyRanges<Float>::Settings{},
             defaultDepth,
-            defaultThreads}};
+            defaultThreads}
+    {
 
-        return settings;
     }
 };
 

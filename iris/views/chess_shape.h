@@ -50,7 +50,7 @@ struct ChessShapeTemplate
 
 struct ChessShapeSettings: public ChessShapeTemplate<pex::Identity>
 {
-    static ChessShapeSettings Default();
+    ChessShapeSettings();
 };
 
 

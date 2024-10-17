@@ -70,11 +70,6 @@ struct VertexCustom
         {
 
         }
-
-        static Plain Default()
-        {
-            return Plain();
-        }
     };
 };
 

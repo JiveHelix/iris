@@ -79,11 +79,6 @@ struct ChessCustom
         {
 
         }
-
-        static Plain Default()
-        {
-            return Plain();
-        }
     };
 };
 

@@ -113,11 +113,6 @@ struct HoughCustom
         {
 
         }
-
-        static Plain Default()
-        {
-            return Plain();
-        }
     };
 
     template<typename ModelBase>
