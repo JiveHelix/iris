@@ -7,8 +7,7 @@
 #include "iris/canny_chain.h"
 #include "iris/hough.h"
 #include "iris/node.h"
-#include "iris/image.h"
-#include "iris/color.h"
+#include "iris/color_map.h"
 
 
 namespace iris
@@ -35,7 +34,7 @@ struct LinesChainResults
     std::shared_ptr<draw::Pixels> Display(
         draw::AsyncShapesControl shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
-        ThreadsafeColor<int32_t> &color,
+        ThreadsafeColorMap<int32_t> &color,
         std::optional<HoughControl> houghControl) const;
 
 private:

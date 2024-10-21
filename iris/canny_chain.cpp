@@ -7,7 +7,7 @@ namespace iris
 
 
 std::shared_ptr<draw::Pixels> CannyChainResults::Display(
-    ThreadsafeColor<int32_t> &color) const
+    ThreadsafeColorMap<int32_t> &color) const
 {
     if (!this->gaussian)
     {

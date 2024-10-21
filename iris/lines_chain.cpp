@@ -19,7 +19,7 @@ LinesChainResults::LinesChainResults(ssize_t shapesId)
 std::shared_ptr<draw::Pixels> LinesChainResults::Display(
     draw::AsyncShapesControl shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
-    ThreadsafeColor<int32_t> &color,
+    ThreadsafeColorMap<int32_t> &color,
     std::optional<HoughControl> houghControl) const
 {
     if (!this->cannyChain)

@@ -39,8 +39,7 @@ target_sources(
     chess_chain_node_settings.cpp
     chess_chain_settings.cpp
     chess_settings.cpp
-    color.cpp
-    color_settings.cpp
+    color_map.cpp
     vertex.cpp
     vertex_chain.cpp
     vertex_chain_settings.cpp

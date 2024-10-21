@@ -3,21 +3,21 @@
 #include <wxpex/file_field.h>
 
 #include <draw/pixels.h>
+#include <draw/color_map_settings.h>
+#include <draw/views/color_map_settings_view.h>
 
 #include <iris/gaussian_settings.h>
 #include <iris/gradient_settings.h>
 #include <iris/canny_settings.h>
-#include <iris/color_settings.h>
 
 #include <iris/gaussian.h>
 #include <iris/gradient.h>
 #include <iris/canny.h>
-#include <iris/color.h>
+#include <iris/color_map.h>
 
 #include <iris/views/gaussian_settings_view.h>
 #include <iris/views/gradient_settings_view.h>
 #include <iris/views/canny_settings_view.h>
-#include <iris/views/color_settings_view.h>
 
 #include "common/about_window.h"
 #include "common/observer.h"
@@ -44,7 +44,7 @@ struct DemoTemplate
     T<iris::GaussianGroup<InProcess>> gaussian;
     T<iris::GradientGroup<InProcess>> gradient;
     T<iris::CannyGroup<float>> canny;
-    T<iris::ColorGroup<InProcess>> color;
+    T<draw::ColorMapSettingsGroup<InProcess>> color;
 };
 
 
@@ -100,7 +100,7 @@ public:
 
         canny->Expand();
 
-        auto color = new iris::ColorSettingsView<InProcess>(
+        auto color = new draw::ColorMapSettingsView<InProcess>(
             this,
             control.color,
             layoutOptions);
@@ -126,7 +126,7 @@ public:
     using Gaussian = iris::Gaussian<InProcess, 0>;
     using Gradient = iris::Gradient<InProcess>;
     using Canny = iris::Canny<float>;
-    using Color = iris::Color<InProcess>;
+    using Color = draw::ColorMap<InProcess>;
 
     DemoBrain()
         :

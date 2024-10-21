@@ -46,7 +46,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
     const draw::LinesShapeSettings &linesShapeSettings,
     const draw::PointsShapeSettings &pointsShapeSettings,
     const ChessShapeSettings &chessShapeSettings,
-    ThreadsafeColor<int32_t> &color,
+    ThreadsafeColorMap<int32_t> &color,
     std::optional<HoughControl> houghControl) const
 {
     this->ClearShapes_(shapesControl);
@@ -101,7 +101,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
     const draw::LinesShapeSettings &linesShapeSettings,
     const draw::PointsShapeSettings &pointsShapeSettings,
     const ChessShapeSettings &chessShapeSettings,
-    ThreadsafeColor<int32_t> &color,
+    ThreadsafeColorMap<int32_t> &color,
     std::optional<HoughControl> houghControl,
     std::optional<ChessChainNodeSettings> nodeSettings) const
 {
@@ -168,7 +168,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
 
 
 std::shared_ptr<draw::Pixels> ChessChainResults::GetPreprocessedPixels_(
-    ThreadsafeColor<int32_t> &color) const
+    ThreadsafeColorMap<int32_t> &color) const
 {
     if (this->chess && this->level)
     {
@@ -218,7 +218,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetPreprocessedPixels_(
 
 std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
     ChessChainNodeSettings nodeSettings,
-    ThreadsafeColor<int32_t> &color) const
+    ThreadsafeColorMap<int32_t> &color) const
 {
     if (nodeSettings.mask.isSelected)
     {
@@ -307,7 +307,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
 void ChessChainResults::DrawHoughResults_(
     draw::AsyncShapesControl shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
-    ThreadsafeColor<int32_t> &color,
+    ThreadsafeColorMap<int32_t> &color,
     std::optional<HoughControl> houghControl) const
 {
     assert(this->hough);
@@ -341,7 +341,7 @@ void ChessChainResults::DrawHoughResults_(
 void ChessChainResults::DrawVerticesResults_(
     draw::AsyncShapesControl shapesControl,
     const draw::PointsShapeSettings &pointsShapeSettings,
-    ThreadsafeColor<int32_t> &color) const
+    ThreadsafeColorMap<int32_t> &color) const
 {
     assert(this->vertices);
     draw::Shapes shapes(this->verticesShapesId_);

@@ -3,18 +3,18 @@
 #include <wxpex/file_field.h>
 
 #include <draw/pixels.h>
+#include <draw/color_map_settings.h>
+#include <draw/views/color_map_settings_view.h>
 
 #include <iris/gaussian_settings.h>
 #include <iris/gradient_settings.h>
-#include <iris/color_settings.h>
 
 #include <iris/gaussian.h>
 #include <iris/gradient.h>
-#include <iris/color.h>
+#include <iris/color_map.h>
 
 #include <iris/views/gaussian_settings_view.h>
 #include <iris/views/gradient_settings_view.h>
-#include <iris/views/color_settings_view.h>
 
 #include "common/about_window.h"
 #include "common/observer.h"
@@ -39,7 +39,7 @@ struct DemoTemplate
 {
     T<iris::GaussianGroup<InProcess>> gaussian;
     T<iris::GradientGroup<InProcess>> gradient;
-    T<iris::ColorGroup<InProcess>> color;
+    T<draw::ColorMapSettingsGroup<InProcess>> color;
 };
 
 
@@ -86,7 +86,7 @@ public:
 
         gradient->Expand();
 
-        auto color = new iris::ColorSettingsView<InProcess>(
+        auto color = new draw::ColorMapSettingsView<InProcess>(
             this,
             control.color,
             layoutOptions);
@@ -112,7 +112,7 @@ class DemoBrain: public Brain<DemoBrain>
 public:
     using Gaussian = iris::Gaussian<InProcess, 0>;
     using Gradient = iris::Gradient<InProcess>;
-    using Color = iris::Color<InProcess>;
+    using Color = draw::ColorMap<InProcess>;
 
     DemoBrain()
         :

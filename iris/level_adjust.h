@@ -2,8 +2,8 @@
 
 #include <tau/color_map.h>
 #include <tau/percentile.h>
+#include <draw/mono_image.h>
 
-#include "iris/image.h"
 #include "iris/level_settings.h"
 #include "iris/node.h"
 #include "iris/mask.h"
@@ -17,7 +17,7 @@ template<typename Value, typename Float>
 class LevelAdjust
 {
 public:
-    using Matrix = ImageMatrix<Value>;
+    using Matrix = draw::MonoImage<Value>;
     using Result = Matrix;
 
     static tau::FloatRescale<Value, Float> MakeRescale(

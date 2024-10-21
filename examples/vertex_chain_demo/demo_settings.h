@@ -4,7 +4,7 @@
 #include <iris/mask_settings.h>
 #include <iris/level_adjust.h>
 #include <iris/vertex_chain_settings.h>
-#include <iris/color_settings.h>
+#include <draw/color_map_settings.h>
 
 
 template<typename T>
@@ -26,7 +26,7 @@ struct DemoTemplate
     T<iris::MaskGroup> mask;
     T<iris::LevelGroup<int32_t>> level;
     T<iris::VertexChainGroup> vertexChain;
-    T<iris::ColorGroup<int32_t>> color;
+    T<draw::ColorMapSettingsGroup<int32_t>> color;
 
     static constexpr auto fields = DemoFields<DemoTemplate>::fields;
 };

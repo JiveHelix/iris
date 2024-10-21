@@ -3,7 +3,7 @@
 
 #include <iris/node.h>
 #include <iris/mask.h>
-#include <iris/color.h>
+#include <iris/color_map.h>
 #include <iris/lines_chain.h>
 #include <iris/level_adjust.h>
 
@@ -13,7 +13,7 @@
 class Filters
 {
 public:
-    using Color = iris::ThreadsafeColor<int32_t>;
+    using Color = iris::ThreadsafeColorMap<int32_t>;
 
     iris::Cancel cancel;
     iris::DefaultSource source;

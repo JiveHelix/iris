@@ -1,8 +1,9 @@
 #include "demo_settings_view.h"
 
+#include <draw/color_map_settings.h>
+#include <draw/views/color_map_settings_view.h>
 #include <iris/views/chess_chain_settings_view.h>
 #include <iris/views/chess_shape_view.h>
-#include <iris/views/color_settings_view.h>
 
 
 DemoSettingsView::DemoSettingsView(
@@ -28,7 +29,7 @@ DemoSettingsView::DemoSettingsView(
         control.chessShape,
         layoutOptions);
 
-    auto color = new iris::ColorSettingsView<int32_t>(
+    auto color = new draw::ColorMapSettingsView<int32_t>(
         this,
         control.color,
         {},

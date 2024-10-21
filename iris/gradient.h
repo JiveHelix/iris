@@ -10,15 +10,15 @@
 #include <tau/vector2d.h>
 #include <tau/percentile.h>
 #include <tau/color_maps/rgb.h>
+#include <draw/mono_image.h>
+#include <draw/pixels.h>
 
 #include "iris/error.h"
-#include "iris/image.h"
 #include "iris/derivative.h"
 #include "iris/gaussian_node.h"
 #include "iris/gradient_settings.h"
 #include "iris/threadsafe_filter.h"
 #include "iris/chunks.h"
-#include "draw/pixels.h"
 #include "iris/node.h"
 
 
@@ -50,8 +50,8 @@ template<typename Value>
 struct GradientResult
 {
     Value maximum;
-    ImageMatrix<Value> dx;
-    ImageMatrix<Value> dy;
+    draw::MonoImage<Value> dx;
+    draw::MonoImage<Value> dy;
 
     template<typename Float>
     static Eigen::MatrixX<Float> Magnitude(
@@ -132,7 +132,7 @@ public:
     using RowVector = typename Differentiate_::RowVector;
     using ColumnVector = typename Differentiate_::ColumnVector;
     using Result = GradientResult<Value>;
-    using Matrix = ImageMatrix<Value>;
+    using Matrix = draw::MonoImage<Value>;
 
     AsyncGradientResult(
         const Differentiate<Value> &differentiate,
@@ -170,7 +170,7 @@ public:
     static constexpr size_t defaultThreads =
         GradientSettings<Value>::defaultThreads;
 
-    using Matrix = ImageMatrix<Value>;
+    using Matrix = draw::MonoImage<Value>;
     using Result = GradientResult<Value>;
 
     Gradient() = default;

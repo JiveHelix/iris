@@ -11,8 +11,7 @@
 #include "iris/harris.h"
 #include "iris/vertex.h"
 #include "iris/node.h"
-#include "iris/image.h"
-#include "iris/color.h"
+#include "iris/color_map.h"
 
 
 namespace iris
@@ -41,7 +40,7 @@ struct VertexChainResults
     std::shared_ptr<draw::Pixels> Display(
         draw::AsyncShapesControl shapesControl,
         const draw::PointsShapeSettings &pointsShapeSettings,
-        ThreadsafeColor<int32_t> &color) const;
+        ThreadsafeColorMap<int32_t> &color) const;
 
 private:
     ssize_t shapesId_;

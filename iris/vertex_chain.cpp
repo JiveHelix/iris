@@ -20,7 +20,7 @@ VertexChainResults::VertexChainResults(ssize_t shapesId)
 std::shared_ptr<draw::Pixels> VertexChainResults::Display(
     draw::AsyncShapesControl shapesControl,
     const draw::PointsShapeSettings &pointsShapeSettings,
-    ThreadsafeColor<int32_t> &color) const
+    ThreadsafeColorMap<int32_t> &color) const
 {
     if (!this->gaussian)
     {

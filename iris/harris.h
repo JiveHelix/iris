@@ -4,13 +4,13 @@
 #include <pex/interface.h>
 #include <tau/eigen.h>
 #include <tau/vector2d.h>
+#include <draw/pixels.h>
+#include <draw/mono_image.h>
 
 #include "iris/gradient.h"
 #include "iris/gaussian.h"
 #include "iris/harris_settings.h"
 #include "iris/suppression.h"
-#include "draw/pixels.h"
-#include "iris/image.h"
 
 
 namespace iris
@@ -21,7 +21,7 @@ template<typename Float>
 class Harris
 {
 public:
-    using Result = ImageMatrix<Float>;
+    using Result = draw::MonoImage<Float>;
 
     Harris() = default;
 

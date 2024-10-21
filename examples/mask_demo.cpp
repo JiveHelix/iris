@@ -6,15 +6,16 @@
 #include <wxpex/file_field.h>
 
 #include <draw/pixels.h>
+#include <draw/color_map_settings.h>
+#include <draw/views/color_map_settings_view.h>
 
 #include <iris/mask.h>
-#include <iris/color_settings.h>
+#include <draw/color_map_settings.h>
 #include <iris/node.h>
-#include <iris/color.h>
+#include <iris/color_map.h>
 
 #include <iris/views/mask_settings_view.h>
 #include <iris/views/mask_brain.h>
-#include <iris/views/color_settings_view.h>
 
 #include "common/about_window.h"
 #include "common/observer.h"
@@ -38,7 +39,7 @@ template<template<typename> typename T>
 struct DemoTemplate
 {
     T<iris::MaskGroup> mask;
-    T<iris::ColorGroup<InProcess>> color;
+    T<draw::ColorMapSettingsGroup<InProcess>> color;
 
     static constexpr auto fields = DemoFields<DemoTemplate>::fields;
 };
@@ -85,7 +86,7 @@ public:
 
         mask->Expand();
 
-        auto color = new iris::ColorSettingsView<InProcess>(
+        auto color = new draw::ColorMapSettingsView<InProcess>(
             this,
             control.color,
             {},
@@ -105,7 +106,7 @@ struct Filters
 {
     using SourceNode = iris::Source<iris::ProcessMatrix>;
     using Mask = iris::Mask<InProcess>;
-    using Color = iris::ThreadsafeColor<InProcess>;
+    using Color = iris::ThreadsafeColorMap<InProcess>;
 
     using MaskNode = iris::Node<SourceNode, Mask, iris::MaskControl>;
 

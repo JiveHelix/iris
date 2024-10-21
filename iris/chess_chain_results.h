@@ -5,7 +5,7 @@
 #include <draw/node_settings.h>
 #include <draw/views/pixel_view.h>
 
-#include "iris/color.h"
+#include "iris/color_map.h"
 #include "iris/node.h"
 #include "iris/mask.h"
 #include "iris/level_adjust.h"
@@ -69,7 +69,7 @@ struct ChessChainResults
         const draw::LinesShapeSettings &linesShapeSettings,
         const draw::PointsShapeSettings &pointsShapeSettings,
         const ChessShapeSettings &chessShapeSettings,
-        ThreadsafeColor<int32_t> &color,
+        ThreadsafeColorMap<int32_t> &color,
         std::optional<HoughControl> houghControl,
         std::optional<ChessChainNodeSettings> nodeSettings) const;
 
@@ -79,29 +79,29 @@ struct ChessChainResults
         const draw::LinesShapeSettings &linesShapeSettings,
         const draw::PointsShapeSettings &pointsShapeSettings,
         const ChessShapeSettings &chessShapeSettings,
-        ThreadsafeColor<int32_t> &color,
+        ThreadsafeColorMap<int32_t> &color,
         std::optional<HoughControl> houghControl) const;
 
 private:
     void ClearShapes_(draw::AsyncShapesControl) const;
 
     std::shared_ptr<draw::Pixels> GetPreprocessedPixels_(
-        ThreadsafeColor<int32_t> &color) const;
+        ThreadsafeColorMap<int32_t> &color) const;
 
     std::shared_ptr<draw::Pixels> GetNodePixels_(
         ChessChainNodeSettings nodeSettings,
-        ThreadsafeColor<int32_t> &color) const;
+        ThreadsafeColorMap<int32_t> &color) const;
 
     void DrawHoughResults_(
         draw::AsyncShapesControl shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
-        ThreadsafeColor<int32_t> &color,
+        ThreadsafeColorMap<int32_t> &color,
         std::optional<HoughControl> houghControl) const;
 
     void DrawVerticesResults_(
         draw::AsyncShapesControl shapesControl,
         const draw::PointsShapeSettings &pointsShapeSettings,
-        ThreadsafeColor<int32_t> &color) const;
+        ThreadsafeColorMap<int32_t> &color) const;
 
 private:
     ssize_t chessShapesId_;

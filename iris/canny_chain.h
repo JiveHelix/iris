@@ -8,8 +8,7 @@
 #include "iris/gradient.h"
 #include "iris/canny.h"
 #include "iris/node.h"
-#include "iris/image.h"
-#include "iris/color.h"
+#include "iris/color_map.h"
 
 
 namespace iris
@@ -32,7 +31,7 @@ struct CannyChainResults
     std::optional<typename Filters::CannyFilter::Result> canny;
 
     std::shared_ptr<draw::Pixels>
-        Display(ThreadsafeColor<int32_t> &color) const;
+        Display(ThreadsafeColorMap<int32_t> &color) const;
 };
 
 
