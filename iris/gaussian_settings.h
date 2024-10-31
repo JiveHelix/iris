@@ -53,7 +53,8 @@ template<typename Value>
 struct GaussianSettings:
     public GaussianTemplate<Value>::template Template<pex::Identity>
 {
-    using Base = GaussianTemplate<Value>::template Template<pex::Identity>;
+    using Base =
+        typename GaussianTemplate<Value>::template Template<pex::Identity>;
 
     static constexpr double defaultSigma = 1.0;
     static constexpr double defaultThreshold = 0.01;
