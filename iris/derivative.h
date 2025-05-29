@@ -25,13 +25,15 @@ struct DerivativeSize
 
     struct SizeChoices
     {
+        using Type = Size;
+
         static std::vector<Size> GetChoices()
         {
             return {Size::three, Size::five, Size::seven};
         }
     };
 
-    using MakeSelect = pex::MakeSelect<Size, SizeChoices>;
+    using MakeSelect = pex::MakeSelect<SizeChoices>;
     using Control = pex::ControlSelector<MakeSelect>;
 
     static Index GetSize(Size size)

@@ -23,6 +23,8 @@ struct VertexFields
 
 struct VertexChoices
 {
+    using Type = Eigen::Index;
+
     static std::vector<Eigen::Index> GetChoices()
     {
         return {2, 4};
@@ -41,7 +43,7 @@ struct VertexTemplate
 
     T<bool> enable;
     T<pex::MakeRange<double, WindowLow, WindowHigh>> window;
-    T<pex::MakeSelect<Eigen::Index, VertexChoices>> count;
+    T<pex::MakeSelect<VertexChoices>> count;
     T<size_t> threads;
 
     static constexpr auto fields =

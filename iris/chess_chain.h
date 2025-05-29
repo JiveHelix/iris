@@ -4,6 +4,7 @@
 #include <pex/endpoint.h>
 #include "iris/chess_chain_results.h"
 #include "iris/chess_chain_settings.h"
+#include "iris/chess/chess_solution.h"
 
 
 namespace iris
@@ -59,7 +60,7 @@ struct ChessChainNodes
     using VertexNode =
         iris::Node<HarrisNode, VertexFilter, VertexControl>;
 
-    using Result = typename Chess::Result;
+    using Result = ChessSolution;
 
     using MixNode =
         typename ChessNodes<VertexNode, HoughNode>::MixNode;

@@ -7,5 +7,6 @@ build
 out
 CMakeFiles/
 CMakeSettings.json
+CMakeUserPresets.json
 bin/
 lib/

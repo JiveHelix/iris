@@ -4,21 +4,29 @@ if (${fPIC})
     set_property(TARGET iris PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif ()
 
+find_package(Jive REQUIRED)
+find_package(Fields REQUIRED)
+find_package(Pex REQUIRED)
+find_package(Tau REQUIRED)
+find_package(Wxpex REQUIRED)
+find_package(Draw REQUIRED)
+find_package(Fmt REQUIRED)
+find_package(Nlohmann_json REQUIRED)
+
 # Projects that include this project must #include "iris/<header-name>"
 target_include_directories(iris PUBLIC ${PROJECT_SOURCE_DIR})
 
 target_link_libraries(
     iris
     PUBLIC
-    CONAN_PKG::jive
-    CONAN_PKG::fields
-    CONAN_PKG::tau
-    CONAN_PKG::pex
-    CONAN_PKG::libpng
-    CONAN_PKG::wxpex
-    CONAN_PKG::draw
-    CONAN_PKG::fmt
-    CONAN_PKG::nlohmann_json)
+    draw::draw
+    wxpex::wxpex
+    tau::tau
+    pex::pex
+    fields::fields
+    jive::jive
+    fmt::fmt
+    nlohmann_json::nlohmann_json)
 
 target_sources(
     iris

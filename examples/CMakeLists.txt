@@ -105,13 +105,3 @@ target_link_libraries(
     project_warnings
     project_options
     common)
-
-
-add_executable(rotation rotation.cpp)
-
-target_link_libraries(
-    rotation
-    PRIVATE
-    project_warnings
-    project_options
-    CONAN_PKG::tau)

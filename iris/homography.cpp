@@ -1,6 +1,6 @@
 #include "iris/homography.h"
 #include "iris/error.h"
-#include <jive/equal.h>
+#include <tau/svd.h>
 
 
 namespace iris
@@ -104,68 +104,13 @@ Homography::Factors Homography::CombineHomographyFactors(
 }
 
 
-template<typename Derived>
-Eigen::VectorX<typename Derived::Scalar>
-SvdSolve(Eigen::MatrixBase<Derived> &factors)
-{
-    using Scalar = typename Derived::Scalar;
-    using Result = Eigen::VectorX<Scalar>;
-
-#ifdef __GNUG__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-enum-enum-conversion"
-#endif
-
-    using Svd = Eigen::JacobiSVD<Derived>;
-
-    Svd svd;
-
-    svd.compute(
-        factors.derived(),
-        Eigen::ColPivHouseholderQRPreconditioner
-            | Eigen::ComputeFullU
-            | Eigen::ComputeFullV);
-
-#ifdef __GNUG__
-#pragma GCC diagnostic pop
-#endif
-
-    Result nullSpace;
-
-    Eigen::MatrixX<Scalar> values = svd.matrixV();
-
-    Eigen::Index solutionIndex = values.cols() - 1;
-
-    while (solutionIndex > 0)
-    {
-        nullSpace = svd.matrixV()(Eigen::all, solutionIndex);
-        Scalar magnitude = nullSpace.transpose() * nullSpace;
-
-        if (jive::Roughly(magnitude, 1e-6) == 1)
-        {
-            return nullSpace;
-        }
-        else
-        {
-            std::cout << "magnitude not 1: " << magnitude << std::endl;
-            std::cout << "solutionIndex: " << solutionIndex << std::endl;
-        }
-
-        --solutionIndex;
-    }
-
-    throw IrisError("Unable to find solution with magnitude 1");
-}
-
-
-
 HomographyMatrix Homography::GetHomographyMatrix(
     const std::vector<NamedVertex> &vertices)
 {
     auto factors = this->CombineHomographyFactors(vertices);
 
     HomographyMatrix homographyMatrix =
-        SvdSolve(factors).reshaped<Eigen::RowMajor>(3, 3);
+        tau::SvdSolve(factors).reshaped<Eigen::RowMajor>(3, 3);
 
     return homographyMatrix;
 }
@@ -195,7 +140,7 @@ Homography::Intrinsics Homography::ComputeIntrinsics(
     }
 
 
-    Eigen::Vector<double, 6> solution = SvdSolve(factors);
+    Eigen::Vector<double, 6> solution = tau::SvdSolve(factors);
 
     using Beta = Eigen::Matrix<double, 3, 3>;
 
