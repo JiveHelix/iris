@@ -17,7 +17,7 @@ HomographySettingsView::HomographySettingsView(
     HomographyControl control,
     const LayoutOptions &layoutOptions)
     :
-    wxpex::Collapsible(parent, "Homograpy", borderStyle)
+    wxpex::Collapsible(parent, "Homography", borderStyle)
 {
     using namespace wxpex;
     using SensorSizeView = SizeView<double, 0>;

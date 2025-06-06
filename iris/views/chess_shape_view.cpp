@@ -1,5 +1,6 @@
 #include "iris/views/chess_shape_view.h"
 
+#include <wxpex/layout_items.h>
 #include <wxpex/check_box.h>
 #include <draw/views/points_shape_view.h>
 #include <draw/views/lines_shape_view.h>

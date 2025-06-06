@@ -1,6 +1,7 @@
 #include "vertex_chain_settings_view.h"
 
 #include <wxpex/labeled_widget.h>
+#include <wxpex/layout_items.h>
 #include <wxpex/check_box.h>
 #include <wxpex/indent_sizer.h>
 #include <draw/views/points_shape_view.h>

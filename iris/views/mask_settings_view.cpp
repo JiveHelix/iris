@@ -1,5 +1,6 @@
 #include "iris/views/mask_settings_view.h"
 
+#include <wxpex/layout_items.h>
 #include <wxpex/check_box.h>
 #include <wxpex/field.h>
 #include <wxpex/slider.h>

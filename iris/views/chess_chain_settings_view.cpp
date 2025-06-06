@@ -1,6 +1,7 @@
 #include "chess_chain_settings_view.h"
 
 #include <wxpex/labeled_widget.h>
+#include <wxpex/layout_items.h>
 #include <wxpex/check_box.h>
 #include <wxpex/button.h>
 #include <wxpex/indent_sizer.h>

@@ -84,7 +84,6 @@ ChessOutput::ChessOutput(
 
     if (this->groups.empty())
     {
-        std::cout << "ChessFromLines groups is empty" << std::endl;
         return;
     }
 
