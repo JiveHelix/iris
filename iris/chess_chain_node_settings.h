@@ -46,57 +46,57 @@ struct ChessChainNodeSettingsTemplate
 
 struct ChessChainNodeSettingsCustom
 {
-    template<typename ModelBase>
-    class Model: public ModelBase
+    template<typename Base>
+    class Model: public Base
     {
     public:
         Model()
             :
-            ModelBase(),
+            Base(),
             maskEndpoint_(
                 this,
                 this->mask.toggleSelect,
-                &Model<ModelBase>::OnMask_),
+                &Model<Base>::OnMask_),
 
             levelEndpoint_(
                 this,
                 this->level.toggleSelect,
-                &Model<ModelBase>::OnLevel_),
+                &Model<Base>::OnLevel_),
 
             gaussianEndpoint_(
                 this,
                 this->gaussian.toggleSelect,
-                &Model<ModelBase>::OnGaussian_),
+                &Model<Base>::OnGaussian_),
 
             gradientEndpoint_(
                 this,
                 this->gradient.toggleSelect,
-                &Model<ModelBase>::OnGradient_),
+                &Model<Base>::OnGradient_),
 
             cannyEndpoint_(
                 this,
                 this->canny.toggleSelect,
-                &Model<ModelBase>::OnCanny_),
+                &Model<Base>::OnCanny_),
 
             houghEndpoint_(
                 this,
                 this->hough.toggleSelect,
-                &Model<ModelBase>::OnHough_),
+                &Model<Base>::OnHough_),
 
             harrisEndpoint_(
                 this,
                 this->harris.toggleSelect,
-                &Model<ModelBase>::OnHarris_),
+                &Model<Base>::OnHarris_),
 
             verticesEndpoint_(
                 this,
                 this->vertices.toggleSelect,
-                &Model<ModelBase>::OnVertices_),
+                &Model<Base>::OnVertices_),
 
             chessEndpoint_(
                 this,
                 this->chess.toggleSelect,
-                &Model<ModelBase>::OnChess_),
+                &Model<Base>::OnChess_),
 
             selected_(nullptr)
         {

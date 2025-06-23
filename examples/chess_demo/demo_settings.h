@@ -41,13 +41,13 @@ struct DemoTemplate
 
 struct DemoCustom
 {
-    template<typename ModelBase>
-    struct Model: public ModelBase
+    template<typename Base>
+    struct Model: public Base
     {
     public:
         Model()
             :
-            ModelBase(),
+            Base(),
             maximumEndpoint_(
                 this,
                 iris::MaximumControl(this->maximum),

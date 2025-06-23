@@ -93,15 +93,15 @@ struct ChessChainCustom
         }
     };
 
-    template<typename ModelBase>
+    template<typename Base>
     struct Model
         :
-        public ModelBase
+        public Base
     {
     public:
         Model()
             :
-            ModelBase(),
+            Base(),
             imageSizeEndpoint_(this),
             maximumEndpoint_(this)
         {

@@ -115,10 +115,10 @@ struct HoughCustom
         }
     };
 
-    template<typename ModelBase>
-    struct Model: public ModelBase
+    template<typename Base>
+    struct Model: public Base
     {
-        using This = Model<ModelBase>;
+        using This = Model<Base>;
 
         using WindowEndpoint =
             typename pex::Endpoint<This, decltype(This::window)>;
@@ -132,7 +132,7 @@ struct HoughCustom
     public:
         Model()
             :
-            ModelBase(),
+            Base(),
             windowEndpoint_(
                 this,
                 this->window,

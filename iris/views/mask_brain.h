@@ -65,7 +65,7 @@ private:
 
     draw::ShapesId shapesId_;
 
-    using MaskShapesBrain = draw::ShapeBrain<DragReplaceMaskPolygon>;
+    using MaskShapesBrain = draw::ShapeEditor<DragReplaceMaskPolygon>;
 
     MaskShapesBrain maskShapesBrain_;
 

@@ -103,13 +103,13 @@ struct LevelCustom
 {
     using Plain = LevelSettings<Value>;
 
-    template<typename ModelBase>
-    struct Model: public ModelBase
+    template<typename Base>
+    struct Model: public Base
     {
     public:
         Model()
             :
-            ModelBase(),
+            Base(),
             maximumEndpoint_(this, this->maximum, &Model::OnMaximum_)
         {
 
