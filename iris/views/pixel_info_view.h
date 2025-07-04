@@ -34,15 +34,15 @@ public:
 
     void OnValues_(const Values &values)
     {
-        this->Display(values, this->point_.Get());
+        this->Display(values, this->point_.Get().template Cast<int>());
     }
 
     void OnPoint_(const draw::Point &point)
     {
-        this->Display(this->values_.Get(), point);
+        this->Display(this->values_.Get(), point.template Cast<int>());
     }
 
-    void Display(const Values &values, const draw::Point &point)
+    void Display(const Values &values, const draw::IntPoint &point)
     {
         if (draw::Size(values).Contains(point))
         {

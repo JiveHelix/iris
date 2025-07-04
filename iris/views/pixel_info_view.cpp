@@ -39,8 +39,9 @@ PixelInfo::PixelInfo(
 
 void PixelInfo::OnPoint_(const draw::Point &point)
 {
-    this->x_->SetLabelText(std::to_string(point.x));
-    this->y_->SetLabelText(std::to_string(point.y));
+    auto pointAsInt = point.template Cast<int>();
+    this->x_->SetLabelText(std::to_string(pointAsInt.x));
+    this->y_->SetLabelText(std::to_string(pointAsInt.y));
 }
 
 
