@@ -99,7 +99,7 @@ struct CannyChainCustom
             Base(),
             maximumEndpoint_(this)
         {
-
+            REGISTER_PEX_NAME(this, "CannyChainModel");
         }
 
         void SetMaximumControl(const MaximumControl &maximumControl)

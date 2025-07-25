@@ -12,7 +12,12 @@ MaskBrain::MaskBrain(
     :
     shapesId_(),
     maskShapesBrain_(maskControl.polygons, pixelViewControl.canvas),
-    maskEndpoint_(this, maskControl, &MaskBrain::OnMask_),
+
+    maskEndpoint_(
+        USE_REGISTER_PEX_NAME(this, "MaskBrain"),
+        maskControl,
+        &MaskBrain::OnMask_),
+
     pixelViewControl_(pixelViewControl)
 {
 

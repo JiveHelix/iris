@@ -66,22 +66,6 @@ public:
     NodeBase & operator=(const NodeBase &other) = delete;
     NodeBase & operator=(NodeBase &&other) = delete;
 
-#if 0
-    NodeBase(InputNode &input, Control control, CancelControl cancel)
-        :
-        mutex_(),
-        input_(input),
-        settings_(control.Get()),
-        settingsChanged_(false),
-        endpoint_(this, control, &NodeBase::OnSettingsChanged),
-        name_(),
-        cancel_(cancel),
-        result_()
-    {
-
-    }
-#endif
-
     NodeBase(
         const std::string &name,
         InputNode &input,
@@ -92,7 +76,12 @@ public:
         input_(input),
         settings_(control.Get()),
         settingsChanged_(false),
-        endpoint_(this, control, &NodeBase::OnSettingsChanged),
+
+        endpoint_(
+            USE_REGISTER_PEX_NAME(this, "NodeBase"),
+            control,
+            &NodeBase::OnSettingsChanged),
+
         name_(name),
         cancel_(cancel),
         result_()

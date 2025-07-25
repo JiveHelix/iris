@@ -25,7 +25,12 @@ public:
     ThreadsafeFilter(Control control)
         :
         mutex_(),
-        endpoint_(this, control, &ThreadsafeFilter::OnSettings_),
+
+        endpoint_(
+            USE_REGISTER_PEX_NAME(this, "ThreadsafeFilter"),
+            control,
+            &ThreadsafeFilter::OnSettings_),
+
         filter_(control.Get())
     {
 

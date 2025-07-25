@@ -17,8 +17,8 @@ template<typename T>
 struct LinesChainNodeSettingsFields
 {
     static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::vertices, "cannyChain"),
-        fields::Field(&T::chess, "hough"));
+        fields::Field(&T::cannyChain, "cannyChain"),
+        fields::Field(&T::hough, "hough"));
 };
 
 
@@ -95,7 +95,7 @@ struct LinesChainCustom
             Base(),
             imageSizeEndpoint_(this)
         {
-
+            REGISTER_PEX_NAME(this, "LinesChainModel");
         }
 
         void SetMaximumControl(const MaximumControl &maximumControl)

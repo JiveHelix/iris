@@ -26,7 +26,12 @@ public:
     PixelValue(wxWindow *parent, ValuesControl values, draw::PointControl point)
         :
         wxStaticText(parent, wxID_ANY, "    "),
-        values_(this, values, &PixelValue::OnValues_),
+
+        values_(
+            USE_REGISTER_PEX_NAME(this, "PixelValue"),
+            values,
+            &PixelValue::OnValues_),
+
         point_(this, point, &PixelValue::OnPoint_)
     {
 

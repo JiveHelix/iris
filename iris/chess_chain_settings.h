@@ -60,6 +60,7 @@ struct ChessChainTemplate
     T<pex::MakeSignal> autoDetectSettings;
 
     static constexpr auto fields = ChessChainFields<ChessChainTemplate>::fields;
+    static constexpr auto fieldsTypeName = "ChessChainSettings";
 };
 
 
@@ -105,7 +106,7 @@ struct ChessChainCustom
             imageSizeEndpoint_(this),
             maximumEndpoint_(this)
         {
-
+            REGISTER_PEX_NAME(this, "ChessChainModel");
         }
 
         void SetImageSizeControl(const draw::SizeControl &sizeControl)

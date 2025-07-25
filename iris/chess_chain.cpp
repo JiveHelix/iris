@@ -31,7 +31,7 @@ ChessChainNodes::ChessChainNodes(
     mix(this->vertices, this->hough, cancel),
     chess("chess", this->mix, control.chess, cancel)
 {
-
+    REGISTER_PEX_NAME(this, "ChessChainNodes");
 }
 
 
@@ -46,7 +46,7 @@ ChessChain::ChessChain(
     chessShapesId_(),
     nodes_(sourceNode, control, cancel),
     autoDetectEndpoint_(
-        this,
+        USE_REGISTER_PEX_NAME(this, "ChessChain"),
         control.autoDetectSettings,
         &ChessChain::AutoDetectSettings)
 {
