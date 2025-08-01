@@ -14,7 +14,7 @@ MaskBrain::MaskBrain(
     maskShapesBrain_(maskControl.polygons, pixelViewControl.canvas),
 
     maskEndpoint_(
-        USE_REGISTER_PEX_NAME(this, "MaskBrain"),
+        PEX_THIS("MaskBrain"),
         maskControl,
         &MaskBrain::OnMask_),
 

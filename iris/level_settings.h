@@ -112,7 +112,7 @@ struct LevelCustom
             Base(),
 
             maximumEndpoint_(
-                USE_REGISTER_PEX_NAME(this, "LevelModel"),
+                PEX_THIS("LevelModel"),
                 this->maximum,
                 &Model::OnMaximum_)
         {

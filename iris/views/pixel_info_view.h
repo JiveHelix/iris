@@ -28,7 +28,7 @@ public:
         wxStaticText(parent, wxID_ANY, "    "),
 
         values_(
-            USE_REGISTER_PEX_NAME(this, "PixelValue"),
+            PEX_THIS("PixelValue"),
             values,
             &PixelValue::OnValues_),
 

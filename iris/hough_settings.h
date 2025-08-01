@@ -134,7 +134,7 @@ struct HoughCustom
             :
             Base(),
             windowEndpoint_(
-                USE_REGISTER_PEX_NAME(this, "HoughModel"),
+                PEX_THIS("HoughModel"),
                 this->window,
                 &Model::OnWindow_),
             rhoCountEndpoint_(

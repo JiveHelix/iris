@@ -17,7 +17,7 @@ public:
         endpoints_(this, control),
         doOpenFile_([this](){this->actor_->OpenFile();})
     {
-        REGISTER_PEX_NAME(this, observerName);
+        PEX_NAME(observerName);
 
         this->endpoints_.openFile.Connect(
             &Observer::OnOpenFile_);

@@ -78,7 +78,7 @@ public:
         settingsChanged_(false),
 
         endpoint_(
-            USE_REGISTER_PEX_NAME(this, "NodeBase"),
+            PEX_THIS("NodeBase"),
             control,
             &NodeBase::OnSettingsChanged),
 

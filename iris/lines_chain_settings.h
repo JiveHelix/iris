@@ -95,7 +95,7 @@ struct LinesChainCustom
             Base(),
             imageSizeEndpoint_(this)
         {
-            REGISTER_PEX_NAME(this, "LinesChainModel");
+            PEX_NAME("LinesChainModel");
         }
 
         void SetMaximumControl(const MaximumControl &maximumControl)

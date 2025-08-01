@@ -54,7 +54,7 @@ struct ChessChainNodeSettingsCustom
             :
             Base(),
             maskEndpoint_(
-                USE_REGISTER_PEX_NAME(this, "ChessChainNodeSettings"),
+                PEX_THIS("ChessChainNodeSettings"),
                 this->mask.toggleSelect,
                 &Model<Base>::OnMask_),
 

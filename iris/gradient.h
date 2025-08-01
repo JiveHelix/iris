@@ -243,7 +243,7 @@ public:
         Base("Gradient", source, control, cancel),
         control_(control),
         detectEndpoint_(
-            USE_REGISTER_PEX_NAME(this, "GradientNode"),
+            PEX_THIS("GradientNode"),
             control.autoDetectSettings,
             &GradientNode::AutoDetectSettings)
     {

@@ -106,7 +106,7 @@ struct ChessChainCustom
             imageSizeEndpoint_(this),
             maximumEndpoint_(this)
         {
-            REGISTER_PEX_NAME(this, "ChessChainModel");
+            PEX_NAME("ChessChainModel");
         }
 
         void SetImageSizeControl(const draw::SizeControl &sizeControl)

@@ -108,7 +108,7 @@ struct VertexChainCustom
             Base(),
             maximumEndpoint_(this)
         {
-            REGISTER_PEX_NAME(this, "VertexChainModel");
+            PEX_NAME("VertexChainModel");
         }
 
         void SetMaximumControl(const MaximumControl &maximumControl)

@@ -86,7 +86,7 @@ public:
         Base("LevelAdjust", source, control, cancel),
         control_(control),
         detectEndpoint_(
-            USE_REGISTER_PEX_NAME(this, "LevelAdjustNode"),
+            PEX_THIS("LevelAdjustNode"),
             control.autoDetectSettings,
             &LevelAdjustNode::AutoDetectSettings)
     {

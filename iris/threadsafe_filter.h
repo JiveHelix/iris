@@ -27,7 +27,7 @@ public:
         mutex_(),
 
         endpoint_(
-            USE_REGISTER_PEX_NAME(this, "ThreadsafeFilter"),
+            PEX_THIS("ThreadsafeFilter"),
             control,
             &ThreadsafeFilter::OnSettings_),
 
