@@ -28,29 +28,26 @@ public:
     {
         using namespace wxpex;
 
-        auto yaw = LabeledWidget(
+        auto yaw_deg = LabeledWidget(
             this,
             "Yaw (z) (deg)",
-            new FieldSlider(
+            wxpex::CreateFieldSlider<3>(
                 this,
-                control.rotation.yaw,
-                control.rotation.yaw.value));
+                control.rotation.yaw_deg));
 
-        auto pitch = LabeledWidget(
+        auto pitch_deg = LabeledWidget(
             this,
             "Pitch (y) (deg)",
-            new FieldSlider(
+            wxpex::CreateFieldSlider<3>(
                 this,
-                control.rotation.pitch,
-                control.rotation.pitch.value));
+                control.rotation.pitch_deg));
 
-        auto roll = LabeledWidget(
+        auto roll_deg = LabeledWidget(
             this,
             "Roll (x) (deg)",
-            new FieldSlider(
+            wxpex::CreateFieldSlider<3>(
                 this,
-                control.rotation.roll,
-                control.rotation.roll.value));
+                control.rotation.roll_deg));
 
         auto axisOrder = LabeledWidget(
             this,
@@ -64,27 +61,27 @@ public:
             "x (m)",
             new Field(
                 this,
-                control.x_m));
+                control.point_m.x));
 
         auto y_m = LabeledWidget(
             this,
             "y (m)",
             new Field(
                 this,
-                control.y_m));
+                control.point_m.y));
 
         auto z_m = LabeledWidget(
             this,
             "z (m)",
             new Field(
                 this,
-                control.z_m));
+                control.point_m.z));
 
         auto sizer = LayoutLabeled(
             layoutOptions,
-            yaw,
-            pitch,
-            roll,
+            yaw_deg,
+            pitch_deg,
+            roll_deg,
             axisOrder,
             x_m,
             y_m,

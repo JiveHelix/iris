@@ -83,11 +83,13 @@ public:
 
         // Positive rotation about y makes the camera look down.
         // Raise the camera to keep the vertices in view.
-        pose.z_m = virtualZ_m * std::tan(tau::ToRadians(pose.rotation.pitch));
+        pose.point_m.z =
+            virtualZ_m * std::tan(tau::ToRadians(pose.rotation.pitch_deg));
 
         // Positive rotation about z makes the camera look left.
         // Translate to the right (-y) to compensate.
-        pose.y_m = -std::tan(tau::ToRadians(pose.rotation.yaw)) * virtualZ_m;
+        pose.point_m.y =
+            -std::tan(tau::ToRadians(pose.rotation.yaw_deg)) * virtualZ_m;
 
         iris::ChessSolution solution;
 
