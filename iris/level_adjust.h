@@ -128,7 +128,7 @@ public:
     }
 
     using DetectEndpoint =
-        pex::Endpoint<LevelAdjustNode, pex::control::Signal<>>;
+        pex::Endpoint<LevelAdjustNode, pex::control::DefaultSignal>;
 
     Control control_;
     DetectEndpoint detectEndpoint_;

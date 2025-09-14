@@ -74,7 +74,7 @@ using MaskGroup = pex::Group
 
 
 using MaskModel = typename MaskGroup::Model;
-using MaskControl = typename MaskGroup::Control;
+using MaskControl = typename MaskGroup::DefaultControl;
 
 
 } // end namespace iris

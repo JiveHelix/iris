@@ -279,7 +279,7 @@ public:
     Control control_;
 
     using DetectEndpoint =
-        pex::Endpoint<GradientNode, pex::control::Signal<>>;
+        pex::Endpoint<GradientNode, pex::control::DefaultSignal>;
 
     DetectEndpoint detectEndpoint_;
 };

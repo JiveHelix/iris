@@ -38,7 +38,7 @@ struct HoughUserTemplate
 
 using HoughUserGroup = pex::Group<HoughUserFields, HoughUserTemplate>;
 
-using HoughUserControl = typename HoughUserGroup::Control;
+using HoughUserControl = typename HoughUserGroup::DefaultControl;
 using HoughUserModel = typename HoughUserGroup::Model;
 
 

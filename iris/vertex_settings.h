@@ -87,7 +87,7 @@ using VertexGroup = pex::Group
 
 using VertexSettings = typename VertexGroup::Plain;
 using VertexModel = typename VertexGroup::Model;
-using VertexControl = typename VertexGroup::Control;
+using VertexControl = typename VertexGroup::DefaultControl;
 
 
 DECLARE_OUTPUT_STREAM_OPERATOR(VertexSettings)

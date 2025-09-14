@@ -96,7 +96,7 @@ template<typename Float>
 using CannyModel = typename CannyGroup<Float>::Model;
 
 template<typename Float>
-using CannyControl = typename CannyGroup<Float>::Control;
+using CannyControl = typename CannyGroup<Float>::DefaultControl;
 
 
 extern template struct CannySettings<float>;

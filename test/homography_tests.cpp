@@ -79,7 +79,12 @@ public:
         // vertices will be placed.
         // Compute the translation of the camera such that the chess board
         // remains centered in the projected view.
-        tau::Pose<double> pose({x_deg, y_deg, z_deg}, 0_d, 0_d, 0_d);
+        tau::Pose<double> pose(
+            tau::PixelOrigin::topRight,
+            {x_deg, y_deg, z_deg},
+            0_d,
+            0_d,
+            0_d);
 
         // Positive rotation about y makes the camera look down.
         // Raise the camera to keep the vertices in view.

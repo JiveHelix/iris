@@ -65,7 +65,7 @@ using HomographyGroup =
         pex::PlainT<HomographySettings>
     >;
 
-using HomographyControl = typename HomographyGroup::Control;
+using HomographyControl = typename HomographyGroup::DefaultControl;
 
 
 } // end namespace iris

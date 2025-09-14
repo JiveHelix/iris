@@ -109,6 +109,8 @@ struct ChessChainCustom
             PEX_NAME("ChessChainModel");
         }
 
+        using Base::operator=;
+
         void SetImageSizeControl(const draw::SizeControl &sizeControl)
         {
             this->imageSizeEndpoint_.ConnectUpstream(
@@ -154,7 +156,7 @@ using ChessChainGroup =
     pex::Group<ChessChainFields, ChessChainTemplate, ChessChainCustom>;
 
 using ChessChainSettings = typename ChessChainGroup::Plain;
-using ChessChainControl = typename ChessChainGroup::Control;
+using ChessChainControl = typename ChessChainGroup::DefaultControl;
 using ChessChainModel = typename ChessChainGroup::Model;
 
 

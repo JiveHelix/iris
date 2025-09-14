@@ -19,7 +19,7 @@ class ThreadsafeFilter
 {
 public:
     using Settings = typename Group::Plain;
-    using Control = typename Group::Control;
+    using Control = typename Group::DefaultControl;
     using SettingsEndpoint = pex::Endpoint<ThreadsafeFilter, Control>;
 
     ThreadsafeFilter(Control control)

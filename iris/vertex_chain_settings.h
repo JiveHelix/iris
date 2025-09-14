@@ -47,7 +47,7 @@ using VertexChainNodeSettingsModel =
     typename VertexChainNodeSettingsGroup::Model;
 
 using VertexChainNodeSettingsControl =
-    typename VertexChainNodeSettingsGroup::Control;
+    typename VertexChainNodeSettingsGroup::DefaultControl;
 
 
 template<typename T>
@@ -142,7 +142,7 @@ using VertexChainGroup = pex::Group
 
 using VertexChainSettings = typename VertexChainGroup::Plain;
 using VertexChainModel = typename VertexChainGroup::Model;
-using VertexChainControl = typename VertexChainGroup::Control;
+using VertexChainControl = typename VertexChainGroup::DefaultControl;
 
 DECLARE_EQUALITY_OPERATORS(VertexChainSettings)
 DECLARE_OUTPUT_STREAM_OPERATOR(VertexChainSettings)

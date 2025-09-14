@@ -3,6 +3,7 @@
 
 #include <wxpex/wxshim.h>
 #include <wxpex/labeled_widget.h>
+#include <wxpex/layout_items.h>
 #include <wxpex/file_field.h>
 #include <wxpex/slider.h>
 #include <wxpex/combo_box.h>

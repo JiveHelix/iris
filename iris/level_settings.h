@@ -152,7 +152,7 @@ template<typename Value>
 using LevelModel = typename LevelGroup<Value>::Model;
 
 template<typename Value>
-using LevelControl = typename LevelGroup<Value>::Control;
+using LevelControl = typename LevelGroup<Value>::DefaultControl;
 
 
 extern template struct LevelSettings<int32_t>;

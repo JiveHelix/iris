@@ -134,7 +134,7 @@ private:
     draw::ShapesId verticesShapesId_;
     draw::ShapesId chessShapesId_;
     ChessChainNodes nodes_;
-    pex::Endpoint<ChessChain, pex::control::Signal<>> autoDetectEndpoint_;
+    pex::Endpoint<ChessChain, pex::control::DefaultSignal> autoDetectEndpoint_;
 };
 
 

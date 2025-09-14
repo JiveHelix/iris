@@ -90,7 +90,7 @@ template<typename Value>
 using GradientModel = typename GradientGroup<Value>::Model;
 
 template<typename Value>
-using GradientControl = typename GradientGroup<Value>::Control;
+using GradientControl = typename GradientGroup<Value>::DefaultControl;
 
 template<typename Value>
 using GradientSettings = typename GradientGroup<Value>::Plain;

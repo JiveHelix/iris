@@ -48,7 +48,7 @@ struct DemoTemplate
 using DemoGroup = pex::Group<DemoFields, DemoTemplate>;
 using DemoSettings = typename DemoGroup::Plain;
 using DemoModel = typename DemoGroup::Model;
-using DemoControl = typename DemoGroup::Control;
+using DemoControl = typename DemoGroup::DefaultControl;
 
 
 DECLARE_OUTPUT_STREAM_OPERATOR(DemoSettings)

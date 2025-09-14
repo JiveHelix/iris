@@ -83,7 +83,7 @@ using SuppressionGroup =
     >;
 
 using SuppressionModel = typename SuppressionGroup::Model;
-using SuppressionControl = typename SuppressionGroup::Control;
+using SuppressionControl = typename SuppressionGroup::DefaultControl;
 
 
 } // end namespace iris

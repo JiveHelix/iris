@@ -143,7 +143,7 @@ using HarrisModel = typename HarrisGroup<Float, Ranges>::Model;
 
 template<typename Float, typename Ranges = HarrisRanges>
 using HarrisControl =
-    typename HarrisGroup<Float, Ranges>::Control;
+    typename HarrisGroup<Float, Ranges>::DefaultControl;
 
 
 } // end namespace iris

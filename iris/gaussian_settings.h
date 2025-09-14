@@ -91,7 +91,7 @@ template<typename Value>
 using GaussianModel = typename GaussianGroup<Value>::Model;
 
 template<typename Value>
-using GaussianControl = typename GaussianGroup<Value>::Control;
+using GaussianControl = typename GaussianGroup<Value>::DefaultControl;
 
 
 extern template struct GaussianSettings<int32_t>;

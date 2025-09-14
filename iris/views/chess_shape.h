@@ -84,7 +84,7 @@ using ChessShapeGroup = pex::Group
 >;
 
 using ChessShapeModel = typename ChessShapeGroup::Model;
-using ChessShapeControl = typename ChessShapeGroup::Control;
+using ChessShapeControl = typename ChessShapeGroup::DefaultControl;
 
 
 } // end namespace iris

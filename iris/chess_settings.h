@@ -93,7 +93,7 @@ using ChessGroup =
 
 using ChessSettings = typename ChessGroup::Plain;
 using ChessModel = typename ChessGroup::Model;
-using ChessControl = typename ChessGroup::Control;
+using ChessControl = typename ChessGroup::DefaultControl;
 
 DECLARE_OUTPUT_STREAM_OPERATOR(ChessSettings)
 DECLARE_EQUALITY_OPERATORS(ChessSettings)

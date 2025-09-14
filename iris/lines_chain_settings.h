@@ -42,7 +42,7 @@ using LinesChainNodeSettingsModel =
     typename LinesChainNodeSettingsGroup::Model;
 
 using LinesChainNodeSettingsControl =
-    typename LinesChainNodeSettingsGroup::Control;
+    typename LinesChainNodeSettingsGroup::DefaultControl;
 
 
 template<typename T>
@@ -130,7 +130,7 @@ using LinesChainGroup = pex::Group
 
 using LinesChainSettings = typename LinesChainGroup::Plain;
 using LinesChainModel = typename LinesChainGroup::Model;
-using LinesChainControl = typename LinesChainGroup::Control;
+using LinesChainControl = typename LinesChainGroup::DefaultControl;
 
 DECLARE_EQUALITY_OPERATORS(LinesChainSettings)
 DECLARE_OUTPUT_STREAM_OPERATOR(LinesChainSettings)

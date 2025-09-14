@@ -14,7 +14,7 @@ namespace iris
 
 struct CreateMaskPolygon
 {
-    std::optional<draw::ShapeValue> operator()(
+    std::optional<draw::ShapeValueWrapper> operator()(
         const draw::Drag &drag,
         const tau::Point2d<int> position)
     {
@@ -38,7 +38,7 @@ struct CreateMaskPolygon
         look.stroke.color.value = 1.0;
         look.stroke.antialias = true;
 
-        return draw::ShapeValue::Create<draw::PolygonShape>(
+        return draw::ShapeValueWrapper::Create<draw::PolygonShape>(
             0,
             pex::Order{},
             polygon,

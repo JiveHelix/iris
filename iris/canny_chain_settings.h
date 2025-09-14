@@ -45,7 +45,7 @@ using CannyChainNodeSettingsModel =
     typename CannyChainNodeSettingsGroup::Model;
 
 using CannyChainNodeSettingsControl =
-    typename CannyChainNodeSettingsGroup::Control;
+    typename CannyChainNodeSettingsGroup::DefaultControl;
 
 
 
@@ -132,7 +132,7 @@ using CannyChainGroup = pex::Group
     >;
 
 using CannyChainSettings = typename CannyChainGroup::Plain;
-using CannyChainControl = typename CannyChainGroup::Control;
+using CannyChainControl = typename CannyChainGroup::DefaultControl;
 using CannyChainModel = typename CannyChainGroup::Model;
 
 

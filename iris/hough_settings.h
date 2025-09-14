@@ -206,7 +206,7 @@ template<typename Float>
 using HoughModel = typename HoughGroup<Float>::Model;
 
 template<typename Float>
-using HoughControl = typename HoughGroup<Float>::Control;
+using HoughControl = typename HoughGroup<Float>::DefaultControl;
 
 template<typename Float>
 using HoughSettings = typename HoughGroup<Float>::Plain;

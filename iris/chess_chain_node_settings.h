@@ -203,7 +203,7 @@ using ChessChainNodeSettingsModel =
     typename ChessChainNodeSettingsGroup::Model;
 
 using ChessChainNodeSettingsControl =
-    typename ChessChainNodeSettingsGroup::Control;
+    typename ChessChainNodeSettingsGroup::DefaultControl;
 
 
 bool HasSelectedNode(const ChessChainNodeSettings &);
