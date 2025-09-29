@@ -80,7 +80,6 @@ public:
         // Compute the translation of the camera such that the chess board
         // remains centered in the projected view.
         tau::Pose<double> pose(
-            tau::PixelOrigin::topRight,
             {x_deg, y_deg, z_deg},
             0_d,
             0_d,
@@ -208,6 +207,6 @@ TEST_CASE("Solve for intrinsics", "[homography]")
     std::cout << "Invented:\n" << intrinsics << std::endl;
     std::cout << "\nComputed:\n" << result << std::endl;
 
-    std::cout << tau::Intrinsics<double>::FromArray(10_d, result)
+    std::cout << tau::Intrinsics<double>::FromArray_pixels(10_d, result)
         << std::endl;
 }

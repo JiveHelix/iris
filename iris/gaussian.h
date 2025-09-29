@@ -10,7 +10,7 @@
 #include <tau/eigen.h>
 #include <tau/convolve.h>
 #include <tau/angles.h>
-#include <draw/mono_image.h>
+#include <tau/mono_image.h>
 
 #include "iris/error.h"
 #include "iris/gaussian_settings.h"
@@ -471,7 +471,7 @@ template<typename Value, size_t order, typename S = double>
 class Gaussian
 {
 public:
-    using Result = draw::MonoImage<Value>;
+    using Result = tau::MonoImage<Value>;
     using Matrix = Result;
     using Kernel = GaussianKernel<Value, S, order>;
 

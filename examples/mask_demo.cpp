@@ -6,11 +6,10 @@
 #include <wxpex/file_field.h>
 
 #include <draw/pixels.h>
-#include <draw/color_map_settings.h>
+#include <tau/color_map_settings.h>
 #include <draw/views/color_map_settings_view.h>
 
 #include <iris/mask.h>
-#include <draw/color_map_settings.h>
 #include <iris/node.h>
 #include <iris/color_map.h>
 
@@ -39,7 +38,7 @@ template<template<typename> typename T>
 struct DemoTemplate
 {
     T<iris::MaskGroup> mask;
-    T<draw::ColorMapSettingsGroup<InProcess>> color;
+    T<tau::ColorMapSettingsGroup<InProcess>> color;
 
     static constexpr auto fields = DemoFields<DemoTemplate>::fields;
 };

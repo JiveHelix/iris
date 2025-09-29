@@ -8,7 +8,7 @@
 #include <tau/vector2d.h>
 #include <tau/percentile.h>
 #include <draw/point.h>
-#include <draw/mono_image.h>
+#include <tau/mono_image.h>
 #include "iris/vertex_settings.h"
 #include "iris/threadsafe_filter.h"
 
@@ -68,7 +68,7 @@ public:
     }
 
     template<typename T>
-    void AddMatrix(const draw::MonoImage<T> &input)
+    void AddMatrix(const tau::MonoImage<T> &input)
     {
         // Create a vector of all of the non-zero values.
         ValuePoints points;
@@ -164,7 +164,7 @@ public:
         assert(settings.count > 0);
     }
 
-    std::optional<Result> Filter(const draw::MonoImage<double> &input)
+    std::optional<Result> Filter(const tau::MonoImage<double> &input)
     {
         if (!this->isEnabled_)
         {

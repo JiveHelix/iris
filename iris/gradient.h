@@ -10,7 +10,7 @@
 #include <tau/vector2d.h>
 #include <tau/percentile.h>
 #include <tau/color_maps/rgb.h>
-#include <draw/mono_image.h>
+#include <tau/mono_image.h>
 #include <draw/pixels.h>
 
 #include "iris/error.h"
@@ -50,8 +50,8 @@ template<typename Value>
 struct GradientResult
 {
     Value maximum;
-    draw::MonoImage<Value> dx;
-    draw::MonoImage<Value> dy;
+    tau::MonoImage<Value> dx;
+    tau::MonoImage<Value> dy;
 
     template<typename Float>
     static Eigen::MatrixX<Float> Magnitude(
@@ -132,7 +132,7 @@ public:
     using RowVector = typename Differentiate_::RowVector;
     using ColumnVector = typename Differentiate_::ColumnVector;
     using Result = GradientResult<Value>;
-    using Matrix = draw::MonoImage<Value>;
+    using Matrix = tau::MonoImage<Value>;
 
     AsyncGradientResult(
         const Differentiate<Value> &differentiate,
@@ -170,7 +170,7 @@ public:
     static constexpr size_t defaultThreads =
         GradientSettings<Value>::defaultThreads;
 
-    using Matrix = draw::MonoImage<Value>;
+    using Matrix = tau::MonoImage<Value>;
     using Result = GradientResult<Value>;
 
     Gradient() = default;

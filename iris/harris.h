@@ -5,7 +5,7 @@
 #include <tau/eigen.h>
 #include <tau/vector2d.h>
 #include <draw/pixels.h>
-#include <draw/mono_image.h>
+#include <tau/mono_image.h>
 
 #include "iris/gradient.h"
 #include "iris/gaussian.h"
@@ -21,7 +21,7 @@ template<typename Float>
 class Harris
 {
 public:
-    using Result = draw::MonoImage<Float>;
+    using Result = tau::MonoImage<Float>;
 
     Harris() = default;
 

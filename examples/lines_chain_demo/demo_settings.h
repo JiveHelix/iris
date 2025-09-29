@@ -5,7 +5,7 @@
 #include <iris/mask_settings.h>
 #include <iris/level_settings.h>
 #include <iris/lines_chain_settings.h>
-#include <draw/color_map_settings.h>
+#include <tau/color_map_settings.h>
 
 #include "../common/png_settings.h"
 
@@ -31,7 +31,7 @@ struct DemoTemplate
     T<iris::MaskGroup> mask;
     T<iris::LevelGroup<int32_t>> level;
     T<iris::LinesChainGroup> lines;
-    T<draw::ColorMapSettingsGroup<int32_t>> color;
+    T<tau::ColorMapSettingsGroup<int32_t>> color;
 
     static constexpr auto fields = DemoFields<DemoTemplate>::fields;
 };

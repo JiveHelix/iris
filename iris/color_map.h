@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <draw/color_map.h>
+#include <tau/color_map.h>
 #include "iris/threadsafe_filter.h"
 
 
@@ -13,15 +13,15 @@ template<typename Value>
 using ThreadsafeColorMap =
     ThreadsafeFilter
     <
-        draw::ColorMapSettingsGroup<Value>,
-        draw::ColorMap<Value>
+        tau::ColorMapSettingsGroup<Value>,
+        tau::ColorMap<Value>
     >;
 
 
 extern template class ThreadsafeFilter
 <
-    draw::ColorMapSettingsGroup<int32_t>,
-    draw::ColorMap<int32_t>
+    tau::ColorMapSettingsGroup<int32_t>,
+    tau::ColorMap<int32_t>
 >;
 
 

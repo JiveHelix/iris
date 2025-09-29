@@ -7,8 +7,8 @@ namespace iris
 
 template class ThreadsafeFilter
 <
-    draw::ColorMapSettingsGroup<int32_t>,
-    draw::ColorMap<int32_t>
+    tau::ColorMapSettingsGroup<int32_t>,
+    tau::ColorMap<int32_t>
 >;
 
 

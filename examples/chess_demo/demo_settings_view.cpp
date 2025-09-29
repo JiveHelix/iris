@@ -1,7 +1,7 @@
 #include "demo_settings_view.h"
 
 #include <wxpex/layout_items.h>
-#include <draw/color_map_settings.h>
+#include <tau/color_map_settings.h>
 #include <draw/views/color_map_settings_view.h>
 #include <iris/views/chess_chain_settings_view.h>
 #include <iris/views/chess_shape_view.h>

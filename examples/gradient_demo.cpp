@@ -4,7 +4,7 @@
 #include <wxpex/layout_items.h>
 
 #include <draw/pixels.h>
-#include <draw/color_map_settings.h>
+#include <tau/color_map_settings.h>
 #include <draw/views/color_map_settings_view.h>
 
 #include <iris/gaussian_settings.h>
@@ -40,7 +40,7 @@ struct DemoTemplate
 {
     T<iris::GaussianGroup<InProcess>> gaussian;
     T<iris::GradientGroup<InProcess>> gradient;
-    T<draw::ColorMapSettingsGroup<InProcess>> color;
+    T<tau::ColorMapSettingsGroup<InProcess>> color;
 };
 
 
@@ -113,7 +113,7 @@ class DemoBrain: public Brain<DemoBrain>
 public:
     using Gaussian = iris::Gaussian<InProcess, 0>;
     using Gradient = iris::Gradient<InProcess>;
-    using Color = draw::ColorMap<InProcess>;
+    using Color = tau::ColorMap<InProcess>;
 
     DemoBrain()
         :

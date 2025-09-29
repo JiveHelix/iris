@@ -17,11 +17,11 @@ class IrisConan(ConanFile):
         self.test_requires("catch2/2.13.8")
 
     def requirements(self):
-        self.requires("jive/[~1.4]")
-        self.requires("fields/[~1.5]")
-        self.requires("tau/[~1.12]")
-        self.requires("pex/[~1.1]")
-        self.requires("wxpex/[~1.0]")
+        self.requires("jive/[>=1.4 <2]")
+        self.requires("fields/[>=1.5 <2]")
+        self.requires("tau/[>=1.13 <2]")
+        self.requires("pex/[>=1.1 <2]")
+        self.requires("wxpex/[>=1.0 <2]")
         self.requires("draw/[~0.3]")
         self.requires("fmt/[~10]")
         self.requires("nlohmann_json/[~3]")

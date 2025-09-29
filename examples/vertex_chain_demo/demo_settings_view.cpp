@@ -1,6 +1,6 @@
 #include "demo_settings_view.h"
 
-#include <draw/color_map_settings.h>
+#include <tau/color_map_settings.h>
 #include <draw/views/color_map_settings_view.h>
 #include <iris/views/level_settings_view.h>
 #include <iris/views/mask_settings_view.h>
