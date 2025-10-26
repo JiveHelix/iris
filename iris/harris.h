@@ -32,6 +32,7 @@ public:
             GaussianKernel<Float, Float, 0>(
                 settings.sigma,
                 static_cast<Float>(0.01),
+                Partials::both,
                 settings.threads).Normalize())
     {
 

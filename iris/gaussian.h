@@ -213,12 +213,28 @@ template
 Derived ThreadedKernelConvolve(
     const Kernel &kernel,
     const Eigen::MatrixBase<Derived> &data,
+    Partials partials,
     size_t threadCount)
 {
     using Eigen::Index;
 
-    auto rowResult = ThreadedRowGaussian(kernel, data, threadCount).Get();
-    return ThreadedColumnGaussian(kernel, rowResult, threadCount).Get();
+    if (partials == Partials::both)
+    {
+        auto rowResult = ThreadedRowGaussian(kernel, data, threadCount).Get();
+        return ThreadedColumnGaussian(kernel, rowResult, threadCount).Get();
+    }
+    else if (partials == Partials::rows)
+    {
+        return ThreadedRowGaussian(kernel, data, threadCount).Get();
+    }
+    else if (partials == Partials::columns)
+    {
+        return ThreadedColumnGaussian(kernel, data, threadCount).Get();
+    }
+    else
+    {
+        return data;
+    }
 }
 
 
@@ -230,11 +246,12 @@ template
 Derived KernelConvolve(
     const Kernel &kernel,
     const Eigen::MatrixBase<Derived> &data,
+    Partials partials,
     size_t threadCount = 1)
 {
     if (threadCount > 1)
     {
-        return ThreadedKernelConvolve(kernel, data, threadCount);
+        return ThreadedKernelConvolve(kernel, data, partials, threadCount);
     }
 
     using Eigen::Index;
@@ -245,21 +262,50 @@ Derived KernelConvolve(
     static constexpr bool isIntegral =
         std::is_integral_v<typename Kernel::Type>;
 
-    Derived partial = tau::DoConvolve2d(data, kernel.rowKernel);
-
-    if constexpr (isIntegral)
+    if (partials == Partials::both)
     {
-        partial.array() /= kernel.sum;
+        Derived partial = tau::DoConvolve2d(data, kernel.rowKernel);
+
+        if constexpr (isIntegral)
+        {
+            partial.array() /= kernel.sum;
+        }
+
+        Derived result = tau::DoConvolve2d(partial, kernel.columnKernel);
+
+        if constexpr (isIntegral)
+        {
+            result.array() /= kernel.sum;
+        }
+
+        return result;
     }
-
-    Derived result = tau::DoConvolve2d(partial, kernel.columnKernel);
-
-    if constexpr (isIntegral)
+    else if (partials == Partials::rows)
     {
-        result.array() /= kernel.sum;
-    }
+        Derived result = tau::DoConvolve2d(data, kernel.rowKernel);
 
-    return result;
+        if constexpr (isIntegral)
+        {
+            result.array() /= kernel.sum;
+        }
+
+        return result;
+    }
+    else if (partials == Partials::columns)
+    {
+        Derived result = tau::DoConvolve2d(data, kernel.columnKernel);
+
+        if constexpr (isIntegral)
+        {
+            result.array() /= kernel.sum;
+        }
+
+        return result;
+    }
+    else
+    {
+        return data;
+    }
 }
 
 
@@ -299,10 +345,11 @@ struct GaussianKernel
             static_cast<S>(-2.0) * sigma * sigma * std::log(scale * edgeValue));
     }
 
-    GaussianKernel(S sigma_, S threshold_, size_t threads_)
+    GaussianKernel(S sigma_, S threshold_, Partials partials_, size_t threads_)
         :
         sigma(sigma_),
         threshold(threshold_),
+        partials(partials_),
         threads(threads_),
         size(
             static_cast<size_t>(
@@ -321,7 +368,11 @@ struct GaussianKernel
 
     GaussianKernel(const GaussianSettings<T> &settings)
         :
-        GaussianKernel(settings.sigma, settings.threshold, settings.threads)
+        GaussianKernel(
+            settings.sigma,
+            settings.threshold,
+            settings.partials,
+            settings.threads)
     {
 
     }
@@ -349,11 +400,12 @@ struct GaussianKernel
     template<typename Derived>
     Derived Filter(const Eigen::MatrixBase<Derived> &data) const
     {
-        return KernelConvolve(*this, data, threads);
+        return KernelConvolve(*this, data, this->partials, threads);
     }
 
     S sigma;
     S threshold;
+    Partials partials;
     size_t threads;
     size_t size;
     RowVector rowKernel;
@@ -376,17 +428,28 @@ struct GaussianKernel<T, S, order, std::enable_if_t<std::is_integral_v<T>>>
 
     GaussianKernel() = default;
 
-    GaussianKernel(S sigma_, T maximum, S threshold_, size_t threads_)
+    GaussianKernel(
+        S sigma_,
+        T maximum,
+        S threshold_,
+        Partials partials_,
+        size_t threads_)
         :
         sigma(sigma_),
         threshold(threshold_),
+        partials(partials_),
         threads(threads_),
         size()
     {
         using Eigen::Index;
 
         // Use a floating-point kernel to design our integral kernel.
-        GaussianKernel<S, S, order> designKernel(sigma_, threshold_, threads_);
+        GaussianKernel<S, S, order> designKernel(
+            sigma_,
+            threshold_,
+            partials_,
+            threads_);
+
         auto normalized = designKernel.Normalize();
 
         // A normalized floating-point kernel sums to 1.
@@ -439,6 +502,7 @@ struct GaussianKernel<T, S, order, std::enable_if_t<std::is_integral_v<T>>>
             settings.sigma,
             settings.maximum,
             settings.threshold,
+            settings.partials,
             settings.threads)
     {
 
@@ -452,11 +516,12 @@ struct GaussianKernel<T, S, order, std::enable_if_t<std::is_integral_v<T>>>
     template<typename Derived>
     Derived Filter(const Eigen::MatrixBase<Derived> &data) const
     {
-        return KernelConvolve(*this, data, threads);
+        return KernelConvolve(*this, data, partials, threads);
     }
 
     S sigma;
     S threshold;
+    Partials partials;
     size_t threads;
     size_t size;
     RowVector rowKernel;

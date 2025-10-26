@@ -52,6 +52,13 @@ public:
             "threshold",
             new wxpex::Field(panel, controls.threshold));
 
+        auto partials = wxpex::LabeledWidget(
+            panel,
+            "partials",
+            wxpex::MakeComboBox<iris::PartialsConverter>(
+                panel,
+                controls.partials));
+
         auto threads = wxpex::LabeledWidget(
             panel,
             "Threads",
@@ -62,6 +69,7 @@ public:
             enable,
             sigma,
             threshold,
+            partials,
             threads);
 
         this->ConfigureSizer(std::move(sizer));

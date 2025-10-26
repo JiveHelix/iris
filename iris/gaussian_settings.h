@@ -12,6 +12,47 @@ namespace iris
 {
 
 
+enum class Partials: uint8_t
+{
+    none = 0x0,
+    rows = 0x1,
+    columns = 0x2,
+    both = 0x3
+};
+
+std::string ToString(Partials);
+
+Partials ToValue(fields::Tag<Partials>, std::string_view asString);
+
+
+struct PartialsConverter
+{
+    static std::string ToString(Partials);
+
+    static Partials ToValue(const std::string &asString);
+};
+
+
+struct PartialsChoices
+{
+    using Type = Partials;
+    static std::vector<Partials> GetChoices();
+    using Converter = PartialsConverter;
+};
+
+
+std::ostream & operator<<(std::ostream &, Partials);
+
+
+
+
+
+
+
+
+
+
+
 template<typename T>
 struct GaussianFields
 {
@@ -19,6 +60,7 @@ struct GaussianFields
         fields::Field(&T::enable, "enable"),
         fields::Field(&T::sigma, "sigma"),
         fields::Field(&T::threshold, "threshold"),
+        fields::Field(&T::partials, "partials"),
         fields::Field(&T::threads, "threads"),
         fields::Field(&T::maximum, "maximum"));
 
@@ -40,6 +82,7 @@ struct GaussianTemplate
         T<bool> enable;
         T<pex::MakeRange<double, SigmaLow, SigmaHigh>> sigma;
         T<double> threshold;
+        T<pex::MakeSelect<PartialsChoices>> partials;
         T<size_t> threads;
         T<Value> maximum;
 
@@ -58,6 +101,7 @@ struct GaussianSettings:
 
     static constexpr double defaultSigma = 1.0;
     static constexpr double defaultThreshold = 0.01;
+    static constexpr Partials defaultPartials = Partials::both;
     static constexpr size_t defaultThreads = 4;
 
     GaussianSettings()
@@ -66,6 +110,7 @@ struct GaussianSettings:
             true,
             defaultSigma,
             defaultThreshold,
+            defaultPartials,
             defaultThreads,
             defaultMaximum}
     {
