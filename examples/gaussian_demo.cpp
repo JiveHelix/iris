@@ -1,8 +1,10 @@
 #include <iostream>
 #include <future>
 #include <wxpex/app.h>
+#include <wxpex/wxshim_app.h>
 #include <wxpex/file_field.h>
 #include <draw/pixels.h>
+#include <iris/node.h>
 #include <iris/gaussian_settings.h>
 #include <iris/views/gaussian_settings_view.h>
 #include <iris/gaussian.h>
@@ -10,6 +12,7 @@
 #include "common/about_window.h"
 #include "common/observer.h"
 #include "common/brain.h"
+#include "common/display_thread.h"
 
 
 class DemoControls: public wxPanel
@@ -18,7 +21,7 @@ public:
     DemoControls(
         wxWindow *parent,
         UserControl userControl,
-        iris::GaussianControl<Pixel> gaussianControl)
+        iris::GaussianControl<iris::InProcess> gaussianControl)
         :
         wxPanel(parent, wxID_ANY)
     {
@@ -34,10 +37,11 @@ public:
             userControl.fileName,
             options);
 
-        auto settings = new iris::GaussianSettingsView<Pixel>(
+        auto settings = new iris::GaussianSettingsView<iris::InProcess>(
             this,
             "Gaussian Blur",
             gaussianControl,
+            nullptr,
             layoutOptions);
 
         settings->Expand();
@@ -56,21 +60,43 @@ public:
 class DemoBrain: public Brain<DemoBrain>
 {
 public:
+    using Png = draw::Png<PngPixel>;
+    using Rgb = draw::PlanarRgb<iris::InProcess>;
+    using Gaussian = iris::Gaussian<iris::InProcess, 0>;
 
-    using Matrix = typename draw::PlanarRgb<Pixel>::Matrix;
-    using Gaussian = iris::Gaussian<Matrix, 0>;
 
     DemoBrain()
         :
+        mutex_(),
+        sourceMutex_(),
         observer_(this, UserControl(this->user_)),
         gaussianModel_(),
-        gaussianTerminus_(
+        gaussianEndpoint_(
             this,
-            iris::GaussianControl<Pixel>(this->gaussianModel_),
-            DemoBrain::OnSettings_),
-        gaussian_(this->gaussianModel_.Get())
+            iris::GaussianControl<iris::InProcess>(this->gaussianModel_),
+            &DemoBrain::OnSettings_),
+        png_{},
+        cancel_(),
+        source_(),
+        gaussian_(this->gaussianModel_.Get()),
+
+        displayThread_(
+            this->userControl_.pixelView.asyncPixels,
+            iris::CancelControl(this->cancel_),
+            std::bind(&DemoBrain::Process, this))
     {
 
+    }
+
+    void Display()
+    {
+        this->displayThread_.Display();
+    }
+
+    void Shutdown()
+    {
+        this->displayThread_.Shutdown();
+        this->Brain<DemoBrain>::Shutdown();
     }
 
     std::string GetAppName() const
@@ -83,7 +109,7 @@ public:
         return new DemoControls(
             parent,
             this->GetUserControls(),
-            iris::GaussianControl<Pixel>(this->gaussianModel_));
+            iris::GaussianControl<iris::InProcess>(this->gaussianModel_));
     }
 
     void SaveSettings() const
@@ -101,87 +127,124 @@ public:
         wxAboutBox(MakeAboutDialogInfo("Gaussian Demo"));
     }
 
+    void LoadPng(const draw::Png<PngPixel> &png)
+    {
+        auto pngSize = png.GetSize();
+        this->user_.pixelView.canvas.viewSettings.imageSize.Set(pngSize);
+
+        std::lock_guard lock(this->sourceMutex_);
+        this->png_ = png;
+        this->source_.SetData(png.GetRgb().template Cast<iris::InProcess>());
+    }
+
     static std::shared_ptr<draw::Pixels>
-    MakePixels(const draw::PlanarRgb<Pixel> &planarRgb)
+    MakePixels(
+        const tau::Margins &margins,
+        const draw::PlanarRgb<iris::InProcess> &planarRgb)
     {
-        draw::PlanarRgb<uint8_t> result = planarRgb.template Cast<uint8_t>();
-        auto size = result.GetSize();
+        auto constrained = planarRgb.RemoveMargin(margins);
+        constrained.Constrain(0, 255);
+        draw::PlanarRgb<uint8_t> result = constrained.template Cast<uint8_t>();
 
-        return std::make_shared<draw::Pixels>(
-            result.GetInterleaved(),
-            size.height,
-            size.width);
+        return draw::Pixels::CreateShared(result);
     }
 
-    std::shared_ptr<draw::Pixels> Process() const
+    std::shared_ptr<draw::Pixels> Process()
     {
-        draw::PlanarRgb<Pixel> processed;
-        const auto png = this->png_.GetRgbPixels();
-        using Matrix = typename draw::PlanarRgb<Pixel>::Matrix;
+        bool enabled;
+        Rgb sourcePixels;
+        Gaussian gaussian;
+        tau::Margins margins;
 
-        auto red = std::async(
-            std::launch::async,
-            &Gaussian::FilterExtend<Matrix>,
-            &this->gaussian_,
-            tau::GetRed(png));
-
-        auto green = std::async(
-            std::launch::async,
-            &Gaussian::FilterExtend<Matrix>,
-            &this->gaussian_,
-            tau::GetGreen(png));
-
-        auto blue = std::async(
-            std::launch::async,
-            &Gaussian::FilterExtend<Matrix>,
-            &this->gaussian_,
-            tau::GetBlue(png));
-
-        tau::GetRed(processed) = red.get();
-        tau::GetGreen(processed) = green.get();
-        tau::GetBlue(processed) = blue.get();
-
-        return MakePixels(processed);
-    }
-
-    void Display()
-    {
-        if (!this->png_)
         {
-            return;
+            std::lock_guard lock(this->sourceMutex_);
+
+            if (!this->png_)
+            {
+                return {};
+            }
         }
 
-        std::lock_guard lock(this->mutex_);
-
-        if (this->gaussianModel_.enable)
         {
-            this->user_.pixelView.pixels.Set(this->Process());
+            std::lock_guard lock(this->mutex_);
+
+            enabled = this->gaussianModel_.enable.Get();
+            gaussian = this->gaussian_;
+        }
+
+        {
+            std::lock_guard lock(this->sourceMutex_);
+            auto minimumMargins = tau::Margins::Create(gaussian.GetSize() / 2);
+            margins = this->source_.GetMargins();
+
+            std::cout << "margins: " << fields::Describe(margins) << std::endl;
+            std::cout << "minimumMargins: " << fields::Describe(minimumMargins)
+                << std::endl;
+
+            if (!margins.Contains(minimumMargins))
+            {
+                // Our existing margins do not contain the new requirement.
+                // Create new margins.
+                std::cout << "!margins.Contains(minimumMargins)" << std::endl;
+                this->source_.SetMargins(minimumMargins);
+                margins = minimumMargins;
+            }
+            else
+            {
+                std::cout << "margins.Contains(minimumMargins)" << std::endl;
+            }
+
+            sourcePixels = *this->source_.GetResult();
+        }
+
+        Rgb processed(sourcePixels.GetSize());
+
+        if (enabled)
+        {
+            gaussian.Filter(
+                tau::GetRed(sourcePixels),
+                tau::GetRed(processed));
+
+            gaussian.Filter(
+                tau::GetGreen(sourcePixels),
+                tau::GetGreen(processed));
+
+            gaussian.Filter(
+                tau::GetBlue(sourcePixels),
+                tau::GetBlue(processed));
         }
         else
         {
-            this->user_.pixelView.pixels.Set(
-                MakePixels(this->png_.GetRgbPixels()));
+            processed = sourcePixels;
         }
+
+        return this->MakePixels(margins, processed);
     }
 
 private:
-    void OnSettings_(const iris::GaussianSettings<Pixel> &settings)
+    void OnSettings_(const iris::GaussianSettings<iris::InProcess> &settings)
     {
         {
             std::lock_guard lock(this->mutex_);
-            this->gaussian_ = iris::Gaussian<Pixel, 0>(settings);
+            this->gaussian_ = iris::Gaussian<iris::InProcess, 0>(settings);
         }
 
         this->Display();
     }
 
 private:
+    mutable std::mutex mutex_;
+    mutable std::mutex sourceMutex_;
     Observer<DemoBrain> observer_;
-    iris::GaussianModel<Pixel> gaussianModel_;
-    pex::Endpoint<DemoBrain, iris::GaussianControl<Pixel>> gaussianEndpoint_;
+    iris::GaussianModel<iris::InProcess> gaussianModel_;
+    pex::Endpoint<DemoBrain, iris::GaussianControl<iris::InProcess>> gaussianEndpoint_;
+    iris::Cancel cancel_;
+    std::optional<Png> png_;
+    iris::Source<Rgb> source_;
     Gaussian gaussian_;
+    DisplayThread displayThread_;
 };
 
 
 // Creates the main function for us, and initializes the app's run loop.
-wxshimIMPLEMENT_APP_CONSOLE(wxpex::App<DemoBrain>)
+wxshimAPP(wxpex::App<DemoBrain>)

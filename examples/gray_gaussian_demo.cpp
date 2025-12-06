@@ -1,3 +1,4 @@
+// #define TAU_CONVOLVE_TRANSPOSE_MAJOR
 #include <iostream>
 #include <wxpex/app.h>
 #include <wxpex/wxshim_app.h>
@@ -10,14 +11,11 @@
 
 #include <iris/node.h>
 #include <iris/gaussian_settings.h>
-#include <iris/gradient_settings.h>
 
 #include <iris/gaussian.h>
-#include <iris/gradient.h>
 #include <iris/color_map.h>
 
 #include <iris/views/gaussian_settings_view.h>
-#include <iris/views/gradient_settings_view.h>
 
 #include "common/observer.h"
 #include "common/gray_png_brain.h"
@@ -25,12 +23,12 @@
 #include "common/timer.h"
 
 
+
 template<typename T>
 struct DemoFields
 {
     static constexpr auto fields = std::make_tuple(
         fields::Field(&T::gaussian, "gaussian"),
-        fields::Field(&T::gradient, "gradient"),
         fields::Field(&T::color, "color"));
 };
 
@@ -39,7 +37,6 @@ template<template<typename> typename T>
 struct DemoTemplate
 {
     T<iris::GaussianGroup<iris::InProcess>> gaussian;
-    T<iris::GradientGroup<iris::InProcess>> gradient;
     T<tau::ColorMapSettingsGroup<iris::InProcess>> color;
 };
 
@@ -81,14 +78,6 @@ public:
 
         gaussian->Expand();
 
-        auto gradient = new iris::GradientSettingsView<iris::InProcess>(
-            this,
-            control.gradient,
-            nullptr,
-            layoutOptions);
-
-        gradient->Expand();
-
         auto color = new draw::ColorMapSettingsView<iris::InProcess>(
             this,
             control.color,
@@ -101,7 +90,6 @@ public:
             wxpex::verticalItems,
             fileSelector,
             gaussian,
-            gradient,
             color);
 
         auto topSizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
@@ -115,7 +103,6 @@ class DemoBrain: public GrayPngBrain<DemoBrain>
 {
 public:
     using Gaussian = iris::Gaussian<iris::InProcess, 0>;
-    using Gradient = iris::Gradient<iris::InProcess>;
     using Color = tau::ColorMap<iris::InProcess>;
 
     DemoBrain()
@@ -123,12 +110,13 @@ public:
         GrayPngBrain<DemoBrain>(),
         observer_(this, UserControl(this->user_)),
         demoModel_(),
+
         demoEndpoint_(
             this,
             this->demoModel_,
             &DemoBrain::OnSettings_),
+
         gaussian_(this->demoModel_.gaussian.Get()),
-        gradient_(this->demoModel_.gradient.Get()),
         color_(this->demoModel_.color.Get()),
 
         displayThread_(
@@ -138,8 +126,6 @@ public:
     {
         auto defer = pex::MakeDefer(this->demoModel_);
         this->demoModel_.color.maximum.Set(pngMaximum);
-        defer.gradient.maximum.Set(pngMaximum);
-        defer.gradient.enable = false;
         defer.color.range.high.Set(pngMaximum);
         this->color_ = Color(this->demoModel_.color.Get());
     }
@@ -153,17 +139,6 @@ public:
     {
         this->displayThread_.Shutdown();
         this->GrayPngBrain<DemoBrain>::Shutdown();
-    }
-
-    void LoadGrayPng(const draw::GrayPng<PngPixel> &png)
-    {
-        auto pngSize = png.GetSize();
-        std::cout << "LoadGrayPng pngSize: " << pngSize << std::endl;
-        this->user_.pixelView.canvas.viewSettings.imageSize.Set(pngSize);
-
-        std::lock_guard lock(this->sourceMutex_);
-        this->png_ = png;
-        this->source_.SetData(png.GetValues().template cast<iris::InProcess>());
     }
 
     std::string GetAppName() const
@@ -181,11 +156,9 @@ public:
 
     std::shared_ptr<draw::Pixels> Process()
     {
-        bool gaussianEnabled;
-        bool gradientEnabled;
+        bool enabled;
         tau::MonoImage<iris::InProcess> sourcePixels;
         Gaussian gaussian;
-        Gradient gradient;
         Color color;
         tau::Margins margins;
 
@@ -200,24 +173,15 @@ public:
 
         {
             std::lock_guard lock(this->mutex_);
-
-            gaussianEnabled = this->demoModel_.gaussian.enable.Get();
-            gradientEnabled = this->demoModel_.gradient.enable.Get();
+            enabled = this->demoModel_.gaussian.enable.Get();
             gaussian = this->gaussian_;
-            gradient = this->gradient_;
             color = this->color_;
 
         }
 
         {
             std::lock_guard lock(this->sourceMutex_);
-
-            auto minimumMargins =
-                tau::Margins::Create(
-                    std::max(
-                        gaussian.GetSize(),
-                        gradient.GetSize()) / 2);
-
+            auto minimumMargins = tau::Margins::Create(gaussian.GetSize() / 2);
             margins = this->source_.GetMargins();
 
             if (!margins.Contains(minimumMargins))
@@ -235,21 +199,13 @@ public:
             sourcePixels.rows(),
             sourcePixels.cols());
 
-        if (gaussianEnabled)
+        if (enabled)
         {
             gaussian.Filter(sourcePixels, processed);
         }
         else
         {
             processed = sourcePixels;
-        }
-
-        if (gradientEnabled)
-        {
-            typename Gradient::Result gradientResult{};
-            gradient.Filter(processed, gradientResult);
-
-            return gradientResult.Colorize(margins);
         }
 
         return color.Filter(margins.RemoveMargin(processed));
@@ -266,7 +222,6 @@ private:
             lockTimer.Report();
 
             this->gaussian_ = Gaussian(settings.gaussian);
-            this->gradient_ = Gradient(settings.gradient);
             this->color_ = Color(settings.color);
         }
 
@@ -276,13 +231,11 @@ private:
         this->displayThread_.Display();
     }
 
-
 private:
     Observer<DemoBrain> observer_;
     DemoModel demoModel_;
     pex::Endpoint<DemoBrain, DemoControl> demoEndpoint_;
     Gaussian gaussian_;
-    Gradient gradient_;
     Color color_;
     DisplayThread displayThread_;
 };

@@ -17,7 +17,8 @@ target_sources(
     PRIVATE
     about_window.cpp
     user.cpp
-    display_error.cpp)
+    display_error.cpp
+    display_thread.cpp)
 
 
 add_version_header(common)

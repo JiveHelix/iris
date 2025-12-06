@@ -4,6 +4,7 @@
 #include <thread>
 #include <chrono>
 #include <wxpex/app.h>
+#include <wxpex/wxshim_app.h>
 
 #include <draw/pixels.h>
 #include <draw/png.h>
@@ -40,13 +41,6 @@ using HoughUserGroup = pex::Group<HoughUserFields, HoughUserTemplate>;
 
 using HoughUserControl = typename HoughUserGroup::DefaultControl;
 using HoughUserModel = typename HoughUserGroup::Model;
-
-
-enum class DisplayState
-{
-    waiting,
-    processing
-};
 
 
 class DemoBrain: public Brain<DemoBrain>
@@ -100,7 +94,7 @@ public:
         return "Lines Demo";
     }
 
-    void LoadPng(const draw::GrayPng<PngPixel> &png)
+    void LoadGrayPng(const draw::GrayPng<PngPixel> &png)
     {
         // Prevent drawing until new dimensions and source data are
         // synchronized.
@@ -153,8 +147,7 @@ public:
     std::shared_ptr<draw::Pixels> MakePixels(
         const iris::ProcessMatrix &value) const
     {
-        return std::make_shared<draw::Pixels>(
-            this->filters_.color.Filter(value));
+        return this->filters_.color.Filter(value);
     }
 
     std::shared_ptr<draw::Pixels> Process()
@@ -339,4 +332,4 @@ private:
 
 
 // Creates the main function for us, and initializes the app's run loop.
-wxshimIMPLEMENT_APP_CONSOLE(wxpex::App<DemoBrain>)
+wxshimAPP(wxpex::App<DemoBrain>)

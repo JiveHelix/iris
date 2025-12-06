@@ -3,6 +3,7 @@
 #include <condition_variable>
 #include <thread>
 #include <wxpex/app.h>
+#include <wxpex/wxshim_app.h>
 #include <wxpex/file_field.h>
 
 #include <draw/pixels.h>
@@ -31,14 +32,11 @@ struct DemoFields
 };
 
 
-using InProcess = int32_t;
-
-
 template<template<typename> typename T>
 struct DemoTemplate
 {
     T<iris::MaskGroup> mask;
-    T<tau::ColorMapSettingsGroup<InProcess>> color;
+    T<tau::ColorMapSettingsGroup<iris::InProcess>> color;
 
     static constexpr auto fields = DemoFields<DemoTemplate>::fields;
 };
@@ -85,7 +83,7 @@ public:
 
         mask->Expand();
 
-        auto color = new draw::ColorMapSettingsView<InProcess>(
+        auto color = new draw::ColorMapSettingsView<iris::InProcess>(
             this,
             control.color,
             {},
@@ -104,8 +102,8 @@ public:
 struct Filters
 {
     using SourceNode = iris::Source<iris::ProcessMatrix>;
-    using Mask = iris::Mask<InProcess>;
-    using Color = iris::ThreadsafeColorMap<InProcess>;
+    using Mask = iris::Mask<iris::InProcess>;
+    using Color = iris::ThreadsafeColorMap<iris::InProcess>;
 
     using MaskNode = iris::Node<SourceNode, Mask, iris::MaskControl>;
 
@@ -128,13 +126,6 @@ struct Filters
     {
 
     }
-};
-
-
-enum class DisplayState
-{
-    waiting,
-    processing
 };
 
 
@@ -167,8 +158,8 @@ public:
         displayThread_(
             std::bind(&DemoBrain::DisplayLoop_, this))
     {
-        this->demoModel_.color.range.SetMaximumValue(8096);
-        this->demoModel_.color.range.high.Set(8096);
+        this->demoModel_.color.range.maximum.Set(pngMaximum);
+        this->demoModel_.color.range.high.Set(pngMaximum);
     }
 
     std::string GetAppName() const
@@ -176,7 +167,7 @@ public:
         return "Mask Demo";
     }
 
-    void LoadPng(const draw::GrayPng<PngPixel> &png)
+    void LoadGrayPng(const draw::GrayPng<PngPixel> &png)
     {
         int32_t maximum = pngMaximum;
 
@@ -219,8 +210,7 @@ public:
     std::shared_ptr<draw::Pixels>
     MakePixels(const iris::ProcessMatrix &value) const
     {
-        return std::make_shared<draw::Pixels>(
-            this->filters_.color.Filter(value));
+        return this->filters_.color.Filter(value);
     }
 
     std::shared_ptr<draw::Pixels> Process()
@@ -345,4 +335,4 @@ private:
 
 
 // Creates the main function for us, and initializes the app's run loop.
-wxshimIMPLEMENT_APP_CONSOLE(wxpex::App<DemoBrain>)
+wxshimAPP(wxpex::App<DemoBrain>)

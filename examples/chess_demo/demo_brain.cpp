@@ -23,7 +23,7 @@ void DemoBrain::ShowAbout()
 std::shared_ptr<draw::Pixels>
 DemoBrain::MakePixels(const iris::ProcessMatrix &value) const
 {
-    return std::make_shared<draw::Pixels>(this->filters_.color.Filter(value));
+    return this->filters_.color.Filter(value);
 }
 
 
@@ -86,7 +86,7 @@ void DemoBrain::Display()
 }
 
 
-void DemoBrain::LoadPng(const draw::GrayPng<PngPixel> &png)
+void DemoBrain::LoadGrayPng(const draw::GrayPng<PngPixel> &png)
 {
     int32_t maximum = pngMaximum;
 

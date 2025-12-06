@@ -7,101 +7,124 @@ elseif (APPLE)
     set(windowed MACOSX_BUNDLE)
 endif ()
 
-# add_executable(gaussian_demo gaussian_demo.cpp)
+add_library(console_app INTERFACE)
+target_compile_definitions(console_app INTERFACE _CONSOLE_APP)
+
+target_link_libraries(
+    console_app
+    INTERFACE
+    project_warnings
+    project_options
+    common)
+
+add_library(windowed_app INTERFACE)
+
+target_link_libraries(
+    windowed_app
+    INTERFACE
+    project_warnings
+    project_options
+    common)
+
+
+add_executable(gaussian_demo gaussian_demo.cpp)
+
+target_link_libraries(
+    gaussian_demo
+    PRIVATE
+    project_warnings
+    project_options
+    iris
+    console_app)
+
+
+add_executable(gradient_demo gradient_demo.cpp)
+
+target_link_libraries(
+    gradient_demo
+    PRIVATE
+    project_warnings
+    project_options
+    iris
+    console_app)
+
+add_executable(gray_gaussian_demo gray_gaussian_demo.cpp)
+
+# target_compile_options(gray_gaussian_demo PRIVATE /O2 /arch:AVX2 /GL)
+# target_link_options(gray_gaussian_demo PRIVATE /LTCG)
+
+target_link_libraries(
+    gray_gaussian_demo
+    PRIVATE
+    project_warnings
+    project_options
+    iris
+    console_app)
+
+
+add_executable(canny_demo canny_demo.cpp)
+
+target_link_libraries(
+    canny_demo
+    PRIVATE
+    project_warnings
+    project_options
+    iris
+    console_app)
+
+
+# add_executable(
+#     lines_chain_demo
+#     lines_chain_demo/lines_chain_demo.cpp
+#     lines_chain_demo/filters.cpp
+#     lines_chain_demo/demo_controls.cpp
+#     lines_chain_demo/demo_settings_view.cpp)
 # 
 # target_link_libraries(
-#     gaussian_demo
+#     lines_chain_demo
 #     PRIVATE
-#     project_warnings
-#     project_options
-#     iris
-#     common)
+#     console_app)
 # 
 # 
-# add_executable(gradient_demo gradient_demo.cpp)
+# add_executable(
+#     chess_demo
+#     chess_demo/chess_demo.cpp
+#     chess_demo/demo_brain.cpp
+#     chess_demo/demo_brain_ctor.cpp
+#     chess_demo/filters.cpp
+#     chess_demo/demo_controls.cpp
+#     chess_demo/demo_settings_view.cpp)
 # 
 # target_link_libraries(
-#     gradient_demo
+#     chess_demo
 #     PRIVATE
-#     project_warnings
-#     project_options
-#     iris
-#     common)
+#     console_app)
 # 
 # 
-# add_executable(canny_demo canny_demo.cpp)
+# add_executable(
+#     vertex_chain_demo
+#     vertex_chain_demo/vertex_chain_demo.cpp
+#     vertex_chain_demo/filters.cpp
+#     vertex_chain_demo/demo_controls.cpp
+#     vertex_chain_demo/demo_settings_view.cpp)
 # 
 # target_link_libraries(
-#     canny_demo
+#     vertex_chain_demo
 #     PRIVATE
-#     project_warnings
-#     project_options
-#     iris
-#     common)
-
-
-add_executable(
-    lines_chain_demo
-    lines_chain_demo/lines_chain_demo.cpp
-    lines_chain_demo/filters.cpp
-    lines_chain_demo/demo_controls.cpp
-    lines_chain_demo/demo_settings_view.cpp)
-
-target_link_libraries(
-    lines_chain_demo
-    PRIVATE
-    project_warnings
-    project_options
-    common)
-
-
-add_executable(
-    chess_demo
-    chess_demo/chess_demo.cpp
-    chess_demo/demo_brain.cpp
-    chess_demo/demo_brain_ctor.cpp
-    chess_demo/filters.cpp
-    chess_demo/demo_controls.cpp
-    chess_demo/demo_settings_view.cpp)
-
-target_link_libraries(
-    chess_demo
-    PRIVATE
-    project_warnings
-    project_options
-    common)
-
-
-add_executable(
-    vertex_chain_demo
-    vertex_chain_demo/vertex_chain_demo.cpp
-    vertex_chain_demo/filters.cpp
-    vertex_chain_demo/demo_controls.cpp
-    vertex_chain_demo/demo_settings_view.cpp)
-
-target_link_libraries(
-    vertex_chain_demo
-    PRIVATE
-    project_warnings
-    project_options
-    common)
-
-
-add_executable(mask_demo mask_demo.cpp)
-
-target_link_libraries(
-    mask_demo
-    PRIVATE
-    project_warnings
-    project_options
-    common)
-
-
-add_executable(level_adjust_demo level_adjust_demo.cpp)
-
-target_link_libraries(
-    level_adjust_demo
-    PRIVATE
-    project_warnings
-    project_options
-    common)
+#     console_app)
+# 
+# 
+# add_executable(mask_demo mask_demo.cpp)
+# 
+# target_link_libraries(
+#     mask_demo
+#     PRIVATE
+#     console_app)
+# 
+# 
+# add_executable(level_adjust_demo level_adjust_demo.cpp)
+# 
+# target_link_libraries(
+#     level_adjust_demo
+#     PRIVATE
+#     console_app)

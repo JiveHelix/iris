@@ -9,8 +9,8 @@
 
 DemoSettingsView::DemoSettingsView(
     wxWindow *parent,
-    DemoControl control,
-    iris::ChessChainNodeSettingsControl nodeSettings)
+    const DemoControl &control,
+    const iris::ChessChainNodeSettingsControl &nodeSettings)
     :
     wxpex::Scrolled(parent)
 {
@@ -20,7 +20,7 @@ DemoSettingsView::DemoSettingsView(
     auto chess = new iris::ChessChainSettingsView(
         this,
         control.chess,
-        nodeSettings,
+        &nodeSettings,
         layoutOptions);
 
     chess->Expand();

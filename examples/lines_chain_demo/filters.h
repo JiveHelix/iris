@@ -22,7 +22,7 @@ public:
     iris::DefaultLinesChain lines;
     Color color;
 
-    Filters(DemoControl controls);
+    Filters(const DemoControl &controls);
 
     Filters(const Filters &) = delete;
 };

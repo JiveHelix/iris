@@ -1,5 +1,6 @@
 #include <iostream>
 #include <wxpex/app.h>
+#include <wxpex/wxshim_app.h>
 #include <wxpex/file_field.h>
 #include <wxpex/layout_items.h>
 
@@ -20,9 +21,9 @@
 #include <iris/views/gradient_settings_view.h>
 #include <iris/views/canny_settings_view.h>
 
-#include "common/about_window.h"
 #include "common/observer.h"
-#include "common/brain.h"
+#include "common/gray_png_brain.h"
+#include "common/display_thread.h"
 
 
 template<typename T>
@@ -36,16 +37,13 @@ struct DemoFields
 };
 
 
-using InProcess = int32_t;
-
-
 template<template<typename> typename T>
 struct DemoTemplate
 {
-    T<iris::GaussianGroup<InProcess>> gaussian;
-    T<iris::GradientGroup<InProcess>> gradient;
+    T<iris::GaussianGroup<iris::InProcess>> gaussian;
+    T<iris::GradientGroup<iris::InProcess>> gradient;
     T<iris::CannyGroup<float>> canny;
-    T<tau::ColorMapSettingsGroup<InProcess>> color;
+    T<tau::ColorMapSettingsGroup<iris::InProcess>> color;
 };
 
 
@@ -65,8 +63,6 @@ public:
         :
         wxPanel(parent, wxID_ANY)
     {
-        auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
-
         wxpex::LayoutOptions layoutOptions{};
         layoutOptions.labelFlags = wxALIGN_RIGHT;
 
@@ -79,17 +75,19 @@ public:
             userControl.fileName,
             options);
 
-        auto gaussian = new iris::GaussianSettingsView<InProcess>(
+        auto gaussian = new iris::GaussianSettingsView<iris::InProcess>(
             this,
             "Gaussian Blur",
             control.gaussian,
+            nullptr,
             layoutOptions);
 
         gaussian->Expand();
 
-        auto gradient = new iris::GradientSettingsView<InProcess>(
+        auto gradient = new iris::GradientSettingsView<iris::InProcess>(
             this,
             control.gradient,
+            nullptr,
             layoutOptions);
 
         gradient->Expand();
@@ -97,13 +95,15 @@ public:
         auto canny = new iris::CannySettingsView<float>(
             this,
             control.canny,
+            nullptr,
             layoutOptions);
 
         canny->Expand();
 
-        auto color = new draw::ColorMapSettingsView<InProcess>(
+        auto color = new draw::ColorMapSettingsView<iris::InProcess>(
             this,
             control.color,
+            nullptr,
             layoutOptions);
 
         auto sizer = wxpex::LayoutItems(
@@ -121,32 +121,51 @@ public:
 };
 
 
-class DemoBrain: public Brain<DemoBrain>
+class DemoBrain: public GrayPngBrain<DemoBrain>
 {
 public:
-    using Gaussian = iris::Gaussian<InProcess, 0>;
-    using Gradient = iris::Gradient<InProcess>;
+    using Gaussian = iris::Gaussian<iris::InProcess, 0>;
+    using Gradient = iris::Gradient<iris::InProcess>;
     using Canny = iris::Canny<float>;
-    using Color = tau::ColorMap<InProcess>;
+    using Color = tau::ColorMap<iris::InProcess>;
 
     DemoBrain()
         :
+        GrayPngBrain<DemoBrain>(),
         observer_(this, UserControl(this->user_)),
         demoModel_(),
+
         demoEndpoint_(
             this,
             DemoControl(this->demoModel_),
             &DemoBrain::OnSettings_),
+
         gaussian_(this->demoModel_.gaussian.Get()),
         gradient_(this->demoModel_.gradient.Get()),
         canny_(this->demoModel_.canny.Get()),
-        color_(this->demoModel_.color.Get())
+        color_(this->demoModel_.color.Get()),
+
+        displayThread_(
+            this->userControl_.pixelView.asyncPixels,
+            iris::CancelControl(this->cancel_),
+            std::bind(&DemoBrain::Process, this))
     {
         this->demoModel_.gradient.enable = false;
-        this->demoModel_.gradient.maximum.Set(8096);
-        this->demoModel_.color.range.SetMaximumValue(8096);
-        this->demoModel_.color.range.high.Set(8096);
+        this->demoModel_.gradient.maximum.Set(pngMaximum);
+        this->demoModel_.color.maximum.Set(pngMaximum);
+        this->demoModel_.color.range.high.Set(pngMaximum);
         this->color_ = Color(this->demoModel_.color.Get());
+    }
+
+    void Display()
+    {
+        this->displayThread_.Display();
+    }
+
+    void Shutdown()
+    {
+        this->displayThread_.Shutdown();
+        this->GrayPngBrain<DemoBrain>::Shutdown();
     }
 
     std::string GetAppName() const
@@ -162,66 +181,103 @@ public:
             DemoControl(this->demoModel_));
     }
 
-    void SaveSettings() const
-    {
-        std::cout << "TODO: Persist the processing settings." << std::endl;
-    }
-
-    void LoadSettings()
-    {
-        std::cout << "TODO: Restore the processing settings." << std::endl;
-    }
-
-    void ShowAbout()
-    {
-        wxAboutBox(MakeAboutDialogInfo("Canny Demo"));
-    }
-
     std::shared_ptr<draw::Pixels>
     MakePixels(const iris::ProcessMatrix &value) const
     {
-        return std::make_shared<draw::Pixels>(this->color_.Filter(value));
+        return this->color_.Filter(value);
     }
 
-    std::shared_ptr<draw::Pixels> Process() const
+    std::shared_ptr<draw::Pixels> Process()
     {
-        std::lock_guard lock(this->mutex_);
+        bool gaussianEnabled;
+        bool gradientEnabled;
+        bool cannyEnabled;
+        tau::MonoImage<iris::InProcess> sourcePixels;
+        Gaussian gaussian;
+        Gradient gradient;
+        Canny canny;
+        Color color;
+        float scale;
+        tau::Margins margins;
 
-        auto scale =
-            static_cast<float>(this->demoModel_.color.range.high.GetMaximum());
-
-        iris::ProcessMatrix processed =
-            this->png_.GetValue(scale).template cast<InProcess>();
-
-        if (this->demoModel_.gaussian.enable)
         {
-            processed = this->gaussian_.FilterExtend(processed);
+            std::lock_guard lock(this->sourceMutex_);
+
+            if (!this->png_)
+            {
+                return {};
+            }
         }
 
-        if (!this->demoModel_.gradient.enable)
+        {
+            std::lock_guard lock(this->mutex_);
+            gaussianEnabled = this->demoModel_.gaussian.enable.Get();
+            gradientEnabled = this->demoModel_.gradient.enable.Get();
+            cannyEnabled = this->demoModel_.canny.enable.Get();
+            gaussian = this->gaussian_;
+            gradient = this->gradient_;
+            canny = this->canny_;
+            color = this->color_;
+
+            scale = static_cast<float>(
+                this->demoModel_.color.range.high.GetMaximum());
+        }
+
+        {
+            std::lock_guard lock(this->sourceMutex_);
+
+            auto minimumMargins =
+                tau::Margins::Create(
+                    std::max(
+                        gaussian.GetSize(),
+                        gradient.GetSize()) / 2);
+
+            margins = this->source_.GetMargins();
+
+            if (!margins.Contains(minimumMargins))
+            {
+                // Our existing margins do not contain the new requirement.
+                // Create new margins.
+                this->source_.SetMargins(minimumMargins);
+                margins = minimumMargins;
+            }
+
+            sourcePixels = *this->source_.GetResult();
+        }
+
+        std::lock_guard lock(this->mutex_);
+
+        tau::MonoImage<iris::InProcess> processed(
+            sourcePixels.rows(),
+            sourcePixels.cols());
+
+        if (gaussianEnabled)
+        {
+            gaussian.Filter(sourcePixels, processed);
+        }
+        else
+        {
+            processed = sourcePixels;
+        }
+
+        if (!gradientEnabled)
         {
             return this->MakePixels(processed);
         }
 
         // Gradient is enabled.
-        auto gradientResult = this->gradient_.Filter(processed);
+        typename Gradient::Result gradientResult{};
+        gradient.Filter(processed, gradientResult);
 
-        if (!this->demoModel_.canny.enable)
+        if (!cannyEnabled)
         {
-            return std::make_shared<draw::Pixels>(
-                gradientResult.Colorize<uint8_t>());
+            return gradientResult.Colorize(margins);
         }
 
-        return std::make_shared<draw::Pixels>(
-            this->canny_.Filter(gradientResult).Colorize<uint8_t>());
-    }
+        typename Canny::Result cannyResult{};
+        canny.Filter(gradientResult, cannyResult);
 
-    void Display()
-    {
-        if (this->png_)
-        {
-            this->user_.pixelView.pixels.Set(this->Process());
-        }
+        return cannyResult.Colorize(margins);
     }
 
 private:
@@ -235,7 +291,7 @@ private:
             this->color_ = Color(settings.color);
         }
 
-        this->Display();
+        this->displayThread_.Display();
     }
 
 private:
@@ -246,8 +302,9 @@ private:
     Gradient gradient_;
     Canny canny_;
     Color color_;
+    DisplayThread displayThread_;
 };
 
 
 // Creates the main function for us, and initializes the app's run loop.
-wxshimIMPLEMENT_APP_CONSOLE(wxpex::App<DemoBrain>)
+wxshimAPP(wxpex::App<DemoBrain>)

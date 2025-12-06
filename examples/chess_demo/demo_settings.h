@@ -22,9 +22,6 @@ struct DemoFields
 };
 
 
-using InProcess = int32_t;
-
-
 template<template<typename> typename T>
 struct DemoTemplate
 {

@@ -4,6 +4,7 @@
 #include <thread>
 #include <chrono>
 #include <wxpex/app.h>
+#include <wxpex/wxshim_app.h>
 #include <wxpex/file_field.h>
 
 #include <iris/views/mask_brain.h>
@@ -16,13 +17,6 @@
 #include "demo_settings.h"
 #include "demo_controls.h"
 #include "filters.h"
-
-
-enum class DisplayState
-{
-    waiting,
-    processing
-};
 
 
 class DemoBrain: public Brain<DemoBrain>
@@ -61,7 +55,7 @@ public:
         return "Vertex Demo";
     }
 
-    void LoadPng(const draw::GrayPng<PngPixel> &png)
+    void LoadGrayPng(const draw::GrayPng<PngPixel> &png)
     {
         int32_t maximum = pngMaximum;
 
@@ -105,8 +99,7 @@ public:
     std::shared_ptr<draw::Pixels>
     MakePixels(const iris::ProcessMatrix &value) const
     {
-        return std::make_shared<draw::Pixels>(
-            this->filters_.color.Filter(value));
+        return this->filters_.color.Filter(value);
     }
 
     std::shared_ptr<draw::Pixels> Process()
@@ -243,4 +236,4 @@ private:
 
 
 // Creates the main function for us, and initializes the app's run loop.
-wxshimIMPLEMENT_APP_CONSOLE(wxpex::App<DemoBrain>)
+wxshimAPP(wxpex::App<DemoBrain>)

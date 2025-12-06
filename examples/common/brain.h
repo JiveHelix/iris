@@ -5,6 +5,7 @@
 #include <wxpex/splitter.h>
 
 #include <draw/png.h>
+#include <draw/open_png.h>
 #include <draw/views/pixel_view.h>
 #include "user.h"
 #include "display_error.h"
@@ -75,17 +76,11 @@ public:
 
     void OpenFile()
     {
-        // Open PNG file, and read data into Eigen matrix.
-        // Display pixel view.
-        auto png =
-            draw::GrayPng<PngPixel>(this->user_.fileName.Get());
-
-        this->GetDerived()->LoadPng(png);
-
-        this->user_.pixelView.canvas.viewSettings.imageSize.Set(png.GetSize());
-        this->user_.pixelView.canvas.viewSettings.FitZoom();
-
-        this->GetDerived()->Display();
+        draw::OpenPng<PngPixel>(
+            pex::StringControl(this->user_.fileName),
+            draw::ViewSettingsControl(
+                this->user_.pixelView.canvas.viewSettings),
+            *this->GetDerived());
     }
 
     void Shutdown()

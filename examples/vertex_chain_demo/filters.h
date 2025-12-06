@@ -28,7 +28,7 @@ public:
     VertexChain vertexChain;
     Color color;
 
-    Filters(DemoControl controls);
+    Filters(const DemoControl &controls);
 
     Filters(const Filters &) = delete;
 };

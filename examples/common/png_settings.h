@@ -1,6 +1,6 @@
 #pragma once
 
-#define LOAD_PNG_HIGH
+// #define LOAD_PNG_HIGH
 
 #ifdef LOAD_PNG_HIGH
 

@@ -12,6 +12,6 @@ class DemoSettingsView: public wxpex::Scrolled
 public:
     DemoSettingsView(
         wxWindow *parent,
-        DemoControl control,
-        iris::ChessChainNodeSettingsControl nodeSettings);
+        const DemoControl &control,
+        const iris::ChessChainNodeSettingsControl &nodeSettings);
 };

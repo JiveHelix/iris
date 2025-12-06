@@ -22,13 +22,6 @@
 #include "./filters.h"
 
 
-enum class DisplayState
-{
-    waiting,
-    processing
-};
-
-
 class DemoBrain: public Brain<DemoBrain>
 {
 public:
@@ -44,7 +37,7 @@ public:
         return "Chess Demo";
     }
 
-    void LoadPng(const draw::GrayPng<PngPixel> &png);
+    void LoadGrayPng(const draw::GrayPng<PngPixel> &png);
 
     wxWindow * CreateControls(wxWindow *parent);
 

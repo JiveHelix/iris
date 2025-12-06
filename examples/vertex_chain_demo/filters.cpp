@@ -1,7 +1,7 @@
 #include "filters.h"
 
 
-Filters::Filters(DemoControl controls)
+Filters::Filters(const DemoControl &controls)
     :
     cancel(false),
     source(),
