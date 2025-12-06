@@ -1,6 +1,5 @@
 #pragma once
 
-#include <optional>
 #include <tau/eigen.h>
 #include <tau/vector2d.h>
 #include <tau/line2d.h>
@@ -36,7 +35,7 @@ public:
 
     Chess(const ChessSettings &settings);
 
-    std::optional<ChessSolution> Filter(const ChessInput &input);
+    bool Filter(const ChessInput &input, ChessSolution &result);
 
 private:
     ChessSettings settings_;

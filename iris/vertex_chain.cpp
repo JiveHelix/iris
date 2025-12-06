@@ -5,7 +5,7 @@ namespace iris
 {
 
 
-VertexChainResults::VertexChainResults(ssize_t shapesId)
+VertexChainResults::VertexChainResults(int64_t shapesId)
     :
     gaussian{},
     gradient{},
@@ -18,6 +18,7 @@ VertexChainResults::VertexChainResults(ssize_t shapesId)
 
 
 std::shared_ptr<draw::Pixels> VertexChainResults::Display(
+    const tau::Margins &margins,
     draw::AsyncShapesControl shapesControl,
     const draw::PointsShapeSettings &pointsShapeSettings,
     ThreadsafeColorMap<int32_t> &color) const
@@ -29,8 +30,7 @@ std::shared_ptr<draw::Pixels> VertexChainResults::Display(
         return {};
     }
 
-    auto gaussianPixels =
-        std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
+    auto gaussianPixels = color.Filter(*this->gaussian);
 
     if (this->vertex)
     {
@@ -47,13 +47,13 @@ std::shared_ptr<draw::Pixels> VertexChainResults::Display(
 
     if (this->harris)
     {
-        return std::make_shared<draw::Pixels>(iris::ColorizeHarris(*this->harris));
+        return iris::ColorizeHarris(margins, *this->harris);
     }
 
     // Harris didn't return a result.
     if (this->gradient)
     {
-        return std::make_shared<draw::Pixels>(this->gradient->Colorize());
+        return this->gradient->Colorize(margins);
     }
 
     // Gradient has no result.

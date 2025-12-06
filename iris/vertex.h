@@ -164,11 +164,11 @@ public:
         assert(settings.count > 0);
     }
 
-    std::optional<Result> Filter(const tau::MonoImage<double> &input)
+    bool Filter(const tau::MonoImage<double> &input, Result &result)
     {
         if (!this->isEnabled_)
         {
-            return {};
+            return false;
         }
 
         detail::PointGroups pointGroups(
@@ -176,8 +176,9 @@ public:
             this->count_);
 
         pointGroups.AddMatrix(input);
+        result = Result(pointGroups.GetVertices());
 
-        return pointGroups.GetVertices();
+        return true;
     }
 
 private:

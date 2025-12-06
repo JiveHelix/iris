@@ -24,8 +24,8 @@ public:
 
     HoughSettingsView(
         wxWindow *parent,
-        HoughControl<Value> controls,
-        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
+        const HoughControl<Value> &controls,
+        const draw::NodeSettingsControl *nodeSettingsControl = nullptr,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
         draw::CollapsibleNodeSettingsView(

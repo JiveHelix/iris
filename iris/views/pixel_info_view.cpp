@@ -12,7 +12,7 @@ namespace iris
 
 PixelInfo::PixelInfo(
     wxWindow *parent,
-    draw::PointControl pointControl)
+    const draw::PointControl &pointControl)
     :
     wxPanel(parent, wxID_ANY),
     pointControl_(pointControl),
@@ -47,7 +47,7 @@ void PixelInfo::OnPoint_(const draw::Point &point)
 
 PixelInfoView::PixelInfoView(
     wxWindow *parent,
-    draw::CanvasControl control,
+    const draw::CanvasControl &control,
     const std::string &label)
     :
     wxPanel(parent, wxID_ANY),

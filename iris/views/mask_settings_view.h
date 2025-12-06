@@ -19,8 +19,8 @@ public:
 
     MaskSettingsView(
         wxWindow *parent,
-        MaskControl controls,
-        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
+        const MaskControl &controls,
+        const draw::NodeSettingsControl * nodeSettingsControl = nullptr,
         const LayoutOptions &layoutOptions = LayoutOptions{});
 };
 

@@ -6,9 +6,9 @@ namespace iris
 
 
 ChessChainResults::ChessChainResults(
-    ssize_t chessShapesId,
-    ssize_t linesShapesId,
-    ssize_t verticesShapesId)
+    int64_t chessShapesId,
+    int64_t linesShapesId,
+    int64_t verticesShapesId)
     :
     mask{},
     level{},
@@ -41,21 +41,22 @@ void ChessChainResults::ClearShapes_(
 
 
 std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
-    ChessChainNodeSettings nodeSettings,
-    draw::AsyncShapesControl shapesControl,
+    const tau::Margins &margins,
+    const ChessChainNodeSettings &nodeSettings,
+    const draw::AsyncShapesControl &shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
     const draw::PointsShapeSettings &pointsShapeSettings,
     const ChessShapeSettings &chessShapeSettings,
     ThreadsafeColorMap<int32_t> &color,
-    std::optional<HoughControl> houghControl) const
+    HoughPixelsControl *houghControl) const
 {
     this->ClearShapes_(shapesControl);
 
-    auto pixels = this->GetNodePixels_(nodeSettings, color);
+    auto pixels = this->GetNodePixels_(margins, nodeSettings, color);
 
     if (!pixels)
     {
-        pixels = this->GetPreprocessedPixels_(color);
+        pixels = this->GetPreprocessedPixels_(margins, color);
     }
 
     if (nodeSettings.vertices.isSelected && this->vertices)
@@ -97,19 +98,21 @@ std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
 
 
 std::shared_ptr<draw::Pixels> ChessChainResults::Display(
-    draw::AsyncShapesControl shapesControl,
+    const tau::Margins &margins,
+    const draw::AsyncShapesControl &shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
     const draw::PointsShapeSettings &pointsShapeSettings,
     const ChessShapeSettings &chessShapeSettings,
     ThreadsafeColorMap<int32_t> &color,
-    std::optional<HoughControl> houghControl,
-    std::optional<ChessChainNodeSettings> nodeSettings) const
+    HoughPixelsControl *houghControl,
+    ChessChainNodeSettings *nodeSettings) const
 {
     if (nodeSettings)
     {
         if (HasSelectedNode(*nodeSettings))
         {
             return this->DisplayNode(
+                margins,
                 *nodeSettings,
                 shapesControl,
                 linesShapeSettings,
@@ -122,7 +125,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
 
     this->ClearShapes_(shapesControl);
 
-    auto pixels = this->GetPreprocessedPixels_(color);
+    auto pixels = this->GetPreprocessedPixels_(margins, color);
 
     if (!this->level)
     {
@@ -168,48 +171,48 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
 
 
 std::shared_ptr<draw::Pixels> ChessChainResults::GetPreprocessedPixels_(
+    const tau::Margins &margins,
     ThreadsafeColorMap<int32_t> &color) const
 {
     if (this->chess && this->level)
     {
-        return std::make_shared<draw::Pixels>(color.Filter(*this->level));
+        return color.Filter(*this->level);
     }
 
     if (this->canny)
     {
-        return std::make_shared<draw::Pixels>(this->canny->Colorize());
+        return this->canny->Colorize(margins);
     }
 
     if (this->vertices && this->gaussian)
     {
         // Display the gaussian output behind the vertices.
-        return std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
+        return color.Filter(*this->gaussian);
     }
 
     if (this->harris)
     {
-        return std::make_shared<draw::Pixels>(iris::ColorizeHarris(
-            *this->harris));
+        return iris::ColorizeHarris(margins, *this->harris);
     }
 
     if (this->gradient)
     {
-        return std::make_shared<draw::Pixels>(this->gradient->Colorize());
+        return this->gradient->Colorize(margins);
     }
 
     if (this->gaussian)
     {
-        return std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
+        return color.Filter(*this->gaussian);
     }
 
     if (this->level)
     {
-        return std::make_shared<draw::Pixels>(color.Filter(*this->level));
+        return color.Filter(*this->level);
     }
 
     if (this->mask)
     {
-        return std::make_shared<draw::Pixels>(color.Filter(*this->mask));
+        return color.Filter(*this->mask);
     }
 
     return {};
@@ -217,7 +220,8 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetPreprocessedPixels_(
 
 
 std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
-    ChessChainNodeSettings nodeSettings,
+    const tau::Margins &margins,
+    const ChessChainNodeSettings &nodeSettings,
     ThreadsafeColorMap<int32_t> &color) const
 {
     if (nodeSettings.mask.isSelected)
@@ -228,8 +232,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
-        std::cout << "Creating mask pixels" << std::endl;
-        return std::make_shared<draw::Pixels>(color.Filter(*this->mask));
+        return color.Filter(*this->mask);
     }
 
     if (nodeSettings.level.isSelected)
@@ -240,7 +243,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
-        return std::make_shared<draw::Pixels>(color.Filter(*this->level));
+        return color.Filter(*this->level);
     }
 
     if (nodeSettings.gaussian.isSelected)
@@ -251,7 +254,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
-        return std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
+        return color.Filter(*this->gaussian);
     }
 
     if (nodeSettings.gradient.isSelected)
@@ -262,7 +265,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
-        return std::make_shared<draw::Pixels>(this->gradient->Colorize());
+        return this->gradient->Colorize(margins);
     }
 
     if (nodeSettings.harris.isSelected)
@@ -273,8 +276,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
-        return std::make_shared<draw::Pixels>(
-            iris::ColorizeHarris(*this->harris));
+        return iris::ColorizeHarris(margins, *this->harris);
     }
 
     if (nodeSettings.vertices.isSelected)
@@ -286,7 +288,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
         }
 
         // Display the gaussian output behind the vertices.
-        return std::make_shared<draw::Pixels>(color.Filter(*this->gaussian));
+        return color.Filter(*this->gaussian);
     }
 
     if (nodeSettings.canny.isSelected)
@@ -297,7 +299,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
-        return std::make_shared<draw::Pixels>(this->canny->Colorize());
+        return this->canny->Colorize(margins);
     }
 
     return {};
@@ -305,10 +307,10 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
 
 
 void ChessChainResults::DrawHoughResults_(
-    draw::AsyncShapesControl shapesControl,
+    const draw::AsyncShapesControl &shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
     ThreadsafeColorMap<int32_t> &color,
-    std::optional<HoughControl> houghControl) const
+    HoughPixelsControl *houghControl) const
 {
     assert(this->hough);
 
@@ -319,8 +321,7 @@ void ChessChainResults::DrawHoughResults_(
         auto scale = static_cast<double>(color.GetSettings().maximum);
         ProcessMatrix space = houghResult.GetScaledSpace<int32_t>(scale);
 
-        houghControl->Set(
-            std::make_shared<draw::Pixels>(color.Filter(space)));
+        houghControl->Set(color.Filter(space));
     }
 
     if (houghResult.lines.empty())
@@ -339,7 +340,7 @@ void ChessChainResults::DrawHoughResults_(
 
 
 void ChessChainResults::DrawVerticesResults_(
-    draw::AsyncShapesControl shapesControl,
+    const draw::AsyncShapesControl &shapesControl,
     const draw::PointsShapeSettings &pointsShapeSettings,
     ThreadsafeColorMap<int32_t> &color) const
 {

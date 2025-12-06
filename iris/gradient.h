@@ -2,7 +2,6 @@
 
 #include <future>
 #include <cmath>
-#include <optional>
 #include <pex/endpoint.h>
 #include <tau/eigen.h>
 #include <tau/planar.h>
@@ -53,6 +52,24 @@ struct GradientResult
     tau::MonoImage<Value> dx;
     tau::MonoImage<Value> dy;
 
+    GradientResult()
+        :
+        maximum{},
+        dx{},
+        dy{}
+    {
+
+    }
+
+    GradientResult(Value maximum_, Eigen::Index rows, Eigen::Index cols)
+        :
+        maximum(maximum_),
+        dx(rows, cols),
+        dy(rows, cols)
+    {
+
+    }
+
     template<typename Float>
     static Eigen::MatrixX<Float> Magnitude(
         const Eigen::MatrixX<Float> &dx,
@@ -102,9 +119,11 @@ struct GradientResult
         return {Magnitude(dxFloat, dyFloat), phase};
     }
 
-    draw::Pixels Colorize() const
+    std::shared_ptr<draw::Pixels> Colorize(const tau::Margins &margins) const
     {
-        auto phasor = this->GetPhasor<float>();
+        auto trimmed = this->RemoveMargin(margins);
+
+        auto phasor = trimmed.GetPhasor<float>();
 
         tau::HsvPlanes<float> hsv(
             phasor.magnitude.rows(),
@@ -117,15 +136,23 @@ struct GradientResult
 
         auto asRgb = tau::HsvToRgb<uint8_t>(hsv);
 
-        return {
-            asRgb.template GetInterleaved<Eigen::RowMajor>(),
-            {phasor.magnitude.cols(), phasor.magnitude.rows()}};
+        return draw::Pixels::CreateShared(asRgb);
+    }
+
+    GradientResult RemoveMargin(const tau::Margins &margins) const
+    {
+        GradientResult trimmed{};
+        trimmed.maximum = this->maximum;
+        trimmed.dx = margins.RemoveMargin(this->dx);
+        trimmed.dy = margins.RemoveMargin(this->dy);
+
+        return trimmed;
     }
 };
 
 
 template<typename Value>
-class AsyncGradientResult
+class AsyncGradient
 {
 public:
     using Differentiate_ = Differentiate<Value>;
@@ -134,32 +161,48 @@ public:
     using Result = GradientResult<Value>;
     using Matrix = tau::MonoImage<Value>;
 
-    AsyncGradientResult(
-        const Differentiate<Value> &differentiate,
-        const Matrix &data,
+    AsyncGradient(
+        const Differentiate_ &differentiate,
+        const Matrix &input,
+        Result &result,
         size_t threadCount)
         :
-        maximum_(differentiate.GetMaximum()),
-        rowConvolution_(differentiate.horizontal, data, threadCount),
-        columnConvolution_(differentiate.vertical, data, threadCount)
+        rowConvolution_(
+            differentiate.horizontal,
+            input,
+            result.dx,
+            threadCount),
+
+        columnConvolution_(
+            differentiate.vertical,
+            input,
+            result.dy,
+            threadCount)
     {
 
     }
 
-    Result Get()
+    void Await()
     {
-        return
-        {
-            this->maximum_,
-            this->rowConvolution_.Get(),
-            this->columnConvolution_.Get(),
-        };
+        this->rowConvolution_.Await();
+        this->columnConvolution_.Await();
     }
 
 private:
     Value maximum_;
-    chunk::RowConvolution<RowVector, Matrix> rowConvolution_;
-    chunk::ColumnConvolution<ColumnVector, Matrix> columnConvolution_;
+
+    // The gradient kernels sum to zero.
+    // Set normalize to false.
+    static constexpr bool normalize = false;
+    using RowConvolution =
+        chunk::RowConvolution<normalize, RowVector, Matrix, Matrix>;
+
+    RowConvolution rowConvolution_;
+
+    using ColumnConvolution =
+        chunk::ColumnConvolution<normalize, ColumnVector, Matrix, Matrix>;
+
+    ColumnConvolution columnConvolution_;
 };
 
 
@@ -193,24 +236,37 @@ public:
 
     }
 
-    AsyncGradientResult<Value> FilterAsync(
-        const Matrix &data) const
+    AsyncGradient<Value> FilterAsync(
+        const Matrix &input,
+        Result &result) const
     {
-        return AsyncGradientResult<Value>(
+        return AsyncGradient<Value>(
             this->differentiate_,
-            data,
+            input,
+            result,
             this->threads_);
     }
 
-    std::optional<Result> Filter(const Matrix &data) const
+    bool Filter(const Matrix &input, Result &result) const
     {
         if (!this->isEnabled_)
         {
-            return {};
+            return false;
         }
 
-        auto asyncResult = this->FilterAsync(data);
-        return asyncResult.Get();
+        result.maximum = this->differentiate_.GetMaximum();
+        result.dx.resize(input.rows(), input.cols());
+        result.dy.resize(input.rows(), input.cols());
+
+        auto asyncGradient = this->FilterAsync(input, result);
+        asyncGradient.Await();
+
+        return true;
+    }
+
+    Eigen::Index GetSize() const
+    {
+        return this->differentiate_.GetSize();
     }
 
 private:

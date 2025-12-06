@@ -3,7 +3,6 @@
 
 #include <future>
 #include <vector>
-#include <optional>
 #include <tau/eigen.h>
 #include <tau/stack.h>
 #include <tau/planar.h>
@@ -204,6 +203,7 @@ public:
                 size_t rhoCount,
                 size_t thetaCount,
                 Float angleRange)
+#if 0
             :
             center_(imageSize.ToPoint2d().template Cast<Float>() / 2),
             maximumRho_(this->center_.Magnitude()),
@@ -227,8 +227,42 @@ public:
                 Matrix::Zero(
                     static_cast<Index>(rhoCount),
                     static_cast<Index>(thetaCount)))
+#endif
         {
+            this->Initialize(imageSize, rhoCount, thetaCount, angleRange);
+        }
 
+        void Initialize(
+                const draw::Size &imageSize,
+                size_t rhoCount,
+                size_t thetaCount,
+                Float angleRange)
+        {
+            this->center_ = imageSize.ToPoint2d().template Cast<Float>() / 2;
+            this->maximumRho_ = this->center_.Magnitude();
+            this->rhoCount_ = static_cast<Index>(rhoCount);
+
+            this->toIndexFactor_ =
+                GetToIndexFactor(this->rhoCount_, this->maximumRho_);
+
+            this->thetaCount_ = static_cast<Index>(thetaCount);
+            this->angleRange_ = angleRange;
+
+            this->thetas_ =
+                RowVector::LinSpaced(
+                    this->thetaCount_,
+                    static_cast<Float>(0),
+                    static_cast<Float>(tau::Angles<Float>::pi));
+
+            this->sinesAndCosines_ =
+                tau::VerticalStack(
+                    this->thetas_.array().sin().eval(),
+                    this->thetas_.array().cos().eval());
+
+            this->space_ =
+                Matrix::Zero(
+                    static_cast<Index>(rhoCount),
+                    static_cast<Index>(thetaCount));
         }
 
         void AddPoint_(
@@ -454,6 +488,25 @@ public:
             return result;
         }
 
+        void Accumulate(
+            const HoughSettings<Float> &settings,
+            const EdgePoints<Float> &edgePoints)
+        {
+            this->Initialize(
+                settings.imageSize,
+                settings.rhoCount,
+                settings.thetaCount,
+                settings.angleRange);
+
+            for (auto &edgePoint: edgePoints)
+            {
+                this->AddPoint(
+                    edgePoint.GetPoint2d(),
+                    edgePoint.weight,
+                    edgePoint.phase);
+            }
+        }
+
     private:
         tau::Point2d<Float> center_;
         Float maximumRho_;
@@ -475,32 +528,11 @@ public:
 
     }
 
-    static Accumulator Accumulate(
-        const HoughSettings<Float> &settings,
-        const EdgePoints<Float> &edgePoints)
-    {
-        Accumulator accumulator(
-            settings.imageSize,
-            settings.rhoCount,
-            settings.thetaCount,
-            settings.angleRange);
-
-        for (auto &edgePoint: edgePoints)
-        {
-            accumulator.AddPoint(
-                edgePoint.GetPoint2d(),
-                edgePoint.weight,
-                edgePoint.phase);
-        }
-
-        return accumulator;
-    }
-
-    std::optional<Result> Filter(const CannyResult<Float> &canny) const
+    bool Filter(const CannyResult<Float> &canny, Result &result) const
     {
         if (!this->settings_.enable)
         {
-            return {};
+            return false;
         }
 
         EdgePoints<Float> edgePoints;
@@ -529,69 +561,83 @@ public:
             this->settings_.threads,
             static_cast<Index>(edgePoints.size()));
 
-        std::vector<std::future<Accumulator>> threadResults;
+        std::vector<jive::Sentry> threadSentries;
+        auto threadPool = jive::GetThreadPool();
 
-        for (auto &chunk: chunks)
+        std::vector<Accumulator> accumulators(chunks.size());
+
+        for (auto index: jive::Range<size_t>(0, chunks.size()))
         {
+            auto &chunk = chunks[index];
+            auto &accumulator = accumulators[index];
+
             auto begin = std::begin(edgePoints) + chunk.index;
             auto end = begin + chunk.count;
 
-            threadResults.push_back(
-                std::async(
-                    std::launch::async,
-                    &Hough<Float>::Accumulate,
-                    this->settings_,
-                    EdgePoints<Float>(begin, end)));
+            threadSentries.emplace_back(
+                threadPool->AddJob(
+                    [&]()
+                    {
+                        accumulator.Accumulate(
+                            this->settings_,
+                            EdgePoints<Float>(begin, end));
+                    }));
         }
 
-        auto accumulator = threadResults.at(0).get();
+        threadSentries.front().Wait();
+        auto &accumulator = accumulators.front();
         Matrix combined = accumulator.GetSpace();
 
-        for (size_t i = 1; i < threadResults.size(); ++i)
+        for (size_t i = 1; i < threadSentries.size(); ++i)
         {
-            combined += threadResults[i].get().GetSpace();
+            threadSentries[i].Wait();
+            combined += accumulators[i].GetSpace();
         }
-
-        Result hough{};
 
         if (this->settings_.suppress)
         {
             auto windowSize = this->settings_.window;
 
-            hough.space = Suppression(
+            Suppression(
                 this->settings_.threads,
                 windowSize,
-                combined);
+                combined,
+                result.space);
 
             // Run suppression again on the seam between 180 and 0.
-            auto seam = Matrix(hough.space.rows(), 2 * windowSize);
+            auto seam = Matrix(result.space.rows(), 2 * windowSize);
 
             seam.leftCols(windowSize) =
-                hough.space.rightCols(windowSize);
+                result.space.rightCols(windowSize);
 
             seam.rightCols(windowSize) =
-                hough.space.leftCols(windowSize).colwise().reverse();
+                result.space.leftCols(windowSize).colwise().reverse();
 
-            auto suppressedSeam = Suppression(
+            using Space = std::remove_cvref_t<decltype(result.space)>;
+
+            Space suppressedSeam;
+
+            Suppression(
                 this->settings_.threads,
                 windowSize,
-                seam);
+                seam,
+                suppressedSeam);
 
-            hough.space.rightCols(windowSize) =
+            result.space.rightCols(windowSize) =
                 suppressedSeam.leftCols(windowSize);
 
-            hough.space.leftCols(windowSize) =
+            result.space.leftCols(windowSize) =
                 suppressedSeam.rightCols(windowSize).colwise().reverse();
 
-            accumulator.SetSpace(hough.space);
-            hough.lines = accumulator.GetLines(this->settings_);
+            accumulator.SetSpace(result.space);
+            result.lines = accumulator.GetLines(this->settings_);
         }
         else
         {
-            hough.space = combined;
+            result.space = combined;
         }
 
-        return hough;
+        return true;
     }
 
 private:

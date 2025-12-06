@@ -15,7 +15,7 @@ namespace iris
 
 ChessShapeView::ChessShapeView(
     wxWindow *parent,
-    ChessShapeControl controls,
+    const ChessShapeControl &controls,
     const LayoutOptions &layoutOptions)
     :
     wxpex::Collapsible(parent, "Chess Shape", borderStyle)

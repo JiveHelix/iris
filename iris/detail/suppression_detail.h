@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <future>
+#include <tau/view.h>
 #include "iris/chunks.h"
 
 
@@ -39,17 +39,18 @@ std::ostream & operator<<(
 }
 
 
-template<typename Data>
+template<tau::IsEigenRef InOut>
 auto GetInitialMaximum(
     Eigen::Index windowSize,
-    Eigen::MatrixBase<Data> &result)
+    InOut inOut)
 {
     using Eigen::Index;
-    using LocalMaximum = LocalMaximumTemplate<typename Data::Scalar>;
+
+    using LocalMaximum = LocalMaximumTemplate<tau::RefScalar<InOut>>;
 
     LocalMaximum maximum;
 
-    auto initialBlock = result.block(0, 0, windowSize, windowSize);
+    auto initialBlock = inOut.block(0, 0, windowSize, windowSize);
 
     maximum.value =
         initialBlock.maxCoeff(&maximum.row, &maximum.column);
@@ -61,18 +62,42 @@ auto GetInitialMaximum(
 }
 
 
-template<typename Data>
+template<tau::IsEigenRef InOut>
 struct Suppressor
 {
     using Index = Eigen::Index;
-    using LocalMaximum = LocalMaximumTemplate<typename Data::Scalar>;
 
-    Suppressor(Index windowSize, Eigen::MatrixBase<Data> &result_)
+    using LocalMaximum = LocalMaximumTemplate<tau::RefScalar<InOut>>;
+
+    Suppressor(Index windowSize, InOut inOut_)
         :
-        result(result_),
+        result(inOut_),
         localMaximum(GetInitialMaximum(windowSize, this->result))
     {
 
+    }
+
+    template<bool compareRow>
+    void ResetLocalMaximum(Eigen::Index index)
+    {
+        if constexpr (compareRow)
+        {
+            if (this->localMaximum && this->localMaximum->row < index)
+            {
+                // We have shifted beyond the range of the previous
+                // localMaximum.
+                this->localMaximum.reset();
+            }
+        }
+        else
+        {
+            if (this->localMaximum && this->localMaximum->column < index)
+            {
+                // We have shifted beyond the range of the previous
+                // localMaximum.
+                this->localMaximum.reset();
+            }
+        }
     }
 
     void UpdateLocalMaximum()
@@ -112,139 +137,25 @@ struct Suppressor
         }
     }
 
-    Eigen::MatrixBase<Data> &result;
+    InOut result;
     std::optional<LocalMaximum> localMaximum;
     LocalMaximum nextMaximum;
 };
 
 
-template<typename Data>
-struct ColumnMajorSuppressor: public Suppressor<Data>
-{
-    using Suppressor<Data>::Suppressor;
-
-    void ResetLocalMaximum(Eigen::Index index)
-    {
-        if (this->localMaximum && this->localMaximum->row < index)
-        {
-            // We have shifted beyond the range of the previous
-            // localMaximum.
-            this->localMaximum.reset();
-        }
-    }
-};
-
-
-template<typename Data>
-struct RowMajorSuppressor: public Suppressor<Data>
-{
-    using Suppressor<Data>::Suppressor;
-
-    void ResetLocalMaximum(Eigen::Index index)
-    {
-        if (this->localMaximum && this->localMaximum->column < index)
-        {
-            // We have shifted beyond the range of the previous
-            // localMaximum.
-            this->localMaximum.reset();
-        }
-    }
-};
-
-
-template<typename Data>
+template<tau::IsEigenRef InOut>
 void SuppressColumnMajor(
     Eigen::Index limitRow,
     Eigen::Index limitColumn,
     Eigen::Index windowSize,
-    Eigen::MatrixBase<Data> &result)
+    InOut inOut)
 {
+    // InOut is column-major.
+    // As we slide the window across the data, the bulk of our reads should be
+    // column-wise.
     using Eigen::Index;
 
-    ColumnMajorSuppressor<Data> suppressor(windowSize, result);
-    Index ignored;
-
-    // First column
-    for (Index row = 1; row < limitRow; ++row)
-    {
-        // Read the next row.
-        auto nextRow = row + windowSize - 1;
-
-        auto rowVector = result.block(
-            nextRow,
-            0,
-            1,
-            windowSize);
-
-        suppressor.nextMaximum.row = nextRow;
-
-        suppressor.nextMaximum.value =
-            rowVector.maxCoeff(&ignored, &suppressor.nextMaximum.column);
-
-        // Zero the row
-        rowVector.array() = 0;
-
-        suppressor.ResetLocalMaximum(row);
-        suppressor.UpdateLocalMaximum();
-    }
-
-    // The other columns
-    for (Index column = 1; column < limitColumn; ++column)
-    {
-        // Start with a block on the first row
-        auto nextBlock = result.block(0, column, windowSize, windowSize);
-
-        suppressor.nextMaximum.value =
-            nextBlock.maxCoeff(
-                &suppressor.nextMaximum.row,
-                &suppressor.nextMaximum.column);
-
-        // Adjust column index of maximum
-        suppressor.nextMaximum.column += column;
-
-        suppressor.localMaximum = suppressor.nextMaximum;
-        nextBlock.rightCols(1).array() = 0;
-
-        suppressor.result(
-            suppressor.nextMaximum.row,
-            suppressor.nextMaximum.column) = suppressor.nextMaximum.value;
-
-        for (Index row = 1; row < limitRow; ++row)
-        {
-            // Read the next row.
-            auto nextRow = row + windowSize - 1;
-            auto rowVector = result.block(
-                nextRow,
-                column,
-                1,
-                windowSize);
-
-            suppressor.nextMaximum.row = nextRow;
-
-            suppressor.nextMaximum.value =
-                rowVector.maxCoeff(&ignored, &suppressor.nextMaximum.column);
-
-            suppressor.nextMaximum.column += column;
-
-            rowVector.array() = 0;
-
-            suppressor.ResetLocalMaximum(row);
-            suppressor.UpdateLocalMaximum();
-        }
-    }
-}
-
-
-template<typename Data>
-void SuppressRowMajor(
-    Eigen::Index limitRow,
-    Eigen::Index limitColumn,
-    Eigen::Index windowSize,
-    Eigen::MatrixBase<Data> &result)
-{
-    using Eigen::Index;
-
-    RowMajorSuppressor<Data> suppressor(windowSize, result);
+    Suppressor<InOut> suppressor(windowSize, inOut);
     Index ignored;
 
     // First row
@@ -253,11 +164,7 @@ void SuppressRowMajor(
         // Read the next column.
         auto nextColumn = column + windowSize - 1;
 
-        auto columnVector = result.block(
-            0,
-            nextColumn,
-            windowSize,
-            1);
+        auto columnVector = inOut.col(nextColumn).segment(0, windowSize);
 
         suppressor.nextMaximum.column = nextColumn;
 
@@ -267,14 +174,14 @@ void SuppressRowMajor(
         // Zero the column
         columnVector.array() = 0;
 
-        suppressor.ResetLocalMaximum(column);
+        suppressor.ResetLocalMaximum<false>(column);
         suppressor.UpdateLocalMaximum();
     }
 
     // The other rows
     for (Eigen::Index row = 1; row < limitRow; ++row)
     {
-        auto nextBlock = result.block(row, 0, windowSize, windowSize);
+        auto nextBlock = inOut.block(row, 0, windowSize, windowSize);
 
         suppressor.nextMaximum.value =
             nextBlock.maxCoeff(
@@ -294,11 +201,7 @@ void SuppressRowMajor(
             // Read the next column.
             auto nextColumn = column + windowSize - 1;
 
-            auto columnVector = result.block(
-                row,
-                nextColumn,
-                windowSize,
-                1);
+            auto columnVector = inOut.col(nextColumn).segment(row, windowSize);
 
             suppressor.nextMaximum.column = nextColumn;
 
@@ -309,45 +212,141 @@ void SuppressRowMajor(
 
             columnVector.array() = 0;
 
-            suppressor.ResetLocalMaximum(column);
+            suppressor.ResetLocalMaximum<false>(column);
+            suppressor.UpdateLocalMaximum();
+        }
+    }
+
+}
+
+
+template<tau::IsEigenRef InOut>
+void SuppressRowMajor(
+    Eigen::Index limitRow,
+    Eigen::Index limitColumn,
+    Eigen::Index windowSize,
+    InOut inOut)
+{
+    using Eigen::Index;
+
+    // InOut is row-major.
+    // As we slide the window across the data, the bulk of our reads should be
+    // row-wise.
+
+    Suppressor<InOut> suppressor(windowSize, inOut);
+    Index ignored;
+
+    // Suppressor contains the maximum value for the first block of data.
+    // First column
+    for (Index row = 1; row < limitRow; ++row)
+    {
+        // Read the next row.
+        auto nextRow = row + windowSize - 1;
+
+        auto rowVector = inOut.row(nextRow).segment(0, windowSize);
+
+        suppressor.nextMaximum.row = nextRow;
+
+        suppressor.nextMaximum.value =
+            rowVector.maxCoeff(&ignored, &suppressor.nextMaximum.column);
+
+        // Zero the row
+        rowVector.array() = 0;
+
+        suppressor.ResetLocalMaximum<true>(row);
+        suppressor.UpdateLocalMaximum();
+    }
+
+    // The other columns
+    for (Index column = 1; column < limitColumn; ++column)
+    {
+        // Start with a block on the first row
+        auto nextBlock = inOut.block(0, column, windowSize, windowSize);
+
+        suppressor.nextMaximum.value =
+            nextBlock.maxCoeff(
+                &suppressor.nextMaximum.row,
+                &suppressor.nextMaximum.column);
+
+        // We found the column within nextBlock.
+        // Adjust column index of maximum relative to the result origin.
+        suppressor.nextMaximum.column += column;
+
+        // Initialize the localMaximum for this column pass.
+        suppressor.localMaximum = suppressor.nextMaximum;
+
+        // Only set the right-most column in this block to zero.
+        // The other columns have already been zeroed, leaving behind only
+        // local maxima.
+        nextBlock.rightCols(1).array() = 0;
+
+        suppressor.result(
+            suppressor.nextMaximum.row,
+            suppressor.nextMaximum.column) = suppressor.nextMaximum.value;
+
+        for (Index row = 1; row < limitRow; ++row)
+        {
+            // Read the next row.
+            auto nextRow = row + windowSize - 1;
+
+            auto rowVector = inOut.row(nextRow).segment(column, windowSize);
+
+            suppressor.nextMaximum.row = nextRow;
+
+            suppressor.nextMaximum.value =
+                rowVector.maxCoeff(&ignored, &suppressor.nextMaximum.column);
+
+            suppressor.nextMaximum.column += column;
+
+            rowVector.array() = 0;
+
+            suppressor.ResetLocalMaximum<true>(row);
             suppressor.UpdateLocalMaximum();
         }
     }
 }
 
 
-template<typename Data>
+template<tau::IsEigenConstRef Input, tau::IsEigenRef Output>
 void Suppress(
     Eigen::Index limitRow,
     Eigen::Index limitColumn,
     Eigen::Index windowSize,
-    Eigen::MatrixBase<Data> &result)
+    Input input,
+    Output output)
 {
-    if constexpr (tau::MatrixTraits<Data>::isColumnMajor)
+    output = input;
+
+    if constexpr (tau::RefTraits<Output>::isColumnMajor)
     {
-        SuppressColumnMajor(limitRow, limitColumn, windowSize, result);
+        SuppressColumnMajor(limitRow, limitColumn, windowSize, output);
     }
     else
     {
-        SuppressRowMajor(limitRow, limitColumn, windowSize, result);
+        SuppressRowMajor(limitRow, limitColumn, windowSize, output);
     }
 }
 
 
-template<typename Data>
-Data CopySuppress(
+template<tau::IsEigenRef InOut>
+void Suppress(
     Eigen::Index limitRow,
     Eigen::Index limitColumn,
     Eigen::Index windowSize,
-    const Eigen::MatrixBase<Data> &input)
+    InOut inOut)
 {
-    Data result = input;
-    Suppress(limitRow, limitColumn, windowSize, result);
-    return result;
+    if constexpr (tau::RefTraits<InOut>::isColumnMajor)
+    {
+        SuppressColumnMajor(limitRow, limitColumn, windowSize, inOut);
+    }
+    else
+    {
+        SuppressRowMajor(limitRow, limitColumn, windowSize, inOut);
+    }
 }
 
 
-template<typename Data>
+template<typename Input, typename Output>
 class SuppressionChunk
 {
 public:
@@ -355,38 +354,51 @@ public:
         chunk::Chunk rows,
         chunk::Chunk columns,
         Eigen::Index windowSize,
-        const Eigen::MatrixBase<Data> &data)
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output)
+        :
+        sentry_(
+            jive::GetThreadPool()->AddJob(
+                [&input, &output, rows, columns, windowSize]()
+                {
+                    using Eigen::Index;
+                    // Limit the bounds of the operation so that the window
+                    // never exceeds the bounds of input; Add +1 because we are
+                    // limiting the starting index of the windowed operation.
+
+                    Index limitRow = (rows.count - windowSize) + 1;
+                    Index limitColumn = (columns.count - windowSize) + 1;
+
+                    Suppress(
+                        limitRow,
+                        limitColumn,
+                        windowSize,
+
+                        tau::MakeView(
+                            input.block(
+                                rows.index,
+                                columns.index,
+                                rows.count,
+                                columns.count)),
+
+                        tau::MakeView(
+                            output.block(
+                                rows.index,
+                                columns.index,
+                                rows.count,
+                                columns.count)));
+                }))
     {
-        using Eigen::Index;
 
-        // Limit the bounds of the operation so that the window never exceeds
-        // the bounds of data_;
-        // Add +1 because we are limiting the starting index of the windowed
-        // operation.
-        Index limitRow = (rows.count - windowSize) + 1;
-        Index limitColumn = (columns.count - windowSize) + 1;
-
-        this->result_ = std::async(
-            std::launch::async,
-            &CopySuppress<Data>,
-            limitRow,
-            limitColumn,
-            windowSize,
-            data.block(
-                rows.index,
-                columns.index,
-                rows.count,
-                columns.count).eval());
     }
 
-    Data Get()
+    void Wait()
     {
-        return this->result_.get();
+        return this->sentry_.Wait();
     }
 
 private:
-    Data data_;
-    std::future<Data> result_;
+    jive::Sentry sentry_;
 };
 
 

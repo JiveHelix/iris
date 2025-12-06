@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <optional>
+#include <cstdint>
 #include <draw/views/pixel_view_settings.h>
 #include <draw/points_shape.h>
 #include "iris/vertex_chain_settings.h"
@@ -18,32 +18,45 @@ namespace iris
 {
 
 
+template<typename Filter>
+using FilterResult =
+    std::shared_ptr<const typename Filter::Result>;
+
+
 struct VertexChainFilters
 {
     using GaussianFilter = Gaussian<int32_t, 0>;
     using GradientFilter = Gradient<int32_t>;
     using HarrisFilter = Harris<double>;
     using VertexFilter = VertexFinder;
+
+    using GaussianResult = FilterResult<GaussianFilter>;
+    using GradientResult = FilterResult<GradientFilter>;
+    using HarrisResult = FilterResult<HarrisFilter>;
+    using VertexResult = FilterResult<VertexFilter>;
 };
+
 
 
 struct VertexChainResults
 {
     using Filters = VertexChainFilters;
-    std::optional<typename Filters::GaussianFilter::Result> gaussian;
-    std::optional<typename Filters::GradientFilter::Result> gradient;
-    std::optional<typename Filters::HarrisFilter::Result> harris;
-    std::optional<typename Filters::VertexFilter::Result> vertex;
 
-    VertexChainResults(ssize_t shapesId);
+    typename Filters::GaussianResult gaussian;
+    typename Filters::GradientResult gradient;
+    typename Filters::HarrisResult harris;
+    typename Filters::VertexResult vertex;
+
+    VertexChainResults(int64_t shapesId);
 
     std::shared_ptr<draw::Pixels> Display(
+        const tau::Margins &margins,
         draw::AsyncShapesControl shapesControl,
         const draw::PointsShapeSettings &pointsShapeSettings,
         ThreadsafeColorMap<int32_t> &color) const;
 
 private:
-    ssize_t shapesId_;
+    int64_t shapesId_;
 };
 
 
@@ -57,6 +70,7 @@ struct VertexChainNodes
     using VertexFilter = typename Filters::VertexFilter;
 
     using Result = typename VertexFilter::Result;
+    using ResultPtr = std::shared_ptr<const Result>;
     using ChainResults = VertexChainResults;
 
     using GaussianNode =
@@ -105,16 +119,18 @@ class VertexChain
         >
 {
 public:
-    using Result = typename VertexChainNodes<SourceNode>::Result;
-    using ChainResults = VertexChainResults;
 
     using Base = NodeBase
         <
             SourceNode,
             VertexChainControl,
-            Result,
+            typename VertexChainNodes<SourceNode>::Result,
             VertexChain<SourceNode>
         >;
+
+    using Result = typename Base::Result;
+    using ResultPtr = typename Base::ResultPtr;
+    using ChainResults = VertexChainResults;
 
     VertexChain(
         SourceNode &sourceNode,
@@ -128,7 +144,7 @@ public:
 
     }
 
-    std::optional<Result> DoGetResult()
+    ResultPtr DoGetResult()
     {
         if (!this->settings_.enable)
         {
@@ -138,7 +154,7 @@ public:
         return this->nodes_.vertex.GetResult();
     }
 
-    std::optional<ChainResults> GetChainResults()
+    std::shared_ptr<ChainResults> GetChainResults()
     {
         if (!this->settings_.enable)
         {
@@ -150,11 +166,11 @@ public:
             this->settingsChanged_ = false;
         }
 
-        ChainResults result(this->shapesId_.Get());
-        result.vertex = this->nodes_.vertex.GetResult();
-        result.harris = this->nodes_.harris.GetResult();
-        result.gradient = this->nodes_.gradient.GetResult();
-        result.gaussian = this->nodes_.gaussian.GetResult();
+        auto result = std::make_shared<ChainResults>(this->shapesId_.Get());
+        result->vertex = this->nodes_.vertex.GetResult();
+        result->harris = this->nodes_.harris.GetResult();
+        result->gradient = this->nodes_.gradient.GetResult();
+        result->gaussian = this->nodes_.gaussian.GetResult();
 
         std::lock_guard lock(this->mutex_);
 
@@ -171,7 +187,7 @@ public:
         this->nodes_.gradient.AutoDetectSettings();
     }
 
-    ssize_t GetShapesId() const
+    int64_t GetShapesId() const
     {
         return this->shapesId_.Get();
     }

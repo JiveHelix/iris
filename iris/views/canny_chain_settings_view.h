@@ -18,8 +18,8 @@ public:
 
     CannyChainSettingsView(
         wxWindow *parent,
-        CannyChainControl controls,
-        std::optional<CannyChainNodeSettingsControl> nodeSettingsControl,
+        const CannyChainControl &controls,
+        const CannyChainNodeSettingsControl *nodeSettings = nullptr,
         const LayoutOptions &layoutOptions = LayoutOptions{});
 };
 

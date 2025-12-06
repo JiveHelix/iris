@@ -18,8 +18,8 @@ namespace iris
 
 VertexChainSettingsView::VertexChainSettingsView(
     wxWindow *parent,
-    VertexChainControl controls,
-    std::optional<VertexChainNodeSettingsControl> nodeSettings,
+    const VertexChainControl &controls,
+    const VertexChainNodeSettingsControl *nodeSettings,
     const LayoutOptions &layoutOptions)
     :
     wxpex::Collapsible(parent, "Vertex Chain", borderStyle)
@@ -37,8 +37,8 @@ VertexChainSettingsView::VertexChainSettingsView(
             "Gaussian Blur",
             controls.gaussian,
             (nodeSettings)
-                ? nodeSettings->gaussian
-                : draw::OptionalNodeSettings{},
+                ? &nodeSettings->gaussian
+                : nullptr,
             layoutOptions);
 
     auto gradient =
@@ -46,8 +46,8 @@ VertexChainSettingsView::VertexChainSettingsView(
             panel,
             controls.gradient,
             (nodeSettings)
-                ? nodeSettings->gradient
-                : draw::OptionalNodeSettings{},
+                ? &nodeSettings->gradient
+                : nullptr,
             layoutOptions);
 
     auto harris =
@@ -55,8 +55,8 @@ VertexChainSettingsView::VertexChainSettingsView(
             panel,
             controls.harris,
             (nodeSettings)
-                ? nodeSettings->harris
-                : draw::OptionalNodeSettings{},
+                ? &nodeSettings->harris
+                : nullptr,
             layoutOptions);
 
     auto vertexSettings =
@@ -64,8 +64,8 @@ VertexChainSettingsView::VertexChainSettingsView(
             panel,
             controls.vertex,
             (nodeSettings)
-                ? nodeSettings->vertex
-                : draw::OptionalNodeSettings{},
+                ? &nodeSettings->vertex
+                : nullptr,
             layoutOptions);
 
     auto pointsShape =

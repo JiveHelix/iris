@@ -199,19 +199,24 @@ struct Differentiate
 
     ColumnVector GetVertical() const
     {
-        return this->horizontal;
+        return this->vertical;
     }
 
     template<typename Data>
     Data X(const Eigen::MatrixBase<Data> &data) const
     {
-        return tau::DoConvolve2d(data, this->horizontal);
+        return tau::CorrelateRows(data, this->horizontal);
     }
 
     template<typename Data>
     Data Y(const Eigen::MatrixBase<Data> &data) const
     {
-        return tau::DoConvolve2d(data, this->vertical);
+        return tau::CorrelateColumns(data, this->vertical);
+    }
+
+    Eigen::Index GetSize() const
+    {
+        return this->size_;
     }
 
 private:

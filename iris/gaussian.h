@@ -30,12 +30,15 @@ struct GaussianKernelFields
         fields::Field(&T::threads, "threads"),
         fields::Field(&T::size, "size"),
         fields::Field(&T::rowKernel, "rowKernel"),
+        fields::Field(&T::columnKernel, "columnKernel"),
+        fields::Field(&T::rowKernelSum, "rowKernelSum"),
+        fields::Field(&T::columnKernelSum, "columnKernelSum"),
         fields::Field(&T::sum, "sum"));
 };
 
 
 template<typename T, size_t order>
-Eigen::VectorX<T> Sample(T sigma, size_t size)
+Eigen::VectorX<T> Sample(T sigma, Eigen::Index size)
 {
     using Vector = Eigen::VectorX<T>;
 
@@ -68,50 +71,44 @@ Eigen::VectorX<T> Sample(T sigma, size_t size)
 }
 
 
-struct RowFunctors: public chunk::RowFunctors
+template<bool normalize>
+struct RowFunctors: public chunk::RowFunctors<normalize>
 {
-    template<typename Kernel, typename Derived>
-    static Derived Filter(
+    static constexpr bool isByRow = true;
+
+    template<typename Kernel, typename Input, typename Output>
+    static void Filter(
         const Kernel &kernel,
-        const Eigen::MatrixBase<Derived> &data,
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output,
         const chunk::Chunk &chunk)
     {
-        Derived partial =
-            chunk::RowFunctors::Filter(kernel.rowKernel, data, chunk);
-
-        static constexpr bool isIntegral =
-            std::is_integral_v<typename Kernel::Type>;
-
-        if constexpr (isIntegral)
-        {
-            partial.array() /= kernel.sum;
-        }
-
-        return partial;
+        chunk::RowFunctors<normalize>::Filter(
+            kernel.rowKernel,
+            input,
+            output,
+            chunk);
     }
 };
 
 
-struct ColumnFunctors: public chunk::ColumnFunctors
+template<bool normalize>
+struct ColumnFunctors: public chunk::ColumnFunctors<normalize>
 {
-    template<typename Kernel, typename Derived>
-    static Derived Filter(
+    static constexpr bool isByRow = false;
+
+    template<typename Kernel, typename Input, typename Output>
+    static void Filter(
         const Kernel &kernel,
-        const Eigen::MatrixBase<Derived> &data,
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output,
         const chunk::Chunk &chunk)
     {
-        Derived partial =
-            chunk::ColumnFunctors::Filter(kernel.columnKernel, data, chunk);
-
-        static constexpr bool isIntegral =
-            std::is_integral_v<typename Kernel::Type>;
-
-        if constexpr (isIntegral)
-        {
-            partial.array() /= kernel.sum;
-        }
-
-        return partial;
+        chunk::ColumnFunctors<normalize>::Filter(
+            kernel.columnKernel,
+            input,
+            output,
+            chunk);
     }
 };
 
@@ -120,120 +117,242 @@ template
 <
     typename Functors,
     typename Kernel,
-    typename Derived
+    typename Input,
+    typename Output
 >
 class ThreadedGaussian
 {
 public:
+    using Period = std::chrono::duration<double, std::micro>;
+    using Clock = std::chrono::steady_clock;
+
     ThreadedGaussian(
         const Kernel &kernel,
-        const Eigen::MatrixBase<Derived> &data,
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output,
         size_t threadCount)
         :
-        rowCount(data.rows()),
-        columnCount(data.cols()),
-        threadResults()
+        rowCount(input.rows()),
+        columnCount(input.cols()),
+        threadPool_(jive::GetThreadPool()),
+        threadSentries_(),
+        beginTime_(Clock::now())
     {
-        auto chunks = Functors::MakeChunks(threadCount, data.derived());
+        assert(kernel.columnKernel.rows() < input.rows());
+        assert(kernel.rowKernel.cols() < input.cols());
+
+        // Output localCopy = output.derived();;
+
+        auto chunks = Functors::MakeChunks(threadCount, input.derived());
+
+        auto makeChunksTime = Clock::now();
+
+        this->threadSentries_.reserve(chunks.size());
 
         for (auto &chunk: chunks)
         {
-            this->threadResults.emplace_back(
-                std::async(
-                    std::launch::async,
-                    Functors::template Filter<Kernel, Derived>,
-                    kernel,
-                    data.derived(),
-                    chunk),
-                chunk);
+            this->threadSentries_.emplace_back(
+                this->threadPool_->AddJob(
+                    [chunk, &kernel, &input, &output]
+                    {
+                        Functors::template Filter<Kernel, Input, Output>(
+                            kernel,
+                            input,
+                            output,
+                            chunk);
+                    }));
         }
+
+        auto totalQueueTime = std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - makeChunksTime).count();
+
+        std::cout << "\n\ngaussian threads: " << chunks.size();
+
+        std::cout << "\nmakeChunksTime (us): "
+            << std::chrono::duration_cast<std::chrono::microseconds>(makeChunksTime - this->beginTime_).count() << std::endl;
+
+        std::cout << "totalQueueTime (us): " << totalQueueTime << std::endl;
     }
 
-    Derived Get()
+    void Await()
     {
-        Derived result(this->rowCount, this->columnCount);
-        Functors::Get(result, this->threadResults);
-        return result;
+        chunk::AwaitThreads(this->threadSentries_);
     }
 
 private:
     Eigen::Index rowCount;
     Eigen::Index columnCount;
-    std::vector<std::pair<std::future<Derived>, chunk::Chunk>> threadResults;
+    std::shared_ptr<jive::ThreadPool> threadPool_;
+    std::vector<jive::Sentry> threadSentries_;
+    Clock::time_point beginTime_;
 };
 
 
-template<typename Kernel, typename Derived>
+template<typename Kernel, typename Input, typename Output>
 class ThreadedRowGaussian
     :
-    public ThreadedGaussian<RowFunctors, Kernel, Derived>
+    public ThreadedGaussian
+    <
+        RowFunctors<Kernel::normalize>,
+        Kernel,
+        Input,
+        Output
+    >
 {
 public:
+    using Base =
+        ThreadedGaussian
+        <
+            RowFunctors<Kernel::normalize>,
+            Kernel,
+            Input,
+            Output
+        >;
+
     ThreadedRowGaussian(
         const Kernel &kernel,
-        const Eigen::MatrixBase<Derived> &data,
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output,
         size_t threadCount)
         :
-        ThreadedGaussian<RowFunctors, Kernel, Derived>(
-            kernel,
-            data,
-            threadCount)
+        Base(kernel, input, output, threadCount)
     {
         assert(kernel.rowKernel.rows() == 1);
     }
 };
 
 
-template<typename Kernel, typename Derived>
+template<typename Kernel, typename Input, typename Output>
 class ThreadedColumnGaussian
     :
-    public ThreadedGaussian<ColumnFunctors, Kernel, Derived>
+    public ThreadedGaussian
+    <
+        ColumnFunctors<Kernel::normalize>,
+        Kernel,
+        Input,
+        Output
+    >
 {
 public:
+    using Base =
+        ThreadedGaussian
+        <
+            ColumnFunctors<Kernel::normalize>,
+            Kernel,
+            Input,
+            Output
+        >;
+
     ThreadedColumnGaussian(
         const Kernel &kernel,
-        const Eigen::MatrixBase<Derived> &data,
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output,
         size_t threadCount)
         :
-        ThreadedGaussian<ColumnFunctors, Kernel, Derived>(
-            kernel,
-            data,
-            threadCount)
+        Base(kernel, input, output, threadCount)
     {
         assert(kernel.columnKernel.cols() == 1);
     }
 };
 
 
-template
-<
-    typename Kernel,
-    typename Derived
->
-Derived ThreadedKernelConvolve(
+template<bool transpose, typename Kernel, typename Input, typename Output>
+std::optional<int64_t> DoThreadedRowGaussian(
     const Kernel &kernel,
-    const Eigen::MatrixBase<Derived> &data,
-    Partials partials,
+    const Eigen::MatrixBase<Input> &input,
+    Eigen::MatrixBase<Output> &output,
     size_t threadCount)
 {
-    using Eigen::Index;
+    if constexpr (!transpose)
+    {
+        ThreadedRowGaussian(kernel, input, output, threadCount).Await();
 
-    if (partials == Partials::both)
-    {
-        auto rowResult = ThreadedRowGaussian(kernel, data, threadCount).Get();
-        return ThreadedColumnGaussian(kernel, rowResult, threadCount).Get();
-    }
-    else if (partials == Partials::rows)
-    {
-        return ThreadedRowGaussian(kernel, data, threadCount).Get();
-    }
-    else if (partials == Partials::columns)
-    {
-        return ThreadedColumnGaussian(kernel, data, threadCount).Get();
+        return {};
     }
     else
     {
-        return data;
+        if constexpr (Input::IsRowMajor)
+        {
+            ThreadedRowGaussian(kernel, input, output, threadCount).Await();
+
+            return {};
+        }
+        else
+        {
+            using namespace std::chrono;
+            using Period = duration<double, std::micro>;
+            using Clock = steady_clock;
+
+            Clock::time_point beginTime = Clock::now();
+
+            using Transposed =
+                Eigen::Matrix
+                <
+                    typename Input::Scalar,
+                    Input::RowsAtCompileTime,
+                    Input::ColsAtCompileTime,
+                    Eigen::RowMajor
+                >;
+
+            Transposed transposed = input;
+
+            Clock::time_point endCopy = Clock::now();
+
+            ThreadedRowGaussian(kernel, transposed, output, threadCount)
+                .Await();
+
+            return duration_cast<microseconds>(endCopy - beginTime).count();
+        }
+    }
+}
+
+
+template<bool transpose, typename Kernel, typename Input, typename Output>
+std::optional<int64_t> DoThreadedColumnGaussian(
+    const Kernel &kernel,
+    const Eigen::MatrixBase<Input> &input,
+    Eigen::MatrixBase<Output> &output,
+    size_t threadCount)
+{
+    if constexpr (!transpose)
+    {
+        ThreadedColumnGaussian(kernel, input, output, threadCount).Await();
+
+        return {};
+    }
+    else
+    {
+        if constexpr (!Input::IsRowMajor)
+        {
+            ThreadedColumnGaussian(kernel, input, output, threadCount).Await();
+
+            return {};
+        }
+        else
+        {
+            using namespace std::chrono;
+            using Period = duration<double, std::micro>;
+            using Clock = steady_clock;
+
+            Clock::time_point beginTime = Clock::now();
+
+            using Transposed =
+                Eigen::Matrix
+                <
+                    typename Input::Scalar,
+                    Input::RowsAtCompileTime,
+                    Input::ColsAtCompileTime,
+                    Eigen::ColMajor
+                >;
+
+            Transposed transposed = input;
+
+            Clock::time_point endCopy = Clock::now();
+
+            ThreadedColumnGaussian(kernel, transposed, output, threadCount)
+                .Await();
+
+            return duration_cast<microseconds>(endCopy - beginTime).count();
+        }
     }
 }
 
@@ -241,18 +360,97 @@ Derived ThreadedKernelConvolve(
 template
 <
     typename Kernel,
-    typename Derived
+    typename Input,
+    typename Output
 >
-Derived KernelConvolve(
+void ThreadedKernelConvolve(
     const Kernel &kernel,
-    const Eigen::MatrixBase<Derived> &data,
+    const Eigen::MatrixBase<Input> &input,
+    Eigen::MatrixBase<Output> &output,
+    Partials partials,
+    size_t threadCount)
+{
+    using Eigen::Index;
+
+    using namespace std::chrono;
+    using Period = duration<double, std::micro>;
+    using Clock = steady_clock;
+
+    if (partials == Partials::both)
+    {
+        Clock::time_point beginTime = Clock::now();
+
+        auto rowCopyTime =
+            DoThreadedRowGaussian<true>(kernel, input, output, threadCount);
+
+        Clock::time_point endRowTime = Clock::now();
+
+        auto colCopyTime =
+            DoThreadedColumnGaussian<true>(kernel, output, output, threadCount);
+
+        Clock::time_point endTime = Clock::now();
+
+        auto rowTime = endRowTime - beginTime;
+        auto colTime = endTime - endRowTime;
+        auto totalTime = endTime - beginTime;
+
+        fmt::print(
+            "rowTime: {} us\n"
+            "colTime: {} us\n"
+            "totalTime: {} us\n"
+            "kernel length: {}\n",
+            duration_cast<microseconds>(rowTime).count(),
+            duration_cast<microseconds>(colTime).count(),
+            duration_cast<microseconds>(totalTime).count(),
+            kernel.rowKernel.size());
+
+        if (rowCopyTime)
+        {
+            fmt::print("rowCopyTime: {} us\n", *rowCopyTime);
+        }
+
+        if (colCopyTime)
+        {
+            fmt::print("colCopyTime: {} us\n", *colCopyTime);
+        }
+    }
+    else if (partials == Partials::rows)
+    {
+        ThreadedRowGaussian(kernel, input, output, threadCount).Await();
+    }
+    else if (partials == Partials::columns)
+    {
+        ThreadedColumnGaussian(kernel, input, output, threadCount).Await();
+    }
+}
+
+
+template
+<
+    typename Kernel,
+    typename Input,
+    typename Output
+>
+void KernelConvolve(
+    const Kernel &kernel,
+    const Eigen::MatrixBase<Input> &input,
+    Eigen::MatrixBase<Output> &output,
     Partials partials,
     size_t threadCount = 1)
 {
-    if (threadCount > 1)
+    static_assert(
+        (Output::Flags & Eigen::LvalueBit) != 0,
+        "output requires a writable (lvalue) matrix or block");
+
+    if (threadCount >= 1)
     {
-        return ThreadedKernelConvolve(kernel, data, partials, threadCount);
+        std::cout << "ThreadedKernelConvolve" << std::endl;
+        ThreadedKernelConvolve(kernel, input, output, partials, threadCount);
+
+        return;
     }
+
+    std::cout << "Non-threaded Kernel convolve" << std::endl;
 
     using Eigen::Index;
 
@@ -264,47 +462,53 @@ Derived KernelConvolve(
 
     if (partials == Partials::both)
     {
-        Derived partial = tau::DoConvolve2d(data, kernel.rowKernel);
+        std::cout << "Partials::both" << std::endl;
+        std::cout << "input max value: " << input.maxCoeff() << std::endl;
+        tau::CorrelateRows(kernel.rowKernel, input, output);
+
+        std::cout << "after correlate rows, output max value: "
+            << output.maxCoeff() << std::endl;
 
         if constexpr (isIntegral)
         {
-            partial.array() /= kernel.sum;
+            output.array() /= kernel.rowKernelSum;
+
+            std::cout << "normalize by " << kernel.rowKernelSum << std::endl;
+
+            std::cout << "after normalize, output max value: "
+                << output.maxCoeff() << std::endl;
         }
 
-        Derived result = tau::DoConvolve2d(partial, kernel.columnKernel);
+        tau::CorrelateColumns(kernel.columnKernel, output);
 
         if constexpr (isIntegral)
         {
-            result.array() /= kernel.sum;
+            output.array() /= kernel.columnKernelSum;
         }
-
-        return result;
     }
     else if (partials == Partials::rows)
     {
-        Derived result = tau::DoConvolve2d(data, kernel.rowKernel);
+        std::cout << "Partials::rows" << std::endl;
+        tau::CorrelateRows(kernel.rowKernel, input, output);
 
         if constexpr (isIntegral)
         {
-            result.array() /= kernel.sum;
+            output.array() /= kernel.rowKernelSum;
         }
-
-        return result;
     }
     else if (partials == Partials::columns)
     {
-        Derived result = tau::DoConvolve2d(data, kernel.columnKernel);
+        std::cout << "Partials::columns" << std::endl;
+        tau::CorrelateColumns(kernel.columnKernel, input, output);
 
         if constexpr (isIntegral)
         {
-            result.array() /= kernel.sum;
+            output.array() /= kernel.columnKernelSum;
         }
-
-        return result;
     }
     else
     {
-        return data;
+        output = input;
     }
 }
 
@@ -325,6 +529,9 @@ struct GaussianKernel
     std::enable_if_t<std::is_floating_point_v<T>>
 >
 {
+    // floating-point kernels are pre-normalized.
+    static constexpr bool normalize = false;
+
     static_assert(std::is_floating_point_v<S>);
     using Type = T;
 
@@ -352,7 +559,7 @@ struct GaussianKernel
         partials(partials_),
         threads(threads_),
         size(
-            static_cast<size_t>(
+            static_cast<Eigen::Index>(
                 1 + 2 * std::round(GetRadius(sigma, threshold))))
     {
         this->columnKernel =
@@ -363,7 +570,9 @@ struct GaussianKernel
         assert(this->rowKernel.rows() == 1);
         assert(this->columnKernel.cols() == 1);
 
-        this->sum = this->columnKernel.sum();
+        this->columnKernelSum = this->columnKernel.sum();
+        this->rowKernelSum = this->rowKernel.sum();
+        this->sum = (this->columnKernel * this->rowKernel).sum();
     }
 
     GaussianKernel(const GaussianSettings<T> &settings)
@@ -382,12 +591,15 @@ struct GaussianKernel
         // Some truncation occurs depending on the threshold, and the sum will
         // be close to 1.0.
         // Scale the kernel to unity gain.
+        GaussianKernel<T, S, 0> result(*this);
+
         Eigen::MatrixX<T> combined = this->columnKernel * this->rowKernel;
         T correction = std::sqrt(combined.sum());
-        GaussianKernel<T, S, 0> result(*this);
         result.columnKernel.array() /= correction;
         result.rowKernel.array() /= correction;
-        result.sum = result.columnKernel.sum();
+        result.columnKernelSum = result.columnKernel.sum();
+        result.rowKernelSum = result.rowKernel.sum();
+        result.sum = 1.0;
 
         return result;
     }
@@ -397,19 +609,23 @@ struct GaussianKernel
         return this->columnKernel * this->rowKernel;
     }
 
-    template<typename Derived>
-    Derived Filter(const Eigen::MatrixBase<Derived> &data) const
+    template<typename Input, typename Output>
+    void Filter(
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output) const
     {
-        return KernelConvolve(*this, data, this->partials, threads);
+        KernelConvolve(*this, input, output, this->partials, this->threads);
     }
 
     S sigma;
     S threshold;
     Partials partials;
     size_t threads;
-    size_t size;
+    Eigen::Index size;
     RowVector rowKernel;
     ColumnVector columnKernel;
+    T rowKernelSum;
+    T columnKernelSum;
     T sum;
 
     static constexpr auto fields = GaussianKernelFields<GaussianKernel>::fields;
@@ -419,6 +635,9 @@ struct GaussianKernel
 template<typename T, typename S, size_t order>
 struct GaussianKernel<T, S, order, std::enable_if_t<std::is_integral_v<T>>>
 {
+    // integer normals cannot be pre-normalized.
+    static constexpr bool normalize = true;
+
     static_assert(std::is_floating_point_v<S>);
     using Type = T;
 
@@ -484,12 +703,14 @@ struct GaussianKernel<T, S, order, std::enable_if_t<std::is_integral_v<T>>>
         assert(this->rowKernel.rows() == 1);
         assert(this->columnKernel.cols() == 1);
 
-        this->size = static_cast<size_t>(taps);
+        this->size = taps;
 
         this->threshold =
             1.0 / static_cast<S>(this->columnKernel.maxCoeff());
 
-        this->sum = this->columnKernel.sum();
+        this->rowKernelSum = this->rowKernel.sum();
+        this->columnKernelSum = this->columnKernel.sum();
+        this->sum = (this->columnKernel * this->rowKernel).sum();
 
         // Assert that data will not be lost to overflow.
         assert(
@@ -513,19 +734,24 @@ struct GaussianKernel<T, S, order, std::enable_if_t<std::is_integral_v<T>>>
         return this->columnKernel * this->rowKernel;
     }
 
-    template<typename Derived>
-    Derived Filter(const Eigen::MatrixBase<Derived> &data) const
+    template<typename Input, typename Output>
+    void Filter(
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output) const
     {
-        return KernelConvolve(*this, data, partials, threads);
+        std::cout << "Integral gaussian kernel convolve" << std::endl;
+        KernelConvolve(*this, input, output, this->partials, this->threads);
     }
 
     S sigma;
     S threshold;
     Partials partials;
     size_t threads;
-    size_t size;
+    Eigen::Index size;
     RowVector rowKernel;
     ColumnVector columnKernel;
+    T rowKernelSum;
+    T columnKernelSum;
     T sum;
 
     static constexpr auto fields = GaussianKernelFields<GaussianKernel>::fields;
@@ -553,34 +779,22 @@ public:
         isEnabled_(settings.enable),
         kernel_(settings)
     {
-
+        std::cout << "Gaussian with settings:\n" << settings << std::endl;
     }
 
-    std::optional<Result> FilterNoExtend(const Matrix &data) const
+    bool Filter(const Matrix &input, Result &output) const
     {
         if (!this->isEnabled_)
         {
-            // Pass through the input.
-            return data;
+            return false;
         }
 
-        return this->kernel_.Filter(data);
+        this->kernel_.Filter(input, output);
+
+        return true;
     }
 
-    std::optional<Result> Filter(const Matrix &data) const
-    {
-        if (!this->isEnabled_)
-        {
-            // Pass through the input.
-            return data;
-        }
-
-        auto size = static_cast<Eigen::Index>(this->kernel_.size);
-        auto filtered = this->kernel_.Filter(tau::Extend(data, size, size));
-        return filtered.block(size, size, data.rows(), data.cols());
-    }
-
-    size_t GetSize() const
+    Eigen::Index GetSize() const
     {
         return this->kernel_.size;
     }

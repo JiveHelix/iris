@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <optional>
+#include <cstdint>
 #include <draw/views/pixel_view_settings.h>
 #include "iris/lines_chain_settings.h"
 #include "iris/canny_chain.h"
@@ -23,22 +23,23 @@ struct LinesChainFilters
 struct LinesChainResults
 {
     using Filters = LinesChainFilters;
-    std::optional<CannyChainResults> cannyChain;
-    std::optional<typename Filters::HoughFilter::Result> hough;
+    std::shared_ptr<const CannyChainResults> cannyChain;
+    std::shared_ptr<const typename Filters::HoughFilter::Result> hough;
 
-    using HoughControl =
+    using HoughPixelsControl =
         typename draw::PixelViewControl::AsyncPixelsControl;
 
-    LinesChainResults(ssize_t shapesId);
+    LinesChainResults(int64_t shapesId);
 
     std::shared_ptr<draw::Pixels> Display(
-        draw::AsyncShapesControl shapesControl,
+        const tau::Margins &margins,
+        const draw::AsyncShapesControl &shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
         ThreadsafeColorMap<int32_t> &color,
-        std::optional<HoughControl> houghControl) const;
+        HoughPixelsControl *houghControl) const;
 
 private:
-    ssize_t shapesId_;
+    int64_t shapesId_;
 };
 
 
@@ -85,7 +86,9 @@ class LinesChain
 {
 public:
     using Result = typename LinesChainNodes<SourceNode>::Result;
+    using ResultPtr = std::shared_ptr<const Result>;
     using ChainResults = LinesChainResults;
+    using ChainResultsPtr = std::shared_ptr<const ChainResults>;
 
     using Base = NodeBase
         <
@@ -107,7 +110,7 @@ public:
 
     }
 
-    std::optional<Result> DoGetResult()
+    ResultPtr DoGetResult()
     {
         if (!this->settings_.enable)
         {
@@ -117,7 +120,7 @@ public:
         return this->nodes_.hough.GetResult();
     }
 
-    std::optional<ChainResults> GetChainResults()
+    ChainResultsPtr GetChainResults()
     {
         if (!this->settings_.enable)
         {
@@ -129,9 +132,11 @@ public:
             this->settingsChanged_ = false;
         }
 
-        ChainResults result(this->shapesId_.Get());
-        result.hough = this->nodes_.hough.GetResult();
-        result.cannyChain = this->nodes_.cannyChain.GetChainResults();
+        auto result =
+            std::make_shared<ChainResults>(this->shapesId_.Get());
+
+        result->hough = this->nodes_.hough.GetResult();
+        result->cannyChain = this->nodes_.cannyChain.GetChainResults();
 
         std::lock_guard lock(this->mutex_);
 
@@ -148,7 +153,7 @@ public:
         this->nodes_.cannyChain.AutoDetectSettings();
     }
 
-    ssize_t GetShapesId() const
+    int64_t GetShapesId() const
     {
         return this->shapesId_.Get();
     }

@@ -29,12 +29,20 @@ TEST_CASE("Create Harris vertex detection class", "[harris]")
     auto gradient = iris::Gradient<float>(differentiate);
     auto settings = iris::HarrisSettings<float>{};
     settings.threads = 1;
+    settings.sigma = 1.0;
     auto harris = iris::Harris<float>(settings);
 
-    auto response = harris.Filter(*gradient.Filter(m));
-    REQUIRE(!!response);
-    REQUIRE(response->cols() == m.cols());
-    REQUIRE(response->rows() == m.rows());
+    iris::GradientResult<float> gradientResult(255, m.rows(), m.cols());
+
+    REQUIRE(gradient.Filter(m, gradientResult));
+
+    using HarrisResult = typename iris::Harris<float>::Result;
+
+    HarrisResult harrisResult{};
+
+    REQUIRE(harris.Filter(gradientResult, harrisResult));
+    REQUIRE(harrisResult.cols() == m.cols());
+    REQUIRE(harrisResult.rows() == m.rows());
 }
 
 
@@ -49,7 +57,8 @@ TEST_CASE("Use suppression filter with count = 1", "[harris]")
         { 0,  0,  0,  4,  0},
         { 0,  0,  0,  0,  5}};
 
-    Matrix filtered = iris::Suppression(1, 3, m);
+    Matrix filtered;
+    iris::Suppression(1, 3, m, filtered);
 
     std::cout << "filtered: " << filtered << std::endl;
 }

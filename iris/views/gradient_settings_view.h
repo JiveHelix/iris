@@ -25,8 +25,8 @@ public:
 
     GradientSettingsView(
         wxWindow *parent,
-        GradientControl<Value> controls,
-        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
+        const GradientControl<Value> &controls,
+        const draw::NodeSettingsControl *nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
         draw::CollapsibleNodeSettingsView(

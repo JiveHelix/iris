@@ -4,6 +4,7 @@
 #include <mutex>
 #include <optional>
 #include <pex/endpoint.h>
+#include <tau/convolve.h>
 #include "iris/default.h"
 
 // #define ENABLE_NODE_CHRONO
@@ -36,6 +37,12 @@
 
 #endif // ENABLE_NODE_LOG
 
+#ifdef ENABLE_NODE_CHRONO
+        using Period = std::chrono::duration<double, std::micro>;
+        using Clock = std::chrono::steady_clock;
+        using TimePoint = std::chrono::time_point<Clock, Period>;
+#endif
+
 
 namespace iris
 {
@@ -57,6 +64,9 @@ class NodeBase
 {
 public:
     using Result = Result_;
+    using ResultPtr = std::shared_ptr<const Result>;
+    using Input = typename InputNode::Result;
+    using InputPtr = typename InputNode::ResultPtr;
     using Settings = typename Control::Type;
     using NodeEndpoint = pex::Endpoint<NodeBase, Control>;
 
@@ -95,13 +105,14 @@ public:
 
         {
             std::lock_guard lock(this->mutex_);
-            hasResult = this->result_.has_value();
+            hasResult = !!this->result_;
         }
 
         if (!this->input_.HasResult())
         {
             std::lock_guard lock(this->mutex_);
             this->result_.reset();
+
             return false;
         }
 
@@ -123,7 +134,7 @@ public:
 
     }
 
-    std::optional<Result> GetResult()
+    ResultPtr GetResult()
     {
         if (this->cancel_.Get())
         {
@@ -142,7 +153,7 @@ public:
             // acquire the mutexes of other nodes while holding our own.
             std::lock_guard lock(this->mutex_);
 
-            if (this->result_.has_value())
+            if (this->result_)
             {
                 NODE_LOG("Returning cached result: ", this->name_);
                 return this->result_;
@@ -156,7 +167,7 @@ public:
             this->settingsChanged_ = false;
         }
 
-        auto result = static_cast<Derived *>(this)->DoGetResult();
+        auto resultPtr = static_cast<Derived *>(this)->DoGetResult();
 
         std::lock_guard lock(this->mutex_);
 
@@ -166,7 +177,7 @@ public:
             return {};
         }
 
-        if (!result)
+        if (!resultPtr)
         {
             NODE_LOG(
                 this->name_,
@@ -176,9 +187,9 @@ public:
             return {};
         }
 
-        NODE_LOG("Cache and return result: ", this->name_);
+        NODE_LOG("Cache and return resultPtr: ", this->name_);
 
-        return this->result_ = result;
+        return this->result_ = resultPtr;
     }
 
 protected:
@@ -191,8 +202,7 @@ protected:
 
 private:
     CancelControl cancel_;
-    mutable std::optional<Result> result_;
-
+    mutable ResultPtr result_;
 };
 
 
@@ -226,9 +236,12 @@ public:
 
     using Settings = typename Base::Settings;
     using Result = typename Base::Result;
+    using ResultPtr = typename Base::ResultPtr;
+    using Input = typename Base::Input;
+    using InputPtr = typename Base::InputPtr;
 
 #if 0
-    Node(InputNode &input, Control control, CancelControl cancel)
+    Node(InputNode &input, const Control &control, const CancelControl &cancel)
         :
         Base(input, control, cancel),
         filter_(this->settings_)
@@ -256,25 +269,43 @@ public:
 
     void SettingsChanged(const Settings &settings)
     {
+        std::lock_guard lock(this->mutex_);
         this->filter_ = FilterClass(settings);
     }
 
-    std::optional<Result> DoGetResult()
+    bool Process(const Input &input, Result &result)
     {
         FilterClass filter;
 
         {
             std::lock_guard lock(this->mutex_);
+            this->settingsChanged_ = false;
             filter = this->filter_;
         }
 
-        auto input = this->input_.GetResult();
+        bool filterSuccess = filter.Filter(input, result);
 
-        if (!input)
+        std::lock_guard lock(this->mutex_);
+
+        if (this->settingsChanged_)
+        {
+            filterSuccess = false;
+        }
+
+        return filterSuccess;
+    }
+
+    ResultPtr DoGetResult()
+    {
+        auto inputPtr = this->input_.GetResult();
+
+        if (!inputPtr)
         {
             NODE_LOG(this->name_, " has no input");
             return {};
         }
+
+        FilterClass filter;
 
         {
             std::lock_guard lock(this->mutex_);
@@ -285,23 +316,14 @@ public:
                 NODE_LOG("Settings changed while waiting for input!");
                 return {};
             }
+
+            filter = this->filter_;
         }
 
-#ifdef ENABLE_NODE_CHRONO
-        using Period = std::chrono::duration<double, std::micro>;
-        using Clock = std::chrono::steady_clock;
-        using TimePoint = std::chrono::time_point<Clock, Period>;
+        auto resultPtr = std::make_shared<Result>();
+        bool filterSuccess = filter.Filter(*inputPtr, *resultPtr);
 
-        TimePoint start = Clock::now();
-#endif
-
-        auto result = filter.Filter(*input);
-
-#ifdef ENABLE_NODE_CHRONO
-        TimePoint end = Clock::now();
-        std::cout << this->name_ << ": " << (end - start).count() << " us\n";
-#endif
-
+#if 0
         std::lock_guard lock(this->mutex_);
 
         if (!this->settingsChanged_)
@@ -309,13 +331,15 @@ public:
             // Cache the filter for later use.
             this->filter_ = filter;
         }
+#endif
 
-        if (!result)
+        if (!filterSuccess)
         {
             NODE_LOG(this->name_, " filter.Filter returned no result.");
+            return {};
         }
 
-        return result;
+        return resultPtr;
     }
 
 private:
@@ -328,19 +352,69 @@ class Source
 {
 public:
     using Result = Data;
+    using ResultPtr = std::shared_ptr<const Result>;
 
-    Source()
+    Source(const tau::Margins &margins = tau::Margins{0, 0})
         :
+        margins_(margins),
         hasFreshData_(false),
         data_()
     {
 
     }
 
+    const tau::Margins & GetMargins() const
+    {
+        return this->margins_;
+    }
+
+    void SetMargins(const tau::Margins &margins)
+    {
+        if constexpr (tau::HasAddMargin<Data> && tau::HasRemoveMargin<Data>)
+        {
+            // If Data is a tau::Planar, it implements AddMargin and
+            // RemoveMargin.
+            if (this->data_)
+            {
+                auto removed = this->data_->RemoveMargin(this->margins_);
+
+                const_cast<Result &>(*this->data_) =
+                    removed.AddMargin(margins);
+            }
+        }
+        else
+        {
+            if (this->data_)
+            {
+                const_cast<Result &>(*this->data_) = margins.AddMargin(
+                    this->margins_.RemoveMargin(*this->data_));
+            }
+        }
+
+        this->margins_ = margins;
+
+        if (this->data_)
+        {
+            this->hasFreshData_ = true;
+        }
+    }
+
     void SetData(const Data &data)
     {
         NODE_LOG("Source::SetData");
-        this->data_ = data;
+
+        // Copy data
+        if constexpr (tau::HasAddMargin<Data> && tau::HasRemoveMargin<Data>)
+        {
+            this->data_ =
+                std::make_shared<Result>(data.AddMargin(this->margins_));
+        }
+        else
+        {
+            this->data_ =
+                std::make_shared<Result>(this->margins_.AddMargin(data));
+        }
+
         this->hasFreshData_ = true;
     }
 
@@ -351,15 +425,16 @@ public:
         return !this->hasFreshData_;
     }
 
-    std::optional<Data> GetResult()
+    ResultPtr GetResult() const
     {
         this->hasFreshData_ = false;
         return this->data_;
     }
 
 private:
-    bool hasFreshData_;
-    std::optional<Data> data_;
+    tau::Margins margins_;
+    mutable bool hasFreshData_;
+    ResultPtr data_;
 };
 
 
@@ -377,10 +452,11 @@ class Mix
 {
 public:
     using Result = Result_;
-    using FirstResult = typename FirstNode::Result;
-    using SecondResult = typename SecondNode::Result;
+    using ResultPtr = std::shared_ptr<Result_>;
+    using FirstResult = typename FirstNode::ResultPtr;
+    using SecondResult = typename SecondNode::ResultPtr;
 
-    Mix(FirstNode &first, SecondNode &second, CancelControl cancel)
+    Mix(FirstNode &first, SecondNode &second, const CancelControl &cancel)
         :
         mutex_(),
         first_(first),
@@ -392,7 +468,7 @@ public:
 
     }
 
-    Mix(FirstNode &&, SecondNode &&, CancelControl) = delete;
+    Mix(FirstNode &&, SecondNode &&, const CancelControl &) = delete;
     Mix(const Mix &other) = delete;
     Mix(Mix &&other) = delete;
     Mix & operator=(const Mix &other) = delete;
@@ -422,7 +498,7 @@ public:
             && this->second_.HasResult());
     }
 
-    std::optional<Result> GetResult()
+    ResultPtr GetResult()
     {
         if (this->cancel_.Get())
         {
@@ -431,7 +507,9 @@ public:
 
         if (this->HasResult())
         {
-            return Result{*this->firstResult_, *this->secondResult_};
+            return std::make_shared<Result_>(
+                *this->firstResult_,
+                *this->secondResult_);
         }
 
         auto firstResult = this->first_.GetResult();
@@ -448,7 +526,9 @@ public:
             return {};
         }
 
-        return Result{*firstResult, *secondResult};
+        return std::make_shared<Result_>(
+            *this->firstResult_,
+            *this->secondResult_);
     }
 
 private:
@@ -456,8 +536,8 @@ private:
     FirstNode & first_;
     SecondNode & second_;
     CancelControl cancel_;
-    mutable std::optional<FirstResult> firstResult_;
-    mutable std::optional<SecondResult> secondResult_;
+    mutable FirstResult firstResult_;
+    mutable SecondResult secondResult_;
 };
 
 
@@ -470,18 +550,19 @@ template
 class Mux
 {
 public:
-    using FirstResult = typename FirstNode::Result;
-    using SecondResult = typename SecondNode::Result;
+    using FirstResult = typename FirstNode::ResultPtr;
+    using SecondResult = typename SecondNode::ResultPtr;
     using MuxModel = pex::model::Value<bool>;
     using MuxControl = pex::control::Value<MuxModel>;
 
     using Result = Result_;
+    using ResultPtr = std::shared_ptr<Result_>;
 
     Mux(
         FirstNode &first,
         SecondNode &second,
-        MuxControl muxControl,
-        CancelControl cancel)
+        const MuxControl &muxControl,
+        const CancelControl &cancel)
         :
         mutex_(),
         first_(first),
@@ -518,15 +599,15 @@ public:
 
         if (muxFirst)
         {
-            return this->firstResult_.has_value();
+            return this->firstResult_;
         }
         else
         {
-            return this->secondResult_.has_value();
+            return this->secondResult_;
         }
     }
 
-    std::optional<Result> GetResult()
+    ResultPtr GetResult()
     {
         if (this->cancel_.Get())
         {
@@ -539,10 +620,10 @@ public:
         {
             if (muxFirst)
             {
-                return Result{this->firstResult_, {}};
+                return std::make_shared<Result_>(this->firstResult_, {});
             }
 
-            return Result{{}, this->secondResult_};
+            return std::make_shared<Result_>({}, this->secondResult_);
         }
 
         if (muxFirst)
@@ -557,7 +638,7 @@ public:
                 return {};
             }
 
-            return Result{firstResult, {}};
+            return std::make_shared<Result_>(firstResult, {});
         }
 
         auto secondResult = this->second_.GetResult();
@@ -570,7 +651,7 @@ public:
             return {};
         }
 
-        return Result{{}, secondResult};
+        return std::make_shared<Result_>({}, secondResult);
     }
 
 private:
@@ -579,8 +660,8 @@ private:
     SecondNode & second_;
     MuxControl muxControl_;
     CancelControl cancel_;
-    mutable std::optional<FirstResult> firstResult_;
-    mutable std::optional<SecondResult> secondResult_;
+    mutable FirstResult firstResult_;
+    mutable SecondResult secondResult_;
 };
 
 

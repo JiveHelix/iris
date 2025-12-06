@@ -51,14 +51,16 @@ public:
 
     }
 
-    std::optional<Result> Filter(const Matrix &data)
+    bool Filter(const Matrix &input, Result &result)
     {
         if (!this->enable_)
         {
-            return data;
+            return false;
         }
 
-        return this->rescale_(data);
+        result = this->rescale_(input);
+
+        return true;
     }
 
 protected:

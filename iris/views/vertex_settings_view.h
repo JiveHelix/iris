@@ -19,8 +19,8 @@ public:
 
     VertexSettingsView(
         wxWindow *parent,
-        VertexControl controls,
-        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
+        const VertexControl &controls,
+        const draw::NodeSettingsControl *nodeSettingsControl = nullptr,
         const LayoutOptions &layoutOptions = LayoutOptions{});
 };
 

@@ -26,7 +26,7 @@ public:
         wxWindow *parent,
         const std::string &name,
         const LevelControl<Value> &control,
-        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
+        const draw::NodeSettingsControl * nodeSettingsControl = nullptr,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
         draw::CollapsibleNodeSettingsView(parent, name, nodeSettingsControl)
@@ -39,7 +39,7 @@ public:
         wxWindow *parent,
         const std::string &name,
         const LevelControl<Value> &control,
-        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
+        const draw::NodeSettingsControl * nodeSettingsControl = nullptr,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
         draw::CollapsibleNodeSettingsView(parent, name, nodeSettingsControl)

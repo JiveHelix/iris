@@ -12,8 +12,8 @@ namespace iris
 
 ChessSettingsView::ChessSettingsView(
     wxWindow *parent,
-    ChessControl controls,
-    std::optional<draw::NodeSettingsControl> nodeSettingsControl,
+    const ChessControl &controls,
+    const draw::NodeSettingsControl *nodeSettingsControl,
     const LayoutOptions &layoutOptions)
     :
     draw::CollapsibleNodeSettingsView(parent, "Chess", nodeSettingsControl)

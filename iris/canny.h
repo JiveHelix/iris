@@ -4,7 +4,6 @@
 #include <future>
 #include <vector>
 #include <deque>
-#include <optional>
 #include <tau/eigen.h>
 #include <tau/planar.h>
 #include <tau/color.h>
@@ -34,30 +33,29 @@ struct CannyResult
     Float rangeHigh;
     Float rangeLow;
 
-    draw::Pixels Colorize() const
+    std::shared_ptr<draw::Pixels> Colorize(const tau::Margins &margins) const
     {
-        tau::HsvPlanes<Float> hsv(this->matrix.rows(), this->matrix.cols());
+        auto trimmed = margins.RemoveMargin(this->matrix);
+        tau::HsvPlanes<Float> hsv(trimmed.rows(), trimmed.cols());
 
         GetSaturation(hsv).array() = Float(1);
 
         GetHue(hsv).array() = Float(120);
 
-        GetHue(hsv).array() = (matrix.array() < this->rangeHigh)
+        GetHue(hsv).array() = (trimmed.array() < this->rangeHigh)
             .select(300, GetHue(hsv).array());
 
         GetValue(hsv) =
-            (matrix.array() >= this->rangeHigh).select(Float(1), matrix);
+            (trimmed.array() >= this->rangeHigh).select(Float(1), trimmed);
 
         GetValue(hsv) =
-            (matrix.array() >= this->rangeLow
-                && matrix.array() < this->rangeHigh)
-            .select(Float(0.7), matrix);
+            (trimmed.array() >= this->rangeLow
+                && trimmed.array() < this->rangeHigh)
+            .select(Float(0.7), trimmed);
 
         auto asRgb = tau::HsvToRgb<uint8_t>(hsv);
 
-        return {
-            asRgb.template GetInterleaved<Eigen::RowMajor>(),
-            {this->matrix.cols(), this->matrix.rows()}};
+        return draw::Pixels::CreateShared(asRgb);
     }
 };
 
@@ -169,25 +167,42 @@ public:
         using Directions =
             Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
-        Solver(
-            const CannySettings<Float> &settings,
-            const Matrix &suppressed,
-            const Directions &directions)
+        Solver()
             :
-            low_(settings.range.low),
-            high_(settings.range.high),
-            depth_(settings.depth),
-            rows_(suppressed.rows()),
-            columns_(suppressed.cols()),
-            suppressed_(suppressed),
-            directions_(directions),
-            result(Matrix::Zero(this->rows_, this->columns_))
+            low_(),
+            high_(),
+            depth_(),
+            rows_(),
+            columns_(),
+            suppressed_(),
+            directions_(),
+            result()
         {
 
         }
 
-        // Do not allow temporaries to bind to const references.
-        Solver(Matrix &&, Directions &&) = delete;
+        Solver(
+            const CannySettings<Float> &settings,
+            const Matrix &suppressed,
+            const Directions &directions)
+        {
+            this->Initialize(settings, suppressed, directions);
+        }
+
+        void Initialize(
+            const CannySettings<Float> &settings,
+            const Matrix &suppressed,
+            const Directions &directions)
+        {
+            this->low_ = settings.range.low;
+            this->high_ = settings.range.high;
+            this->depth_ = settings.depth;
+            this->rows_ = suppressed.rows();
+            this->columns_ = suppressed.cols();
+            this->suppressed_ = suppressed;
+            this->directions_ = directions;
+            this->result = Matrix::Zero(this->rows_, this->columns_);
+        }
 
         // trigger is the point that caused us to check for an extension of the
         // edge.
@@ -232,7 +247,7 @@ public:
                 // Check the second neighbor for inclusion.
                 this->Extend(neighbors.second, check, depth + 1);
             }
-        };
+        }
 
     private:
         Float low_;
@@ -247,15 +262,15 @@ public:
         Matrix result;
     };
 
-    static Matrix Solve(
+    static void Solve(
+        Solver &solver,
         const chunk::Chunk &chunk,
         const CannySettings<Float> &settings,
         const Eigen::MatrixX<Float> &suppressed,
         const Eigen::MatrixX<int> &directions)
     {
         using Eigen::Index;
-
-        Solver solver(settings, suppressed, directions);
+        solver.Initialize(settings, suppressed, directions);
 
         Index columns = suppressed.cols();
 
@@ -277,8 +292,6 @@ public:
                 solver.Extend(candidate, candidate);
             }
         }
-
-        return solver.result;
     }
 
     static bool LocateCenterPoint(
@@ -354,23 +367,22 @@ public:
 
 
     template<typename Value>
-    std::optional<Result> Filter(const GradientResult<Value> &gradient) const
+    bool Filter(const GradientResult<Value> &gradient, Result &result) const
     {
         if (!this->settings_.enable)
         {
-            return {};
+            return false;
         }
 
         using Eigen::Index;
 
-        Result canny{};
-        canny.rangeHigh = this->settings_.range.high;
-        canny.rangeLow = this->settings_.range.low;
+        result.rangeHigh = this->settings_.range.high;
+        result.rangeLow = this->settings_.range.low;
 
-        canny.phasor = gradient.template GetPhasor<Float>();
+        result.phasor = gradient.template GetPhasor<Float>();
 
         // Copy the phasor for local modification.
-        auto phasor = canny.phasor;
+        auto phasor = result.phasor;
 
         // Reduce the phase to 8 sectors
         typename Solver::Directions reducedPhase =
@@ -399,7 +411,7 @@ public:
 
                 Float value = phasor.GetMagnitude(point);
 
-                if (value <= canny.rangeLow)
+                if (value <= result.rangeLow)
                 {
                     continue;
                 }
@@ -459,35 +471,44 @@ public:
             << std::endl;
 #endif
 
-        std::vector<std::future<Matrix>> threadResults;
-
         auto chunks = chunk::MakeChunks(this->settings_.threads, rows);
 
-        for (auto &chunk: chunks)
+        std::vector<jive::Sentry> threadSentries;
+        threadSentries.reserve(chunks.size());
+        std::vector<Solver> solvers(chunks.size());
+        auto threadPool = jive::GetThreadPool();
+
+        for (auto index: jive::Range<size_t>(0, chunks.size()))
         {
-            threadResults.push_back(
-                std::async(
-                    std::launch::async,
-                    &Canny<Float>::Solve,
-                    chunk,
-                    this->settings_,
-                    suppressed,
-                    directions));
+            threadSentries.emplace_back(
+                threadPool->AddJob(
+                    [&, index]()
+                    {
+                        Canny<Float>::Solve(
+                            solvers[index],
+                            chunks[index],
+                            this->settings_,
+                            suppressed,
+                            directions);
+                    }));
         }
 
-        canny.matrix = Matrix::Zero(rows, columns);
+        result.matrix = Matrix::Zero(rows, columns);
 
-        for (auto &threadResult: threadResults)
+        for (auto index: jive::Range<size_t>(0, chunks.size()))
         {
-            Matrix result = threadResult.get();
+            threadSentries[index].Wait();
+
+            const auto &chunkResult = solvers[index].result;
 
             // Each thread may have followed an edge into another thread's
             // boundaries.
             // Only copy non-zero values.
-            canny.matrix = (result.array() > 0).select(result, canny.matrix);
+            result.matrix =
+                (chunkResult.array() > 0).select(chunkResult, result.matrix);
         }
 
-        return canny;
+        return true;
     }
 
 private:

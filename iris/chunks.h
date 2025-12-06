@@ -1,7 +1,9 @@
 #pragma once
 
 
+#include <cassert>
 #include <vector>
+#include <jive/thread_pool.h>
 #include <tau/eigen_shim.h>
 #include <tau/convolve.h>
 
@@ -32,8 +34,11 @@ using Chunks = std::vector<Chunk>;
 inline
 Chunks MakeChunks(
     size_t threadCount,
-    Eigen::Index processCount)
+    Eigen::Index processCount,
+    std::optional<Eigen::Index> minimumChunkCount = std::nullopt)
 {
+    assert(processCount >= static_cast<Eigen::Index>(threadCount));
+
     if (threadCount == 0)
     {
         throw ChunkError("threadCount must be greater than 0");
@@ -43,6 +48,24 @@ Chunks MakeChunks(
 
     Index chunkCount =
         processCount / static_cast<Index>(threadCount);
+
+    if (minimumChunkCount)
+    {
+        if (processCount < *minimumChunkCount)
+        {
+            throw std::logic_error("Inconsistent constraint");
+        }
+
+        while (chunkCount < minimumChunkCount && threadCount > 1)
+        {
+            --threadCount;
+            chunkCount = processCount / static_cast<Index>(threadCount);
+        }
+
+        // The check and throw above guarantees that processCount >=
+        // minimumChunkCount; therefore, this condition is guaranteed.
+        assert(chunkCount >= *minimumChunkCount);
+    }
 
     Chunks result(threadCount, Chunk{0, chunkCount});
 
@@ -65,6 +88,16 @@ Chunks MakeChunks(
 }
 
 
+inline void AwaitThreads(std::vector<jive::Sentry> &sentries)
+{
+    for (auto &sentry: sentries)
+    {
+        sentry.Wait();
+    }
+}
+
+
+template<bool normalize = false>
 struct RowFunctors
 {
     template<typename Derived>
@@ -75,35 +108,34 @@ struct RowFunctors
         return chunk::MakeChunks(threadCount, data.rows());
     }
 
-    template<typename Kernel, typename Derived>
-    static Derived Filter(
+    template<typename Kernel, typename Input, typename Output>
+    static void Filter(
         const Eigen::MatrixBase<Kernel> &kernel,
-        const Eigen::MatrixBase<Derived> &data,
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output,
         const Chunk &chunk)
     {
         assert(kernel.rows() == 1);
 
-        return tau::DoConvolve2d(
-                data.block(chunk.index, 0, chunk.count, data.cols()).eval(),
-                kernel);
-    }
+        auto outputView = tau::MakeView(
+            output.block(chunk.index, 0, chunk.count, output.cols()));
 
-    template<typename Derived, typename ThreadResults>
-    static void Get(
-        Eigen::MatrixBase<Derived> &result,
-        ThreadResults &threadResults)
-    {
-        for (auto &threadResult: threadResults)
+        tau::CorrelateRows(
+            tau::ViewTag{},
+            kernel,
+            tau::MakeView(
+                input.block(chunk.index, 0, chunk.count, input.cols())),
+            outputView);
+
+        if constexpr (normalize)
         {
-            auto &chunk = threadResult.second;
-
-            result.block(chunk.index, 0, chunk.count, result.cols()) =
-                threadResult.first.get();
+            outputView.array() /= kernel.sum();
         }
     }
 };
 
 
+template<bool normalize = false>
 struct ColumnFunctors
 {
     template<typename Derived>
@@ -115,92 +147,104 @@ struct ColumnFunctors
     }
 
 
-    template<typename Kernel, typename Derived>
-    static Derived Filter(
+    template<typename Kernel, typename Input, typename Output>
+    static void Filter(
         const Eigen::MatrixBase<Kernel> &kernel,
-        const Eigen::MatrixBase<Derived> &data,
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output,
         const Chunk &chunk)
     {
-        assert(kernel.cols() == 1);
+        auto outputView = tau::MakeView(
+            output.block(0, chunk.index, output.rows(), chunk.count));
 
-        return tau::DoConvolve2d(
-            data.block(0, chunk.index, data.rows(), chunk.count).eval(),
-            kernel);
-    }
+        tau::CorrelateColumns(
+            tau::ViewTag{},
+            kernel,
+            tau::MakeView(
+                input.block(0, chunk.index, input.rows(), chunk.count)),
+            outputView);
 
-
-    template<typename Derived, typename ThreadResults>
-    static void Get(
-        Eigen::MatrixBase<Derived> &result,
-        ThreadResults &threadResults)
-    {
-        for (auto &threadResult: threadResults)
+        if constexpr (normalize)
         {
-            auto &chunk = threadResult.second;
-
-            result.block(0, chunk.index, result.rows(), chunk.count) =
-                threadResult.first.get();
+            outputView.array() /= kernel.sum();
         }
     }
 };
 
 
-template<typename Functors, typename Kernel, typename Data>
+template
+<
+    typename Functors,
+    typename Kernel,
+    typename Input,
+    typename Output
+>
 class PartialConvolution
 {
 public:
     PartialConvolution(
         const Kernel &kernel,
-        const Eigen::MatrixBase<Data> &data,
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output,
         size_t threadCount)
         :
-        rowCount(data.rows()),
-        columnCount(data.cols()),
-        threadResults()
+        rowCount(input.rows()),
+        columnCount(input.cols()),
+        threadPool_(jive::GetThreadPool()),
+        threadSentries_()
     {
-        auto chunks = Functors::MakeChunks(threadCount, data.derived());
+        assert(this->rowCount > 0);
+        assert(this->columnCount > 0);
+
+        assert(this->rowCount == output.rows());
+        assert(this->columnCount == output.cols());
+
+        auto chunks = Functors::MakeChunks(threadCount, input.derived());
 
         for (auto &chunk: chunks)
         {
-            this->threadResults.emplace_back(
-                std::async(
-                    std::launch::async,
-                    Functors::template Filter<Kernel, Data>,
-                    kernel,
-                    data.derived(),
-                    chunk),
-                chunk);
+            this->threadSentries_.emplace_back(
+                this->threadPool_->AddJob(
+                    [chunk, &kernel, &input, &output]
+                    {
+                        return Functors::template Filter<Kernel, Input, Output>(
+                            kernel,
+                            input,
+                            output,
+                            chunk);
+                    }));
         }
     }
 
-    Data Get()
+    void Await()
     {
-        Data result(this->rowCount, this->columnCount);
-        Functors::Get(result, this->threadResults);
-        return result;
+        AwaitThreads(this->threadSentries_);
     }
 
 private:
     Eigen::Index rowCount;
     Eigen::Index columnCount;
-    std::vector<std::pair<std::future<Data>, Chunk>> threadResults;
+    std::shared_ptr<jive::ThreadPool> threadPool_;
+    std::vector<jive::Sentry> threadSentries_;
 };
 
 
-template<typename Kernel, typename Data>
+template<bool normalize, typename Kernel, typename Input, typename Output>
 class RowConvolution
     :
-    public PartialConvolution<RowFunctors, Kernel, Data>
+    public PartialConvolution<RowFunctors<normalize>, Kernel, Input, Output>
 {
 public:
     RowConvolution(
         const Kernel &kernel,
-        const Eigen::MatrixBase<Data> &data,
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output,
         size_t threadCount)
         :
-        PartialConvolution<RowFunctors, Kernel, Data>(
+        PartialConvolution<RowFunctors<normalize>, Kernel, Input, Output>(
             kernel,
-            data,
+            input,
+            output,
             threadCount)
     {
 
@@ -208,20 +252,22 @@ public:
 };
 
 
-template<typename Kernel, typename Data>
+template<bool normalize, typename Kernel, typename Input, typename Output>
 class ColumnConvolution
     :
-    public PartialConvolution<ColumnFunctors, Kernel, Data>
+    public PartialConvolution<ColumnFunctors<normalize>, Kernel, Input, Output>
 {
 public:
     ColumnConvolution(
         const Kernel &kernel,
-        const Eigen::MatrixBase<Data> &data,
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output,
         size_t threadCount)
         :
-        PartialConvolution<ColumnFunctors, Kernel, Data>(
+        PartialConvolution<ColumnFunctors<normalize>, Kernel, Input, Output>(
             kernel,
-            data,
+            input,
+            output,
             threadCount)
     {
 

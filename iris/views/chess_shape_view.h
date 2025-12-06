@@ -17,7 +17,7 @@ public:
 
     ChessShapeView(
         wxWindow *parent,
-        ChessShapeControl controls,
+        const ChessShapeControl &controls,
         const LayoutOptions &layoutOptions = LayoutOptions{});
 };
 

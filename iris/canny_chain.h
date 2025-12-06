@@ -1,7 +1,6 @@
 #pragma once
 
 
-#include <optional>
 #include "iris/canny_chain_settings.h"
 #include "iris/level_adjust.h"
 #include "iris/gaussian.h"
@@ -26,12 +25,14 @@ struct CannyChainFilters
 struct CannyChainResults
 {
     using Filters = CannyChainFilters;
-    std::optional<typename Filters::GaussianFilter::Result> gaussian;
-    std::optional<typename Filters::GradientFilter::Result> gradient;
-    std::optional<typename Filters::CannyFilter::Result> canny;
+    std::shared_ptr<const typename Filters::GaussianFilter::Result> gaussian;
+    std::shared_ptr<const typename Filters::GradientFilter::Result> gradient;
+    std::shared_ptr<const typename Filters::CannyFilter::Result> canny;
 
     std::shared_ptr<draw::Pixels>
-        Display(ThreadsafeColorMap<int32_t> &color) const;
+        Display(
+            const tau::Margins &margins,
+            ThreadsafeColorMap<int32_t> &color) const;
 };
 
 
@@ -87,6 +88,7 @@ class CannyChain
 {
 public:
     using Result = typename CannyChainNodes<SourceNode>::Result;
+    using ResultPtr = std::shared_ptr<const Result>;
     using ChainResults = CannyChainResults;
 
     using Base = NodeBase
@@ -108,7 +110,7 @@ public:
 
     }
 
-    std::optional<Result> DoGetResult()
+    ResultPtr DoGetResult()
     {
         if (!this->settings_.enable)
         {
@@ -118,7 +120,7 @@ public:
         return this->nodes_.canny.GetResult();
     }
 
-    std::optional<ChainResults> GetChainResults()
+    std::shared_ptr<ChainResults> GetChainResults()
     {
         if (!this->settings_.enable)
         {
@@ -130,10 +132,10 @@ public:
             this->settingsChanged_ = false;
         }
 
-        ChainResults result;
-        result.canny = this->nodes_.canny.GetResult();
-        result.gradient = this->nodes_.gradient.GetResult();
-        result.gaussian = this->nodes_.gaussian.GetResult();
+        auto result = std::make_shared<ChainResults>();
+        result->canny = this->nodes_.canny.GetResult();
+        result->gradient = this->nodes_.gradient.GetResult();
+        result->gaussian = this->nodes_.gaussian.GetResult();
 
         std::lock_guard lock(this->mutex_);
 

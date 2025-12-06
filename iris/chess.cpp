@@ -13,25 +13,26 @@ Chess::Chess(const ChessSettings &settings)
 }
 
 
-std::optional<ChessSolution> Chess::Filter(const ChessInput &input)
+bool Chess::Filter(const ChessInput &input, ChessSolution &result)
 {
     if (!this->settings_.enable)
     {
-        return {};
+        return false;
     }
 
     if (input.vertices.empty())
     {
-        return {};
+        return false;
     }
 
     if (input.hough.lines.empty())
     {
-        return {};
+        return false;
     }
 
-    return ChessSolution(
-        ChessOutput(input.hough.lines, input.vertices, this->settings_));
+    result = ChessOutput(input.hough.lines, input.vertices, this->settings_);
+
+    return true;
 }
 
 

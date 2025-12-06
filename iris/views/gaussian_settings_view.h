@@ -26,8 +26,8 @@ public:
     GaussianSettingsView(
         wxWindow *parent,
         const std::string &name,
-        GaussianControl<Value> controls,
-        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
+        const GaussianControl<Value> &controls,
+        const draw::NodeSettingsControl *nodeSettingsControl,
         const LayoutOptions &layoutOptions)
         :
         draw::CollapsibleNodeSettingsView(parent, name, nodeSettingsControl)

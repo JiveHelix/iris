@@ -18,8 +18,8 @@ namespace iris
 
 MaskSettingsView::MaskSettingsView(
     wxWindow *parent,
-    MaskControl controls,
-    std::optional<draw::NodeSettingsControl> nodeSettingsControl,
+    const MaskControl &controls,
+    const draw::NodeSettingsControl *nodeSettingsControl,
     const LayoutOptions &layoutOptions)
     :
     draw::CollapsibleNodeSettingsView(parent, "Mask", nodeSettingsControl)
@@ -35,31 +35,18 @@ MaskSettingsView::MaskSettingsView(
             "Show Outline",
             controls.showOutline);
 
-    // TODO: polygons can start as an empty list. Using the example in
-    // draw/examples/shapes_interface, display the polygon shape control when
-    // it is created.
-#if 0
-    auto polygon =
-        new draw::ShapeView(
-            panel,
-            "Polygon",
-            controls.polygons[0],
-            layoutOptions);
-#endif
-
     auto feather =
         new GaussianSettingsView<double>(
             panel,
             "Feather",
             controls.feather,
-            {},
+            nullptr,
             layoutOptions);
 
     auto sizer = wxpex::LayoutItems(
         wxpex::verticalItems,
         enable,
         showOutline,
-        // polygon,
         feather);
 
     this->ConfigureSizer(std::move(sizer));

@@ -7,8 +7,8 @@ namespace iris
 
 
 MaskBrain::MaskBrain(
-    MaskControl maskControl,
-    draw::PixelViewControl pixelViewControl)
+    const MaskControl &maskControl,
+    const draw::PixelViewControl &pixelViewControl)
     :
     shapesId_(),
     maskShapesBrain_(maskControl.polygons, pixelViewControl.canvas),

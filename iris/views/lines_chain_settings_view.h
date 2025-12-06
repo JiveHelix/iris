@@ -18,8 +18,8 @@ public:
 
     LinesChainSettingsView(
         wxWindow *parent,
-        LinesChainControl controls,
-        std::optional<LinesChainNodeSettingsControl> nodeSettingsControl,
+        const LinesChainControl &controls,
+        const LinesChainNodeSettingsControl *nodeSettingsControl = nullptr,
         const LayoutOptions &layoutOptions = LayoutOptions{});
 };
 

@@ -7,8 +7,8 @@ namespace iris
 
 ChessChainNodes::ChessChainNodes(
     SourceNode &source,
-    ChessChainControl control,
-    CancelControl cancel)
+    const ChessChainControl &control,
+    const CancelControl &cancel)
     :
     mask("Mask", source, control.mask, cancel),
     level(this->mask, control.level, cancel),
@@ -37,8 +37,8 @@ ChessChainNodes::ChessChainNodes(
 
 ChessChain::ChessChain(
     SourceNode &sourceNode,
-    ChessChainControl control,
-    CancelControl cancel)
+    const ChessChainControl &control,
+    const CancelControl &cancel)
     :
     Base("ChessChain", sourceNode, control, cancel),
     linesShapesId_(),
@@ -53,7 +53,7 @@ ChessChain::ChessChain(
 
 }
 
-std::optional<ChessChain::Result> ChessChain::DoGetResult()
+ChessChain::ResultPtr ChessChain::DoGetResult()
 {
     if (!this->settings_.enable)
     {
@@ -63,7 +63,7 @@ std::optional<ChessChain::Result> ChessChain::DoGetResult()
     return this->nodes_.chess.GetResult();
 }
 
-std::optional<ChessChain::ChainResults> ChessChain::GetChainResults()
+std::shared_ptr<ChessChain::ChainResults> ChessChain::GetChainResults()
 {
     if (!this->settings_.enable)
     {
@@ -75,20 +75,20 @@ std::optional<ChessChain::ChainResults> ChessChain::GetChainResults()
         this->settingsChanged_ = false;
     }
 
-    ChainResults result(
+    auto result = std::make_shared<ChainResults>(
         this->chessShapesId_.Get(),
         this->linesShapesId_.Get(),
         this->verticesShapesId_.Get());
 
-    result.chess = this->nodes_.chess.GetResult();
-    result.vertices = this->nodes_.vertices.GetResult();
-    result.harris = this->nodes_.harris.GetResult();
-    result.hough = this->nodes_.hough.GetResult();
-    result.canny = this->nodes_.canny.GetResult();
-    result.gradient = this->nodes_.gradientForHarris.GetResult();
-    result.gaussian = this->nodes_.gaussian.GetResult();
-    result.level = this->nodes_.level.GetResult();
-    result.mask = this->nodes_.mask.GetResult();
+    result->chess = this->nodes_.chess.GetResult();
+    result->vertices = this->nodes_.vertices.GetResult();
+    result->harris = this->nodes_.harris.GetResult();
+    result->hough = this->nodes_.hough.GetResult();
+    result->canny = this->nodes_.canny.GetResult();
+    result->gradient = this->nodes_.gradientForHarris.GetResult();
+    result->gaussian = this->nodes_.gaussian.GetResult();
+    result->level = this->nodes_.level.GetResult();
+    result->mask = this->nodes_.mask.GetResult();
 
     std::lock_guard lock(this->mutex_);
 

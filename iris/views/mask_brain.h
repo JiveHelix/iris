@@ -55,8 +55,8 @@ class MaskBrain
 {
 public:
     MaskBrain(
-        MaskControl maskControl,
-        draw::PixelViewControl pixelViewControl);
+        const MaskControl &maskControl,
+        const draw::PixelViewControl &pixelViewControl);
 
     void UpdateDisplay();
 

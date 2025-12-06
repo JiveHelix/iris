@@ -25,8 +25,8 @@ public:
 
     HarrisSettingsView(
         wxWindow *parent,
-        Control controls,
-        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
+        const Control &controls,
+        const draw::NodeSettingsControl *nodeSettingsControl,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
         draw::CollapsibleNodeSettingsView(parent, "Harris", nodeSettingsControl)

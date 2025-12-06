@@ -6,7 +6,7 @@ namespace iris
 {
 
 
-LinesChainResults::LinesChainResults(ssize_t shapesId)
+LinesChainResults::LinesChainResults(int64_t shapesId)
     :
     cannyChain{},
     hough{},
@@ -17,10 +17,11 @@ LinesChainResults::LinesChainResults(ssize_t shapesId)
 
 
 std::shared_ptr<draw::Pixels> LinesChainResults::Display(
-    draw::AsyncShapesControl shapesControl,
+    const tau::Margins &margins,
+    const draw::AsyncShapesControl &shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
     ThreadsafeColorMap<int32_t> &color,
-    std::optional<HoughControl> houghControl) const
+    HoughPixelsControl *houghControl) const
 {
     if (!this->cannyChain)
     {
@@ -29,7 +30,7 @@ std::shared_ptr<draw::Pixels> LinesChainResults::Display(
         return {};
     }
 
-    auto cannyChainPixels = this->cannyChain->Display(color);
+    auto cannyChainPixels = this->cannyChain->Display(margins, color);
 
     if (this->hough)
     {
@@ -40,8 +41,7 @@ std::shared_ptr<draw::Pixels> LinesChainResults::Display(
             auto scale = static_cast<double>(color.GetSettings().maximum);
             ProcessMatrix space = houghResult.GetScaledSpace<int32_t>(scale);
 
-            auto houghPixels =
-                std::make_shared<draw::Pixels>(color.Filter(space));
+            auto houghPixels = color.Filter(space);
 
             houghControl->Set(houghPixels);
         }

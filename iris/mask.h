@@ -49,11 +49,11 @@ public:
         assert(!this->mask_);
     }
 
-    std::optional<Result> Filter(const Input &data)
+    bool Filter(const Input &input, Result &result)
     {
         if (!this->maskSettings_.enable)
         {
-            return data;
+            return false;
         }
 
         if (!this->mask_)
@@ -61,13 +61,15 @@ public:
             this->mask_ = CreateMask(this->maskSettings_);
         }
 
-        assert(data.rows() == this->mask_->rows());
-        assert(data.cols() == this->mask_->cols());
+        assert(input.rows() == this->mask_->rows());
+        assert(input.cols() == this->mask_->cols());
 
-        MaskMatrix result =
-            data.template cast<double>().array() * this->mask_->array();
+        MaskMatrix resultAsFloat =
+            input.template cast<double>().array() * this->mask_->array();
 
-        return result.template cast<Value>();
+        result = resultAsFloat.template cast<Value>();
+
+        return true;
     }
 
 

@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <cstdint>
 #include <pex/endpoint.h>
 #include "iris/chess_chain_results.h"
 #include "iris/chess_chain_settings.h"
@@ -38,7 +39,6 @@ struct ChessChainNodes
     using HarrisFilter = typename Filters::HarrisFilter;
     using VertexFilter = typename Filters::VertexFilter;
 
-
     using MaskNode = Node<SourceNode, MaskFilter, MaskControl>;
     using LevelNode = LevelAdjustNode<MaskNode, InProcess, double>;
 
@@ -46,7 +46,6 @@ struct ChessChainNodes
         iris::Node<LevelNode, GaussianFilter, GaussianControl<int32_t>>;
 
     using GradientNode_ = GradientNode<GaussianNode>;
-
 
     using CannyNode =
         iris::Node<GradientNode_, CannyFilter, CannyControl<double>>;
@@ -61,6 +60,7 @@ struct ChessChainNodes
         iris::Node<HarrisNode, VertexFilter, VertexControl>;
 
     using Result = ChessSolution;
+    using ResultPtr = std::shared_ptr<const ChessSolution>;
 
     using MixNode =
         typename ChessNodes<VertexNode, HoughNode>::MixNode;
@@ -85,8 +85,8 @@ struct ChessChainNodes
 
     ChessChainNodes(
         SourceNode &source,
-        ChessChainControl control,
-        CancelControl cancel);
+        const ChessChainControl &control,
+        const CancelControl &cancel);
 };
 
 
@@ -102,29 +102,30 @@ class ChessChain
 {
 public:
     using SourceNode = typename ChessChainNodes::SourceNode;
-    using Result = typename ChessChainNodes::Result;
     using ChainResults = ChessChainResults;
 
     using Base = NodeBase
         <
             SourceNode,
             ChessChainControl,
-            Result,
+            typename ChessChainNodes::Result,
             ChessChain
         >;
 
+    using Result = typename Base::Result;
+
     ChessChain(
         SourceNode &sourceNode,
-        ChessChainControl control,
-        CancelControl cancel);
+        const ChessChainControl &control,
+        const CancelControl &cancel);
 
     void AutoDetectSettings();
 
-    std::optional<Result> DoGetResult();
+    ResultPtr DoGetResult();
 
-    std::optional<ChainResults> GetChainResults();
+    std::shared_ptr<ChainResults> GetChainResults();
 
-    ssize_t GetShapesId() const
+    int64_t GetShapesId() const
     {
         return this->chessShapesId_.Get();
     }

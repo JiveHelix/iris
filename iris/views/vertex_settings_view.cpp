@@ -15,8 +15,8 @@ namespace iris
 
 VertexSettingsView::VertexSettingsView(
     wxWindow *parent,
-    VertexControl controls,
-    std::optional<draw::NodeSettingsControl> nodeSettingsControl,
+    const VertexControl &controls,
+    const draw::NodeSettingsControl *nodeSettingsControl,
     const LayoutOptions &layoutOptions)
     :
     draw::CollapsibleNodeSettingsView(parent, "Vertex", nodeSettingsControl)

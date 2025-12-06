@@ -15,7 +15,7 @@ namespace iris
 {
 
 
-template<typename Data>
+template<typename Input, typename Output>
 class AsyncSuppression
 {
 public:
@@ -24,17 +24,19 @@ public:
     AsyncSuppression(
         size_t threadCount,
         Index windowSize,
-        const Eigen::MatrixBase<Data> &data)
+        const Eigen::MatrixBase<Input> &input,
+        Eigen::MatrixBase<Output> &output)
         :
         threadCount_(threadCount),
         windowSize_(windowSize),
-        rows_(data.rows()),
-        columns_(data.cols()),
-        threads_()
+        rows_(input.rows()),
+        columns_(input.cols()),
+        suppressionChunks_(),
+        output_(output)
     {
         Index maximumThreadCount;
 
-        if constexpr (tau::MatrixTraits<Data>::isColumnMajor)
+        if constexpr (tau::MatrixTraits<Output>::isColumnMajor)
         {
             maximumThreadCount = this->columns_ / windowSize;
         }
@@ -43,30 +45,37 @@ public:
             maximumThreadCount = this->rows_ / windowSize;
         }
 
+        // Ensure that output has the right size.
+        // Leave the values uninitialized for now.
+        this->output_ = Output(this->rows_, this->columns_);
+
         this->threadCount_ =
             std::min(static_cast<size_t>(maximumThreadCount), threadCount);
 
-        auto chunks = this->MakeChunks_();
+        this->chunks_ = this->MakeChunks_();
 
-        if (chunks.at(0).count < windowSize)
+        if (this->chunks_.at(0).count < windowSize)
         {
             throw IrisError("Chunk width is smaller than window size.");
         }
 
-        if constexpr (tau::MatrixTraits<Data>::isColumnMajor)
+        this->suppressionChunks_.reserve(this->chunks_.size());
+
+        if constexpr (tau::MatrixTraits<Output>::isColumnMajor)
         {
             if (this->rows_ < windowSize)
             {
                 throw IrisError("Chunk height is smaller than window size.");
             }
 
-            for (auto &chunk: chunks)
+            for (auto &chunk: this->chunks_)
             {
-                this->threads_.emplace_back(
-                    chunk::Chunk{0, this->rows_},
+                this->suppressionChunks_.emplace_back(
                     chunk,
+                    chunk::Chunk{0, this->columns_},
                     windowSize,
-                    data);
+                    input,
+                    output);
             }
         }
         else
@@ -76,75 +85,50 @@ public:
                 throw IrisError("Chunk height is smaller than window size.");
             }
 
-            for (auto &chunk: chunks)
+            for (auto &chunk: this->chunks_)
             {
-                this->threads_.emplace_back(
+                this->suppressionChunks_.emplace_back(
+                    chunk::Chunk{0, this->rows_},
                     chunk,
-                    chunk::Chunk{0, this->columns_},
                     windowSize,
-                    data);
+                    input,
+                    output);
             }
         }
     }
 
-    Data Get()
+    void Wait()
     {
-        Data result(this->rows_, this->columns_);
-        auto chunks = this->MakeChunks_();
-
-        if constexpr (tau::MatrixTraits<Data>::isColumnMajor)
+        for (auto &chunk: this->suppressionChunks_)
         {
-            // Create chunks along the columns
-            chunk::Chunk rowChunk{0, this->rows_};
-
-            for (size_t i = 0; i < this->threads_.size(); ++i)
-            {
-                auto &columnChunk = chunks.at(i);
-
-                result.block(
-                    rowChunk.index,
-                    columnChunk.index,
-                    rowChunk.count,
-                    columnChunk.count) = this->threads_[i].Get();
-            }
-
-            if (this->threadCount_ > 1)
-            {
-                this->ZipColumnMajor_(result, chunks);
-            }
-        }
-        else
-        {
-            // Create chunks along the rows
-            chunk::Chunk columnChunk{0, this->columns_};
-
-            for (size_t i = 0; i < this->threads_.size(); ++i)
-            {
-                auto &rowChunk = chunks.at(i);
-
-                result.block(
-                    rowChunk.index,
-                    columnChunk.index,
-                    rowChunk.count,
-                    columnChunk.count) = this->threads_[i].Get();
-            }
-
-            if (this->threadCount_ > 1)
-            {
-                this->ZipRowMajor_(result, chunks);
-            }
+            chunk.Wait();
         }
 
-        return result;
+        if (this->threadCount_ > 1)
+        {
+            if constexpr (tau::MatrixTraits<Output>::isColumnMajor)
+            {
+                this->ZipColumnMajor_();
+            }
+            else
+            {
+                this->ZipRowMajor_();
+            }
+        }
     }
 
 private:
     chunk::Chunks MakeChunks_() const
     {
-        if constexpr (tau::MatrixTraits<Data>::isColumnMajor)
+        if constexpr (tau::MatrixTraits<Output>::isColumnMajor)
         {
             // Create chunks along the columns
-            auto chunks = chunk::MakeChunks(this->threadCount_, this->columns_);
+            auto chunks =
+                chunk::MakeChunks(
+                    this->threadCount_,
+                    this->rows_,
+                    this->windowSize_);
+
             assert(chunks.back().count >= chunks.at(0).count);
 
             return chunks;
@@ -152,14 +136,19 @@ private:
         else
         {
             // Create chunks along the rows
-            auto chunks = chunk::MakeChunks(this->threadCount_, this->rows_);
+            auto chunks =
+                chunk::MakeChunks(
+                    this->threadCount_,
+                    this->columns_,
+                    this->windowSize_);
+
             assert(chunks.back().count >= chunks.at(0).count);
 
             return chunks;
         }
     }
 
-    void ZipColumnMajor_(Data &result, const chunk::Chunks &chunks)
+    void ZipColumnMajor_()
     {
         assert(this->threadCount_ >= 2);
 
@@ -167,29 +156,45 @@ private:
         // Each thread applied the suppression window up to the boundary.
         // We need to apply the window to the seam, extending a full window
         // height or width into the neighboring region.
-        Index zipSize = 2 * (this->windowSize_ - 1);
-        auto chunk = std::begin(chunks);
+        auto chunkPtr = std::begin(this->chunks_);
 
-        // We will look backwards starting at the second chunk.
-        while (++chunk != std::end(chunks))
+        auto threadPool = jive::GetThreadPool();
+        std::vector<jive::Sentry> sentries;
+        sentries.reserve(this->chunks_.size() - 1);
+
+        // We will look backwards starting at the second chunkPtr.
+        while (++chunkPtr != std::end(this->chunks_))
         {
-            Index zipBegin = chunk->index - this->windowSize_ + 1;
+            auto chunk = *chunkPtr;
 
-            auto block = result.block(
-                0,
-                zipBegin,
-                this->rows_,
-                zipSize);
+            sentries.emplace_back(
+                threadPool->AddJob(
+                    [chunk, this]()
+                    {
+                        Index zipBegin = chunk.index - this->windowSize_ + 1;
+                        Index zipSize = 2 * (this->windowSize_ - 1);
 
-            detail::Suppress(
-                this->rows_ - this->windowSize_ + 1,
-                zipSize - this->windowSize_ + 1,
-                this->windowSize_,
-                block);
+                        auto block = this->output_.block(
+                            zipBegin,
+                            0,
+                            zipSize,
+                            this->columns_);
+
+                        detail::Suppress(
+                            zipSize - this->windowSize_ + 1,
+                            this->columns_ - this->windowSize_ + 1,
+                            this->windowSize_,
+                            tau::MakeView(block));
+                    }));
+        }
+
+        for (auto &sentry: sentries)
+        {
+            sentry.Wait();
         }
     }
 
-    void ZipRowMajor_(Data &result, const chunk::Chunks &chunks)
+    void ZipRowMajor_()
     {
         assert(this->threadCount_ >= 2);
 
@@ -197,45 +202,63 @@ private:
         // Each thread applied the suppression window up to the boundary.
         // We need to apply the window to the seam, extending a full window
         // height or width into the neighboring region.
-        Index zipSize = 2 * (this->windowSize_ - 1);
-        auto chunk = std::begin(chunks);
+        auto chunkPtr = std::begin(this->chunks_);
 
-        // We will look backwards starting at the second chunk.
-        while (++chunk != std::end(chunks))
+        auto threadPool = jive::GetThreadPool();
+        std::vector<jive::Sentry> sentries;
+        sentries.reserve(this->chunks_.size() - 1);
+
+        // We will look backwards starting at the second chunkPtr.
+        while (++chunkPtr != std::end(this->chunks_))
         {
-            Index zipBegin = chunk->index - this->windowSize_ + 1;
+            auto chunk = *chunkPtr;
 
-            auto block = result.block(
-                zipBegin,
-                0,
-                zipSize,
-                this->columns_);
+            sentries.emplace_back(
+                threadPool->AddJob(
+                    [chunk, this]()
+                    {
+                        Index zipBegin = chunk.index - this->windowSize_ + 1;
+                        Index zipSize = 2 * (this->windowSize_ - 1);
 
-            detail::Suppress(
-                zipSize - this->windowSize_ + 1,
-                this->columns_ - this->windowSize_ + 1,
-                this->windowSize_,
-                block);
+                        auto block = this->output_.block(
+                            0,
+                            zipBegin,
+                            this->rows_,
+                            zipSize);
+
+                        detail::Suppress(
+                            this->rows_ - this->windowSize_ + 1,
+                            zipSize - this->windowSize_ + 1,
+                            this->windowSize_,
+                            tau::MakeView(block));
+                    }));
+        }
+
+        for (auto &sentry: sentries)
+        {
+            sentry.Wait();
         }
     }
-
 
 private:
     size_t threadCount_;
     Index windowSize_;
     Index rows_;
     Index columns_;
-    std::vector<detail::SuppressionChunk<Data>> threads_;
+    std::vector<detail::SuppressionChunk<Input, Output>> suppressionChunks_;
+    chunk::Chunks chunks_;
+    Eigen::MatrixBase<Output> &output_;
 };
 
 
-template<typename Data>
-Data Suppression(
+template<typename Input, typename Output>
+void Suppression(
     size_t threadCount,
     Eigen::Index windowSize,
-    const Eigen::MatrixBase<Data> &data)
+    const Eigen::MatrixBase<Input> &input,
+    Eigen::MatrixBase<Output> &output)
 {
-    return AsyncSuppression<Data>(threadCount, windowSize, data).Get();
+    AsyncSuppression(threadCount, windowSize, input, output).Wait();
 }
 
 

@@ -23,7 +23,10 @@ class PixelValue: public wxStaticText
 public:
     using Values = typename ValuesControl::Type;
 
-    PixelValue(wxWindow *parent, ValuesControl values, draw::PointControl point)
+    PixelValue(
+        wxWindow *parent,
+        const ValuesControl &values,
+        const draw::PointControl &point)
         :
         wxStaticText(parent, wxID_ANY, "    "),
 
@@ -72,10 +75,10 @@ public:
 
     PixelInfo(
         wxWindow *parent,
-        draw::PointControl point);
+        const draw::PointControl &point);
 
     template<typename ValuesControl>
-    void AddValue(ValuesControl values, const std::string &name)
+    void AddValue(const ValuesControl &values, const std::string &name)
     {
         wxpex::LayoutOptions options{};
         options.labelFlags = wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL;
@@ -110,7 +113,7 @@ public:
 
     PixelInfoView(
         wxWindow *parent,
-        draw::CanvasControl control,
+        const draw::CanvasControl &control,
         const std::string &label = "");
 
 protected:

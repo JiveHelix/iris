@@ -19,8 +19,8 @@ public:
 
     ChessChainSettingsView(
         wxWindow *parent,
-        ChessChainControl control,
-        std::optional<ChessChainNodeSettingsControl> nodeSettingsControl,
+        const ChessChainControl &control,
+        const ChessChainNodeSettingsControl *nodeSettingsControl = nullptr,
         const LayoutOptions &layoutOptions = LayoutOptions{});
 };
 

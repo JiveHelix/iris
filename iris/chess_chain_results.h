@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <draw/pixels.h>
 #include <draw/node_settings.h>
@@ -43,70 +44,74 @@ struct ChessChainFilters
 struct ChessChainResults
 {
     using Filters = ChessChainFilters;
-    std::optional<typename Filters::MaskFilter::Result> mask;
-    std::optional<typename Filters::LevelFilter::Result> level;
+    std::shared_ptr<const typename Filters::MaskFilter::Result> mask;
+    std::shared_ptr<const typename Filters::LevelFilter::Result> level;
 
-    std::optional<typename Filters::GaussianFilter::Result> gaussian;
-    std::optional<typename Filters::GradientFilter::Result> gradient;
-    std::optional<typename Filters::CannyFilter::Result> canny;
-    std::optional<typename Filters::HoughFilter::Result> hough;
+    std::shared_ptr<const typename Filters::GaussianFilter::Result> gaussian;
+    std::shared_ptr<const typename Filters::GradientFilter::Result> gradient;
+    std::shared_ptr<const typename Filters::CannyFilter::Result> canny;
+    std::shared_ptr<const typename Filters::HoughFilter::Result> hough;
 
-    std::optional<typename Filters::HarrisFilter::Result> harris;
-    std::optional<typename Filters::VertexFilter::Result> vertices;
+    std::shared_ptr<const typename Filters::HarrisFilter::Result> harris;
+    std::shared_ptr<const typename Filters::VertexFilter::Result> vertices;
 
-    std::optional<typename Chess::Result> chess;
+    std::shared_ptr<const typename Chess::Result> chess;
 
-    using HoughControl =
+    using HoughPixelsControl =
         typename draw::PixelViewControl::AsyncPixelsControl;
 
     ChessChainResults(
-        ssize_t chessShapesId,
-        ssize_t linesShapesId,
-        ssize_t verticesShapesId);
+        int64_t chessShapesId,
+        int64_t linesShapesId,
+        int64_t verticesShapesId);
 
     std::shared_ptr<draw::Pixels> Display(
-        draw::AsyncShapesControl shapesControl,
+        const tau::Margins &margins,
+        const draw::AsyncShapesControl &shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
         const draw::PointsShapeSettings &pointsShapeSettings,
         const ChessShapeSettings &chessShapeSettings,
         ThreadsafeColorMap<int32_t> &color,
-        std::optional<HoughControl> houghControl,
-        std::optional<ChessChainNodeSettings> nodeSettings) const;
+        HoughPixelsControl *houghControl,
+        ChessChainNodeSettings *nodeSettings) const;
 
     std::shared_ptr<draw::Pixels> DisplayNode(
-        ChessChainNodeSettings nodeSettings,
-        draw::AsyncShapesControl shapesControl,
+        const tau::Margins &margins,
+        const ChessChainNodeSettings &nodeSettings,
+        const draw::AsyncShapesControl &shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
         const draw::PointsShapeSettings &pointsShapeSettings,
         const ChessShapeSettings &chessShapeSettings,
         ThreadsafeColorMap<int32_t> &color,
-        std::optional<HoughControl> houghControl) const;
+        HoughPixelsControl *houghControl) const;
 
 private:
     void ClearShapes_(draw::AsyncShapesControl) const;
 
     std::shared_ptr<draw::Pixels> GetPreprocessedPixels_(
+        const tau::Margins &margins,
         ThreadsafeColorMap<int32_t> &color) const;
 
     std::shared_ptr<draw::Pixels> GetNodePixels_(
-        ChessChainNodeSettings nodeSettings,
+        const tau::Margins &margins,
+        const ChessChainNodeSettings &nodeSettings,
         ThreadsafeColorMap<int32_t> &color) const;
 
     void DrawHoughResults_(
-        draw::AsyncShapesControl shapesControl,
+        const draw::AsyncShapesControl &shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
         ThreadsafeColorMap<int32_t> &color,
-        std::optional<HoughControl> houghControl) const;
+        HoughPixelsControl *houghControl) const;
 
     void DrawVerticesResults_(
-        draw::AsyncShapesControl shapesControl,
+        const draw::AsyncShapesControl &shapesControl,
         const draw::PointsShapeSettings &pointsShapeSettings,
         ThreadsafeColorMap<int32_t> &color) const;
 
 private:
-    ssize_t chessShapesId_;
-    ssize_t linesShapesId_;
-    ssize_t verticesShapesId_;
+    int64_t chessShapesId_;
+    int64_t linesShapesId_;
+    int64_t verticesShapesId_;
 };
 
 

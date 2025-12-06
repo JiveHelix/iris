@@ -92,11 +92,13 @@ MaskMatrix CreateMask(const MaskSettings &maskSettings)
     }
 
     auto gaussian = Gaussian<double, 0>(maskSettings.feather);
-    auto feather = gaussian.Filter(red);
+    using GaussianResult = typename Gaussian<double, 0>::Result;
+    GaussianResult feather(red.rows(), red.cols());
+    bool filterResult = gaussian.Filter(red, feather);
 
-    // We've already checked that feather is enabled
-    assert(feather);
-    return *feather;
+    assert(filterResult);
+
+    return feather;
 }
 
 

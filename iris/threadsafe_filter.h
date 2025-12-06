@@ -22,7 +22,7 @@ public:
     using Control = typename Group::DefaultControl;
     using SettingsEndpoint = pex::Endpoint<ThreadsafeFilter, Control>;
 
-    ThreadsafeFilter(Control control)
+    ThreadsafeFilter(const Control &control)
         :
         mutex_(),
 

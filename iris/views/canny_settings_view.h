@@ -25,8 +25,8 @@ public:
 
     CannySettingsView(
         wxWindow *parent,
-        CannyControl<Value> controls,
-        std::optional<draw::NodeSettingsControl> nodeSettingsControl,
+        const CannyControl<Value> &controls,
+        const draw::NodeSettingsControl *nodeSettingsControl = nullptr,
         const LayoutOptions &layoutOptions = LayoutOptions{})
         :
         draw::CollapsibleNodeSettingsView(parent, "Canny", nodeSettingsControl)

@@ -39,62 +39,67 @@ public:
     }
 
     template<typename Value>
-    std::optional<Result> Filter(const GradientResult<Value> &gradient)
+    bool Filter(const GradientResult<Value> &gradient, Result &result)
     {
         if (!this->settings_.enable)
         {
-            return {};
+            return false;
         }
 
         Result dx = gradient.dx.template cast<Float>();
         Result dy = gradient.dy.template cast<Float>();
 
         Result dxSquared = dx.array().square();
+        Result dxSquaredResult(dxSquared.rows(), dxSquared.cols());
         Result dySquared = dy.array().square();
+        Result dySquaredResult(dySquared.rows(), dySquared.cols());
         Result dxdy = dx.array() * dy.array();
+        Result dxdyResult(dxdy.rows(), dxdy.cols());
 
         // Window the gradient data using the gaussian kernel.
         auto threadedDxSquared = ThreadedRowGaussian(
             this->gaussianKernel_,
             dxSquared,
+            dxSquaredResult,
             this->settings_.threads);
 
         auto threadedDySquared = ThreadedColumnGaussian(
             this->gaussianKernel_,
             dySquared,
+            dySquaredResult,
             this->settings_.threads);
 
-        auto threadedDxDy = std::async(
-            std::launch::async,
-            [this, &dxdy]()
+        auto threadedDxDy = jive::GetThreadPool()->AddJob(
+            [this, &dxdy, &dxdyResult]()
             {
-                return this->gaussianKernel_.Filter(dxdy);
+                this->gaussianKernel_.Filter(dxdy, dxdyResult);
             });
 
-        Result windowedDxSquared = threadedDxSquared.Get();
-        Result windowedDySquared = threadedDySquared.Get();
-        Result windowedDxDy = threadedDxDy.get();
+        threadedDxSquared.Await();
+        threadedDySquared.Await();
+        threadedDxDy.Wait();
 
         Result response =
-            windowedDxSquared.array() * windowedDySquared.array()
-            - windowedDxDy.array().square()
+            dxSquaredResult.array() * dySquaredResult.array()
+            - dxdyResult.array().square()
             - this->settings_.alpha
-                * (windowedDxSquared.array() + windowedDySquared.array())
+                * (dxSquaredResult.array() + dySquaredResult.array())
                     .square();
-
-        Result threshold = this->Threshold(response);
 
         if (this->settings_.suppress)
         {
-            Result result = Suppression(
+            Suppression(
                 this->settings_.threads,
                 this->settings_.window,
-                threshold);
+                this->Threshold(response),
+                result);
 
-            return result;
+            return true;
         }
 
-        return threshold;
+        result = this->Threshold(response);
+
+        return true;
     }
 
     Result Threshold(const Result &response)
@@ -115,7 +120,9 @@ using ThreadsafeHarris =
 
 
 template<typename Derived>
-draw::Pixels ColorizeHarris(const Eigen::MatrixBase<Derived> &input)
+std::shared_ptr<draw::Pixels> ColorizeHarris(
+    const tau::Margins &margins,
+    const Eigen::MatrixBase<Derived> &input)
 {
     using Float = typename Derived::Scalar;
 
@@ -132,17 +139,17 @@ draw::Pixels ColorizeHarris(const Eigen::MatrixBase<Derived> &input)
     response.array() += 0.4;
     tau::Select(response) <= 0.4 = 0.0;
 
-    tau::HsvPlanes<Float> hsv(response.rows(), response.cols());
+    auto validSize = margins.GetValidSize(response);
+
+    tau::HsvPlanes<Float> hsv(validSize.rows, validSize.columns);
 
     tau::GetSaturation(hsv).array() = Float(1.0);
     tau::GetHue(hsv).array() = Float(120.0);
-    tau::GetValue(hsv) = response;
+    tau::GetValue(hsv) = margins.RemoveMargin(response);
 
     auto asRgb = tau::HsvToRgb<uint8_t>(hsv);
 
-    return {
-        asRgb.template GetInterleaved<Eigen::RowMajor>(),
-        {response.cols(), response.rows()}};
+    return draw::Pixels::CreateShared(asRgb);
 }
 
 

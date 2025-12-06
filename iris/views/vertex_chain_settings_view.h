@@ -17,8 +17,8 @@ public:
 
     VertexChainSettingsView(
         wxWindow *parent,
-        VertexChainControl controls,
-        std::optional<VertexChainNodeSettingsControl> nodeSettingsControl,
+        const VertexChainControl &controls,
+        const VertexChainNodeSettingsControl *nodeSettingsControl = nullptr,
         const LayoutOptions &layoutOptions = LayoutOptions{});
 };
 

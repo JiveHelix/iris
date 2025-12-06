@@ -1,4 +1,5 @@
 #include "iris/chess/group_functions.h"
+#include <cstddef>
 
 
 namespace iris
@@ -215,8 +216,8 @@ void SortDescending(
         [&](const LineGroup &first, const LineGroup &second) -> bool
         {
             auto sizeDifference = std::abs(
-                static_cast<ssize_t>(first.lines.size())
-                    - static_cast<ssize_t>(second.lines.size()));
+                static_cast<std::ptrdiff_t>(first.lines.size())
+                    - static_cast<std::ptrdiff_t>(second.lines.size()));
 
             double firstAngleDifference = std::abs(
                 tau::LineAngleDifference(first.angle, verticalAngle));
