@@ -20,7 +20,7 @@ bool Chess::Filter(const ChessInput &input, ChessSolution &result)
         return false;
     }
 
-    if (input.vertices.empty())
+    if (input.vertices.vertices.empty())
     {
         return false;
     }
@@ -30,7 +30,10 @@ bool Chess::Filter(const ChessInput &input, ChessSolution &result)
         return false;
     }
 
-    result = ChessOutput(input.hough.lines, input.vertices, this->settings_);
+    result = ChessOutput(
+        input.hough.lines,
+        input.vertices,
+        this->settings_);
 
     return true;
 }

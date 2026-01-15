@@ -111,9 +111,45 @@ public:
 };
 
 
+struct Nodes
+{
+    using Gaussian = iris::Gaussian<iris::InProcess, 0>;
+    using Gradient = iris::Gradient<iris::InProcess>;
+
+    using GaussianNode =
+        iris::Node<GrayPngSource, Gaussian, iris::GaussianControl<iris::InProcess>>;
+
+    GrayPngSource source;
+    GaussianNode gaussian;
+    iris::GradientNode<GaussianNode> gradient;
+
+    Nodes(
+        const iris::CancelControl &cancelControl,
+        const DemoControl &demoControl)
+        :
+        source(),
+
+        gaussian(
+            "gaussian",
+            this->source,
+            demoControl.gaussian,
+            cancelControl),
+
+        gradient(
+            this->gaussian,
+            demoControl.gradient,
+            cancelControl)
+    {
+
+    }
+};
+
+
 class DemoBrain: public GrayPngBrain<DemoBrain>
 {
 public:
+    using Base = GrayPngBrain<DemoBrain>;
+
     using Gaussian = iris::Gaussian<iris::InProcess, 0>;
     using Gradient = iris::Gradient<iris::InProcess>;
     using Color = tau::ColorMap<iris::InProcess>;
@@ -123,12 +159,16 @@ public:
         GrayPngBrain<DemoBrain>(),
         observer_(this, UserControl(this->user_)),
         demoModel_(),
+
+        nodes_(
+            iris::CancelControl(this->cancel_),
+            DemoControl(this->demoModel_)),
+
         demoEndpoint_(
             this,
             this->demoModel_,
             &DemoBrain::OnSettings_),
-        gaussian_(this->demoModel_.gaussian.Get()),
-        gradient_(this->demoModel_.gradient.Get()),
+
         color_(this->demoModel_.color.Get()),
 
         displayThread_(
@@ -155,17 +195,6 @@ public:
         this->GrayPngBrain<DemoBrain>::Shutdown();
     }
 
-    void LoadGrayPng(const draw::GrayPng<PngPixel> &png)
-    {
-        auto pngSize = png.GetSize();
-        std::cout << "LoadGrayPng pngSize: " << pngSize << std::endl;
-        this->user_.pixelView.canvas.viewSettings.imageSize.Set(pngSize);
-
-        std::lock_guard lock(this->sourceMutex_);
-        this->png_ = png;
-        this->source_.SetData(png.GetValues().template cast<iris::InProcess>());
-    }
-
     std::string GetAppName() const
     {
         return "Gray Gaussian Demo";
@@ -181,13 +210,7 @@ public:
 
     std::shared_ptr<draw::Pixels> Process()
     {
-        bool gaussianEnabled;
-        bool gradientEnabled;
-        tau::MonoImage<iris::InProcess> sourcePixels;
-        Gaussian gaussian;
-        Gradient gradient;
         Color color;
-        tau::Margins margins;
 
         {
             std::lock_guard lock(this->sourceMutex_);
@@ -196,63 +219,35 @@ public:
             {
                 return {};
             }
-        }
 
-        {
-            std::lock_guard lock(this->mutex_);
-
-            gaussianEnabled = this->demoModel_.gaussian.enable.Get();
-            gradientEnabled = this->demoModel_.gradient.enable.Get();
-            gaussian = this->gaussian_;
-            gradient = this->gradient_;
             color = this->color_;
-
         }
 
+        auto gradientResult = this->nodes_.gradient.GetResult();
+
+        if (gradientResult)
         {
-            std::lock_guard lock(this->sourceMutex_);
-
-            auto minimumMargins =
-                tau::Margins::Create(
-                    std::max(
-                        gaussian.GetSize(),
-                        gradient.GetSize()) / 2);
-
-            margins = this->source_.GetMargins();
-
-            if (!margins.Contains(minimumMargins))
-            {
-                // Our existing margins do not contain the new requirement.
-                // Create new margins.
-                this->source_.SetMargins(minimumMargins);
-                margins = minimumMargins;
-            }
-
-            sourcePixels = *this->source_.GetResult();
+            return gradientResult->Colorize();
         }
 
-        tau::MonoImage<iris::InProcess> processed(
-            sourcePixels.rows(),
-            sourcePixels.cols());
+        auto margins = this->nodes_.source.GetMargins();
 
-        if (gaussianEnabled)
+        std::cout << "margins: " << fields::Describe(margins) << std::endl;
+        auto gaussianResult = this->nodes_.gaussian.GetResult();
+
+        if (gaussianResult)
         {
-            gaussian.Filter(sourcePixels, processed);
-        }
-        else
-        {
-            processed = sourcePixels;
+            return color.Filter(margins.RemoveMargin(*gaussianResult));
         }
 
-        if (gradientEnabled)
-        {
-            typename Gradient::Result gradientResult{};
-            gradient.Filter(processed, gradientResult);
+        auto sourcePixels = this->nodes_.source.GetResult();
 
-            return gradientResult.Colorize(margins);
-        }
+        return color.Filter(margins.RemoveMargin(*sourcePixels));
+    }
 
-        return color.Filter(margins.RemoveMargin(processed));
+    void SetPngData(const SourceType &data)
+    {
+        this->nodes_.source.SetData(data);
     }
 
 private:
@@ -265,8 +260,6 @@ private:
             std::lock_guard lock(this->mutex_);
             lockTimer.Report();
 
-            this->gaussian_ = Gaussian(settings.gaussian);
-            this->gradient_ = Gradient(settings.gradient);
             this->color_ = Color(settings.color);
         }
 
@@ -280,9 +273,8 @@ private:
 private:
     Observer<DemoBrain> observer_;
     DemoModel demoModel_;
+    Nodes nodes_;
     pex::Endpoint<DemoBrain, DemoControl> demoEndpoint_;
-    Gaussian gaussian_;
-    Gradient gradient_;
     Color color_;
     DisplayThread displayThread_;
 };

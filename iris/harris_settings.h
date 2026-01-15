@@ -19,8 +19,7 @@ struct HarrisFields
         fields::Field(&T::sigma, "sigma"),
         fields::Field(&T::threshold, "threshold"),
         fields::Field(&T::suppress, "suppress"),
-        fields::Field(&T::window, "window"),
-        fields::Field(&T::threads, "threads"));
+        fields::Field(&T::window, "window"));
 };
 
 
@@ -92,8 +91,6 @@ struct HarrisTemplate
             >
         > window;
 
-        T<size_t> threads;
-
         static constexpr auto fields = HarrisFields<Template>::fields;
         static constexpr auto fieldsTypeName = "Harris";
     };
@@ -109,7 +106,6 @@ struct HarrisSettings
     static constexpr Float defaultSigma = static_cast<Float>(3.85);
     static constexpr Float defaultThreshold = static_cast<Float>(0.01);
     static constexpr Eigen::Index defaultWindow = 6;
-    static constexpr size_t defaultThreads = 4;
 
     HarrisSettings()
         :
@@ -119,8 +115,7 @@ struct HarrisSettings
             defaultSigma,
             defaultThreshold,
             true,
-            defaultWindow,
-            defaultThreads}
+            defaultWindow}
     {
 
     }

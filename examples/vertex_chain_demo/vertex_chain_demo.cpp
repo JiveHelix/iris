@@ -11,20 +11,23 @@
 
 #include "../common/about_window.h"
 #include "../common/observer.h"
-#include "../common/brain.h"
+#include "../common/gray_png_brain.h"
 #include "../common/png_settings.h"
+#include "../common/display_thread.h"
 
 #include "demo_settings.h"
 #include "demo_controls.h"
 #include "filters.h"
 
 
-class DemoBrain: public Brain<DemoBrain>
+class DemoBrain: public GrayPngBrain<DemoBrain>
 {
 public:
+    using Base = GrayPngBrain<DemoBrain>;
+
     DemoBrain()
         :
-        Brain<DemoBrain>(),
+        Base(),
         observer_(this, UserControl(this->user_)),
         demoModel_(),
 
@@ -37,17 +40,19 @@ public:
             DemoControl(this->demoModel_),
             &DemoBrain::OnSettings_),
 
-        pngIsLoaded_(false),
-        filters_(DemoControl(this->demoModel_)),
-        mutex_(),
-        condition_(),
-        displayState_(DisplayState::waiting),
-        displayRequested_(false),
-        displayLoopIsRunning_(true),
-        displayThread_(
-            std::bind(&DemoBrain::DisplayLoop_, this))
-    {
+        filters_(
+            iris::CancelControl(this->cancel_),
+            DemoControl(this->demoModel_)),
 
+        mutex_(),
+
+        displayThread_(
+            this->userControl_.pixelView.asyncPixels,
+            iris::CancelControl(this->cancel_),
+            std::bind(&DemoBrain::Process, this))
+    {
+        this->demoModel_.maximum.Set(pngMaximum);
+        this->demoModel_.color.range.high.Set(pngMaximum);
     }
 
     std::string GetAppName() const
@@ -55,22 +60,9 @@ public:
         return "Vertex Demo";
     }
 
-    void LoadGrayPng(const draw::GrayPng<PngPixel> &png)
+    void SetPngData(const SourceType &data)
     {
-        int32_t maximum = pngMaximum;
-
-        // Prevent drawing until new dimensions and source data are
-        // synchronized.
-        this->pngIsLoaded_ = false;
-
-        this->demoModel_.color.range.high.SetMaximum(maximum);
-        this->demoModel_.color.range.high.Set(maximum);
-        this->demoModel_.maximum.Set(maximum);
-        this->filters_.source.SetData(png.GetValues().template cast<int32_t>());
-
-        this->pngIsLoaded_ = true;
-
-        this->Display();
+        this->filters_.source.SetData(data);
     }
 
     wxWindow * CreateControls(wxWindow *parent)
@@ -129,93 +121,21 @@ public:
 
     void Display()
     {
-        if (!this->pngIsLoaded_)
-        {
-            return;
-        }
-
-        std::lock_guard lock(this->mutex_);
-
-        if (this->displayState_ == DisplayState::processing)
-        {
-            this->filters_.cancel.Set(true);
-        }
-
-        this->displayRequested_ = true;
-        this->condition_.notify_one();
+        this->displayThread_.Display();
     }
 
     void Shutdown()
     {
-        {
-            std::lock_guard lock(this->mutex_);
-            this->displayLoopIsRunning_ = false;
-            this->filters_.cancel.Set(true);
-            this->condition_.notify_one();
-        }
-
-        this->displayThread_.join();
-        Brain<DemoBrain>::Shutdown();
+        this->displayThread_.Shutdown();
+        this->GrayPngBrain<DemoBrain>::Shutdown();
     }
 
 private:
     void OnSettings_(const DemoSettings &)
     {
-        if (this->pngIsLoaded_)
+        if (this->png_)
         {
             this->Display();
-        }
-    }
-
-    void DisplayLoop_()
-    {
-        while (this->displayLoopIsRunning_)
-        {
-            {
-                std::unique_lock lock(this->mutex_);
-
-                if (!this->displayRequested_)
-                {
-                    // Sleep until display is requested
-                    this->displayState_ = DisplayState::waiting;
-
-                    this->condition_.wait(
-                        lock,
-                        [this]() -> bool
-                        {
-                            return this->displayRequested_
-                                || !this->displayLoopIsRunning_;
-                        });
-                }
-
-                if (!this->displayLoopIsRunning_)
-                {
-                    return;
-                }
-
-                this->displayState_ = DisplayState::processing;
-            }
-
-            auto pixels = this->Process();
-
-            {
-                std::lock_guard lock(this->mutex_);
-
-                if (this->filters_.cancel.Get())
-                {
-                    this->filters_.cancel.Set(false);
-                    continue;
-                }
-                else
-                {
-                    this->displayRequested_ = false;
-                }
-            }
-
-            if (pixels)
-            {
-                this->userControl_.pixelView.asyncPixels.Set(pixels);
-            }
         }
     }
 
@@ -224,14 +144,9 @@ private:
     DemoModel demoModel_;
     iris::MaskBrain maskBrain_;
     pex::Endpoint<DemoBrain, DemoControl> demoEndpoint_;
-    bool pngIsLoaded_;
     Filters filters_;
     mutable std::mutex mutex_;
-    std::condition_variable condition_;
-    DisplayState displayState_;
-    std::atomic_bool displayRequested_;
-    std::atomic_bool displayLoopIsRunning_;
-    std::thread displayThread_;
+    DisplayThread displayThread_;
 };
 
 

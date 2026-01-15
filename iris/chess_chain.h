@@ -121,6 +121,23 @@ public:
 
     void AutoDetectSettings();
 
+    tau::Margins DoComputeRequiredMargins() const
+    {
+        std::lock_guard lock(this->mutex_);
+
+        return tau::ComputeMaximumMargins(
+            this->nodes_.mask.ComputeRequiredMargins(),
+            this->nodes_.level.ComputeRequiredMargins(),
+            this->nodes_.gaussian.ComputeRequiredMargins(),
+            this->nodes_.gradientForCanny.ComputeRequiredMargins(),
+            this->nodes_.gradientForHarris.ComputeRequiredMargins(),
+            this->nodes_.canny.ComputeRequiredMargins(),
+            this->nodes_.hough.ComputeRequiredMargins(),
+            this->nodes_.harris.ComputeRequiredMargins(),
+            this->nodes_.vertices.ComputeRequiredMargins(),
+            this->nodes_.chess.ComputeRequiredMargins());
+    }
+
     ResultPtr DoGetResult();
 
     std::shared_ptr<ChainResults> GetChainResults();

@@ -96,11 +96,6 @@ public:
             "Edge tolerance",
             new wxpex::Field(panel, controls.edgeTolerance));
 
-        auto threads = wxpex::LabeledWidget(
-            panel,
-            "Threads",
-            new wxpex::Field(panel, controls.threads));
-
         auto sizer = LayoutLabeled(
             layoutOptions,
             enable,
@@ -112,8 +107,7 @@ public:
             window,
             threshold,
             includeEdges,
-            edgeTolerance,
-            threads);
+            edgeTolerance);
 
         this->ConfigureSizer(std::move(sizer));
     }

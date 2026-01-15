@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tau/vector2d.h>
+#include <iris/filter_result.h>
 #include "iris/vertex.h"
 #include "iris/chess_settings.h"
 #include "iris/chess/line_group.h"
@@ -40,7 +41,7 @@ NamedVertices FormVertices(
     double maximumVertexDistance);
 
 
-struct ChessSolution
+struct ChessSolution: public FilterResult
 {
 public:
     using Lines = std::vector<tau::Line2d<double>>;
@@ -53,6 +54,16 @@ public:
     std::vector<tau::Line2d<double>> horizontal;
     std::vector<tau::Line2d<double>> vertical;
     NamedVertices vertices;
+
+    tau::Size<Eigen::Index> GetSize() const
+    {
+        return {0, 0};
+    }
+
+    void Resize(const tau::Size<Eigen::Index> &)
+    {
+
+    }
 };
 
 

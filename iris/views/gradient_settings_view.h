@@ -63,11 +63,6 @@ public:
             "Maximum",
             new View(this->GetPanel(), controls.maximum));
 
-        auto threads = wxpex::LabeledWidget(
-            this->GetPanel(),
-            "Threads",
-            new wxpex::Field(this->GetPanel(), controls.threads));
-
         auto percentile = wxpex::LabeledWidget(
             this->GetPanel(),
             "Percentile",
@@ -84,7 +79,6 @@ public:
             scale,
             size,
             maximum,
-            threads,
             percentile);
 
         auto topSizer = std::make_unique<wxBoxSizer>(wxVERTICAL);

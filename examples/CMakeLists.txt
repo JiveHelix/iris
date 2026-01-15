@@ -34,7 +34,6 @@ target_link_libraries(
     PRIVATE
     project_warnings
     project_options
-    iris
     console_app)
 
 
@@ -45,7 +44,6 @@ target_link_libraries(
     PRIVATE
     project_warnings
     project_options
-    iris
     console_app)
 
 add_executable(gray_gaussian_demo gray_gaussian_demo.cpp)
@@ -58,7 +56,6 @@ target_link_libraries(
     PRIVATE
     project_warnings
     project_options
-    iris
     console_app)
 
 
@@ -69,62 +66,53 @@ target_link_libraries(
     PRIVATE
     project_warnings
     project_options
-    iris
     console_app)
 
 
-# add_executable(
-#     lines_chain_demo
-#     lines_chain_demo/lines_chain_demo.cpp
-#     lines_chain_demo/filters.cpp
-#     lines_chain_demo/demo_controls.cpp
-#     lines_chain_demo/demo_settings_view.cpp)
-# 
-# target_link_libraries(
-#     lines_chain_demo
-#     PRIVATE
-#     console_app)
-# 
-# 
-# add_executable(
-#     chess_demo
-#     chess_demo/chess_demo.cpp
-#     chess_demo/demo_brain.cpp
-#     chess_demo/demo_brain_ctor.cpp
-#     chess_demo/filters.cpp
-#     chess_demo/demo_controls.cpp
-#     chess_demo/demo_settings_view.cpp)
-# 
-# target_link_libraries(
-#     chess_demo
-#     PRIVATE
-#     console_app)
-# 
-# 
-# add_executable(
-#     vertex_chain_demo
-#     vertex_chain_demo/vertex_chain_demo.cpp
-#     vertex_chain_demo/filters.cpp
-#     vertex_chain_demo/demo_controls.cpp
-#     vertex_chain_demo/demo_settings_view.cpp)
-# 
-# target_link_libraries(
-#     vertex_chain_demo
-#     PRIVATE
-#     console_app)
-# 
-# 
-# add_executable(mask_demo mask_demo.cpp)
-# 
-# target_link_libraries(
-#     mask_demo
-#     PRIVATE
-#     console_app)
-# 
-# 
-# add_executable(level_adjust_demo level_adjust_demo.cpp)
-# 
-# target_link_libraries(
-#     level_adjust_demo
-#     PRIVATE
-#     console_app)
+add_executable(mask_demo mask_demo.cpp)
+
+target_link_libraries(
+    mask_demo
+    PRIVATE
+    console_app)
+
+
+add_executable(
+    vertex_chain_demo
+    vertex_chain_demo/vertex_chain_demo.cpp
+    vertex_chain_demo/filters.cpp
+    vertex_chain_demo/demo_controls.cpp
+    vertex_chain_demo/demo_settings_view.cpp)
+
+target_link_libraries(
+    vertex_chain_demo
+    PRIVATE
+    console_app)
+
+
+add_executable(
+    lines_chain_demo
+    lines_chain_demo/lines_chain_demo.cpp
+    lines_chain_demo/filters.cpp
+    lines_chain_demo/demo_controls.cpp
+    lines_chain_demo/demo_settings_view.cpp)
+
+target_link_libraries(
+    lines_chain_demo
+    PRIVATE
+    console_app)
+
+
+add_executable(
+    chess_demo
+    chess_demo/chess_demo.cpp
+    chess_demo/demo_brain.cpp
+    chess_demo/demo_brain_ctor.cpp
+    chess_demo/filters.cpp
+    chess_demo/demo_controls.cpp
+    chess_demo/demo_settings_view.cpp)
+
+target_link_libraries(
+    chess_demo
+    PRIVATE
+    console_app)

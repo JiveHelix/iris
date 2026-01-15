@@ -6,6 +6,7 @@
 #include <draw/node_settings.h>
 #include <draw/views/pixel_view.h>
 
+#include <iris/filter_result.h>
 #include "iris/color_map.h"
 #include "iris/node.h"
 #include "iris/mask.h"
@@ -41,9 +42,10 @@ struct ChessChainFilters
 };
 
 
-struct ChessChainResults
+struct ChessChainResults: public FilterResult
 {
     using Filters = ChessChainFilters;
+
     std::shared_ptr<const typename Filters::MaskFilter::Result> mask;
     std::shared_ptr<const typename Filters::LevelFilter::Result> level;
 
@@ -66,7 +68,6 @@ struct ChessChainResults
         int64_t verticesShapesId);
 
     std::shared_ptr<draw::Pixels> Display(
-        const tau::Margins &margins,
         const draw::AsyncShapesControl &shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
         const draw::PointsShapeSettings &pointsShapeSettings,
@@ -76,7 +77,6 @@ struct ChessChainResults
         ChessChainNodeSettings *nodeSettings) const;
 
     std::shared_ptr<draw::Pixels> DisplayNode(
-        const tau::Margins &margins,
         const ChessChainNodeSettings &nodeSettings,
         const draw::AsyncShapesControl &shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
@@ -89,11 +89,9 @@ private:
     void ClearShapes_(draw::AsyncShapesControl) const;
 
     std::shared_ptr<draw::Pixels> GetPreprocessedPixels_(
-        const tau::Margins &margins,
         ThreadsafeColorMap<int32_t> &color) const;
 
     std::shared_ptr<draw::Pixels> GetNodePixels_(
-        const tau::Margins &margins,
         const ChessChainNodeSettings &nodeSettings,
         ThreadsafeColorMap<int32_t> &color) const;
 

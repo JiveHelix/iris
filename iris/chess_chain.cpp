@@ -80,6 +80,7 @@ std::shared_ptr<ChessChain::ChainResults> ChessChain::GetChainResults()
         this->linesShapesId_.Get(),
         this->verticesShapesId_.Get());
 
+    result->SetMargins(this->GetMargins());
     result->chess = this->nodes_.chess.GetResult();
     result->vertices = this->nodes_.vertices.GetResult();
     result->harris = this->nodes_.harris.GetResult();

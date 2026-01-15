@@ -3,7 +3,7 @@
 
 DemoBrain::DemoBrain()
     :
-    Brain<DemoBrain>(),
+    GrayPngBrain<DemoBrain>(),
     observer_(this, UserControl(this->user_)),
     demoModel_(),
     demoControl_(this->demoModel_),
@@ -15,13 +15,11 @@ DemoBrain::DemoBrain()
     demoEndpoint_(this, this->demoControl_, &DemoBrain::OnSettings_),
     pngIsLoaded_(false),
     filters_(this->demoControl_),
-    mutex_(),
-    condition_(),
-    displayState_(DisplayState::waiting),
-    displayRequested_(false),
-    displayLoopIsRunning_(true),
+
     displayThread_(
-        std::bind(&DemoBrain::DisplayLoop_, this))
+        this->userControl_.pixelView.asyncPixels,
+        iris::CancelControl(this->cancel_),
+        std::bind(&DemoBrain::Process, this))
 {
     this->demoModel_.color.turbo.Set(false);
 }

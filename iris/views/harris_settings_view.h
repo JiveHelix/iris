@@ -77,13 +77,6 @@ public:
                 controls.window,
                 controls.window.value));
 
-        auto threads = LabeledWidget(
-            panel,
-            "threads",
-            new Field(
-                panel,
-                controls.threads));
-
         auto sizer = LayoutLabeled(
             layoutOptions,
             enable,
@@ -91,8 +84,7 @@ public:
             sigma,
             threshold,
             suppress,
-            window,
-            threads);
+            window);
 
         this->ConfigureSizer(std::move(sizer));
     }

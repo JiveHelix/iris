@@ -21,14 +21,15 @@ public:
     using LevelNode = iris::LevelAdjustNode<MaskNode, int32_t, double>;
     using VertexChain = iris::VertexChain<LevelNode>;
 
-    iris::Cancel cancel;
     SourceNode source;
     MaskNode mask;
     LevelNode level;
     VertexChain vertexChain;
     Color color;
 
-    Filters(const DemoControl &controls);
+    Filters(
+        const iris::CancelControl &cancelControl,
+        const DemoControl &controls);
 
     Filters(const Filters &) = delete;
 };

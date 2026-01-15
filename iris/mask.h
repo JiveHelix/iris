@@ -49,11 +49,24 @@ public:
         assert(!this->mask_);
     }
 
-    bool Filter(const Input &input, Result &result)
+    tau::Margins ComputeRequiredMargins() const
+    {
+        return {0, 0};
+    }
+
+    bool Filter(Eigen::Ref<const Input> input, Eigen::Ref<Result> result)
     {
         if (!this->maskSettings_.enable)
         {
             return false;
+        }
+
+        auto &imageSize = this->maskSettings_.imageSize;
+
+        if (imageSize.height != input.rows() || imageSize.width != input.cols())
+        {
+            imageSize = draw::GetMatrixSize(input);
+            this->mask_.reset();
         }
 
         if (!this->mask_)
@@ -61,6 +74,8 @@ public:
             this->mask_ = CreateMask(this->maskSettings_);
         }
 
+        assert(result.rows() == input.rows());
+        assert(result.cols() == input.cols());
         assert(input.rows() == this->mask_->rows());
         assert(input.cols() == this->mask_->cols());
 
@@ -71,7 +86,6 @@ public:
 
         return true;
     }
-
 
 private:
     MaskSettings maskSettings_;

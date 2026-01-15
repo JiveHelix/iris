@@ -33,7 +33,7 @@ DemoSettingsView::DemoSettingsView(
 
     auto lines = new iris::LinesChainSettingsView(
         this,
-        control.lines,
+        control.linesChain,
         {},
         layoutOptions);
 

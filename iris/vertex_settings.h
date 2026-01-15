@@ -16,8 +16,7 @@ struct VertexFields
     static constexpr auto fields = std::make_tuple(
         fields::Field(&T::enable, "enable"),
         fields::Field(&T::window, "window"),
-        fields::Field(&T::count, "count"),
-        fields::Field(&T::threads, "threads"));
+        fields::Field(&T::count, "count"));
 };
 
 
@@ -44,7 +43,6 @@ struct VertexTemplate
     T<bool> enable;
     T<pex::MakeRange<double, WindowLow, WindowHigh>> window;
     T<pex::MakeSelect<VertexChoices>> count;
-    T<size_t> threads;
 
     static constexpr auto fields =
         VertexFields<VertexTemplate>::fields;
@@ -60,15 +58,13 @@ struct VertexCustom
     {
         static constexpr Eigen::Index defaultWindow = 40;
         static constexpr Eigen::Index defaultCount = 4;
-        static constexpr size_t defaultThreads = 4;
 
         Plain()
             :
             Base{
                 true,
                 defaultWindow,
-                defaultCount,
-                defaultThreads}
+                defaultCount}
         {
 
         }

@@ -13,16 +13,23 @@
 class Filters
 {
 public:
-    using Color = iris::ThreadsafeColorMap<int32_t>;
 
-    iris::Cancel cancel;
-    iris::DefaultSource source;
-    iris::DefaultMaskNode mask;
-    iris::DefaultLevelAdjustNode level;
-    iris::DefaultLinesChain lines;
+    using SourceNode = iris::Source<iris::ProcessMatrix>;
+    using Mask = iris::Mask<int32_t>;
+    using Color = iris::ThreadsafeColorMap<int32_t>;
+    using MaskNode = iris::Node<SourceNode, Mask, iris::MaskControl>;
+    using LevelNode = iris::LevelAdjustNode<MaskNode, int32_t, double>;
+    using LinesChain = iris::LinesChain<LevelNode>;
+
+    SourceNode source;
+    MaskNode mask;
+    LevelNode level;
+    LinesChain linesChain;
     Color color;
 
-    Filters(const DemoControl &controls);
+    Filters(
+        const iris::CancelControl &cancelControl,
+        const DemoControl &controls);
 
     Filters(const Filters &) = delete;
 };

@@ -17,8 +17,7 @@ struct CannyFields
     static constexpr auto fields = std::make_tuple(
         fields::Field(&T::enable, "enable"),
         fields::Field(&T::range, "range"),
-        fields::Field(&T::depth, "depth"),
-        fields::Field(&T::threads, "threads"));
+        fields::Field(&T::depth, "depth"));
 
     static constexpr auto fieldsTypeName = "Canny";
 };
@@ -51,7 +50,6 @@ struct CannyTemplate
         T<bool> enable;
         T<typename CannyRanges<Float>::Group> range;
         T<size_t> depth;
-        T<size_t> threads;
 
         static constexpr auto fields = CannyFields<Template>::fields;
     };
@@ -63,15 +61,13 @@ struct CannySettings:
     public CannyTemplate<Float>::template Template<pex::Identity>
 {
     static constexpr size_t defaultDepth = 32;
-    static constexpr size_t defaultThreads = 4;
 
     CannySettings()
         :
         CannyTemplate<Float>::template Template<pex::Identity>{
             true,
             typename CannyRanges<Float>::Settings{},
-            defaultDepth,
-            defaultThreads}
+            defaultDepth}
     {
 
     }

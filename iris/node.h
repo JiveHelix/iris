@@ -5,6 +5,7 @@
 #include <optional>
 #include <pex/endpoint.h>
 #include <tau/convolve.h>
+#include <iris/filter_result.h>
 #include "iris/default.h"
 
 // #define ENABLE_NODE_CHRONO
@@ -24,8 +25,6 @@
         std::cout, \
         "[node:", \
         jive::path::Base(__FILE__), \
-        ":", \
-        __FUNCTION__, \
         ":", \
         __LINE__, \
         "] ", \
@@ -51,6 +50,45 @@ namespace iris
 using Cancel = pex::model::Value<bool>;
 using CancelControl = pex::control::Value<Cancel>;
 
+using MarginModel = pex::model::Value<tau::Margins>;
+using MarginControl = pex::control::Value<MarginModel>;
+
+
+template<typename Data>
+std::shared_ptr<const Data> ChangeMargins(
+    [[maybe_unused]] const tau::Margins &oldMargins,
+    const tau::Margins &newMargins,
+    const Data &data)
+{
+    if constexpr (tau::HasAddMargin<Data> && tau::HasRemoveMargin<Data>)
+    {
+        // Remove the old margin.
+        auto removed = data.RemoveMargin(oldMargins);
+
+        // Use the new margin to expand the data.
+        return std::make_shared<Data>(removed.AddMargin(newMargins));
+    }
+    else if constexpr (
+        tau::HasAddMargin<Data> && tau::HasRemoveMarginVoid<Data>)
+    {
+        // data knows what the old margin was.
+        // Remove the old margin.
+        auto removed = data.RemoveMargin();
+
+        // Use the new margin to expand the data.
+        return std::make_shared<Data>(removed.AddMargin(newMargins));
+    }
+    else
+    {
+        // Margins knows how to operate on Eigen arrays.
+        static_assert(tau::IsEigen<std::remove_cvref_t<Data>>);
+
+        // Remove the old margin.
+        // Then use the new margin to expand the data.
+        return std::make_shared<Data>(
+            newMargins.AddMargin(oldMargins.RemoveMargin(data)));
+    }
+}
 
 
 template
@@ -121,17 +159,71 @@ public:
 
     void OnSettingsChanged(const Settings &settings)
     {
-        std::lock_guard lock(this->mutex_);
-        this->settings_ = settings;
-        this->settingsChanged_ = true;
-        static_cast<Derived *>(this)->SettingsChanged(this->settings_);
-        this->result_.reset();
+        {
+            std::lock_guard lock(this->mutex_);
+            this->settings_ = settings;
+            this->settingsChanged_ = true;
+            static_cast<Derived *>(this)->SettingsChanged(this->settings_);
+            this->result_.reset();
+        }
+
+        auto filterMargins = this->ComputeRequiredMargins();
+
+        if (filterMargins.HasMargin())
+        {
+            auto inputMargins = this->input_.GetMargins();
+
+            if (!inputMargins.Contains(filterMargins))
+            {
+                // The input margins are not large enough to enclose the
+                // new filter requirements.
+                // Pass the new requirement up the processing chain.
+                this->input_.SetMargins(filterMargins);
+            }
+        }
     }
 
     // Derived classes may not care about changed settings.
     void SettingsChanged(const Settings &)
     {
 
+    }
+
+    tau::Margins GetMargins() const
+    {
+        return this->input_.GetMargins();
+    }
+
+    tau::Margins ComputeRequiredMargins() const
+    {
+        return static_cast<const Derived *>(this)->DoComputeRequiredMargins();
+    }
+
+    tau::Margins ComputeMinimumMargins() const
+    {
+        return tau::ComputeMaximumMargins(
+            this->input_.ComputeMinimumMargins(),
+            this->ComputeRequiredMargins());
+    }
+
+    void SetMargins(const tau::Margins &margins)
+    {
+        if (this->HasResult())
+        {
+            auto oldMargins = this->input_.GetMargins();
+
+            std::lock_guard lock(this->mutex_);
+
+            if (this->result_)
+            {
+                this->result_ = ChangeMargins(
+                    oldMargins,
+                    margins,
+                    *this->result_);
+            }
+        }
+
+        this->input_.SetMargins(margins);
     }
 
     ResultPtr GetResult()
@@ -206,6 +298,38 @@ private:
 };
 
 
+template<typename T>
+tau::Size<Eigen::Index> GetSize(const T &input)
+{
+    if constexpr (tau::IsEigen<T>)
+    {
+        return tau::Size<Eigen::Index>(input);
+    }
+    else
+    {
+        return input.GetSize();
+    }
+}
+
+
+template<typename T>
+void Resize(const tau::Size<Eigen::Index> &size, T &object)
+{
+    if constexpr (tau::IsEigen<T>)
+    {
+        object.resize(size.height, size.width);
+    }
+    else
+    {
+        object.Resize(size);
+    }
+}
+
+
+template<typename Filter>
+concept FilterWantsMargins = Filter::wantsMargins;
+
+
 template
 <
     typename InputNode,
@@ -259,7 +383,20 @@ public:
         Base(name, input, control, cancel),
         filter_(this->settings_)
     {
+        auto filterMargins = this->DoComputeRequiredMargins();
 
+        if (filterMargins.HasMargin())
+        {
+            auto inputMargins = this->input_.GetMargins();
+
+            if (!inputMargins.Contains(filterMargins))
+            {
+                // The input margins are not large enough to enclose the
+                // new filter requirements.
+                // Pass the new requirement up the processing chain.
+                this->input_.SetMargins(filterMargins);
+            }
+        }
     }
 
     const void * GetFilterAddress() const
@@ -269,7 +406,8 @@ public:
 
     void SettingsChanged(const Settings &settings)
     {
-        std::lock_guard lock(this->mutex_);
+        // Do not acquire the lock here.
+        // NodeBase will call this while holding the mutex.
         this->filter_ = FilterClass(settings);
     }
 
@@ -283,16 +421,40 @@ public:
             filter = this->filter_;
         }
 
-        bool filterSuccess = filter.Filter(input, result);
+        bool filterSuccess;
+        auto inputMargins = this->input_.GetMargins();
+        auto inputSize = GetSize(input);
+        auto resultSize = GetSize(result);
+
+        if (!resultSize.Contains(inputSize))
+        {
+            Resize(inputSize, result);
+        }
+
+        if constexpr (FilterWantsMargins<FilterClass>)
+        {
+            filterSuccess = filter.Filter(input, result, inputMargins);
+        }
+        else
+        {
+            filterSuccess = filter.Filter(input, result);
+        }
 
         std::lock_guard lock(this->mutex_);
 
         if (this->settingsChanged_)
         {
-            filterSuccess = false;
+            return false;
         }
 
         return filterSuccess;
+    }
+
+    tau::Margins DoComputeRequiredMargins() const
+    {
+        std::lock_guard lock(this->mutex_);
+
+        return this->filter_.ComputeRequiredMargins();
     }
 
     ResultPtr DoGetResult()
@@ -305,38 +467,17 @@ public:
             return {};
         }
 
-        FilterClass filter;
-
-        {
-            std::lock_guard lock(this->mutex_);
-
-            if (this->settingsChanged_)
-            {
-                // The settings changed while waiting for input.
-                NODE_LOG("Settings changed while waiting for input!");
-                return {};
-            }
-
-            filter = this->filter_;
-        }
-
         auto resultPtr = std::make_shared<Result>();
-        bool filterSuccess = filter.Filter(*inputPtr, *resultPtr);
 
-#if 0
-        std::lock_guard lock(this->mutex_);
-
-        if (!this->settingsChanged_)
-        {
-            // Cache the filter for later use.
-            this->filter_ = filter;
-        }
-#endif
-
-        if (!filterSuccess)
+        if (!this->Process(*inputPtr, *resultPtr))
         {
             NODE_LOG(this->name_, " filter.Filter returned no result.");
             return {};
+        }
+
+        if constexpr (std::derived_from<Result, FilterResult>)
+        {
+            resultPtr->SetMargins(this->GetMargins());
         }
 
         return resultPtr;
@@ -363,32 +504,30 @@ public:
 
     }
 
-    const tau::Margins & GetMargins() const
+    tau::Margins GetMargins() const
     {
+        std::lock_guard lock(this->mutex_);
+
         return this->margins_;
+    }
+
+    tau::Margins ComputeMinimumMargins() const
+    {
+        // Source has no minimum margin requirement.
+
+        return {0, 0};
     }
 
     void SetMargins(const tau::Margins &margins)
     {
-        if constexpr (tau::HasAddMargin<Data> && tau::HasRemoveMargin<Data>)
-        {
-            // If Data is a tau::Planar, it implements AddMargin and
-            // RemoveMargin.
-            if (this->data_)
-            {
-                auto removed = this->data_->RemoveMargin(this->margins_);
+        std::lock_guard lock(this->mutex_);
 
-                const_cast<Result &>(*this->data_) =
-                    removed.AddMargin(margins);
-            }
-        }
-        else
+        if (this->data_)
         {
-            if (this->data_)
-            {
-                const_cast<Result &>(*this->data_) = margins.AddMargin(
-                    this->margins_.RemoveMargin(*this->data_));
-            }
+            this->data_ = ChangeMargins(
+                this->margins_,
+                margins,
+                *this->data_);
         }
 
         this->margins_ = margins;
@@ -401,6 +540,8 @@ public:
 
     void SetData(const Data &data)
     {
+        std::lock_guard lock(this->mutex_);
+
         NODE_LOG("Source::SetData");
 
         // Copy data
@@ -422,16 +563,21 @@ public:
     // Allows the processing chain to decide whether it can use cached results.
     bool HasResult() const
     {
-        return !this->hasFreshData_;
+        std::lock_guard lock(this->mutex_);
+
+        return !this->hasFreshData_ && this->data_;
     }
 
     ResultPtr GetResult() const
     {
+        std::lock_guard lock(this->mutex_);
+
         this->hasFreshData_ = false;
         return this->data_;
     }
 
 private:
+    mutable std::mutex mutex_;
     tau::Margins margins_;
     mutable bool hasFreshData_;
     ResultPtr data_;
@@ -493,9 +639,32 @@ public:
             this->secondResult_.reset();
         }
 
-        return (hasResult
+        return (
+            hasResult
             && this->first_.HasResult()
             && this->second_.HasResult());
+    }
+
+    tau::Margins GetMargins() const
+    {
+        assert(
+            this->first_.GetMargins()
+            == this->second_.GetMargins());
+
+        return this->first_.GetMargins();
+    }
+
+    tau::Margins ComputeRequiredMargins() const
+    {
+        return tau::ComputeMaximumMargins(
+            this->first_.ComputeRequiredMargins(),
+            this->second_.ComputeRequiredMargins());
+    }
+
+    void SetMargins(const tau::Margins &margins)
+    {
+        this->first_.SetMargins(margins);
+        this->second_.SetMargins(margins);
     }
 
     ResultPtr GetResult()
@@ -605,6 +774,28 @@ public:
         {
             return this->secondResult_;
         }
+    }
+
+    tau::Margins GetMargins() const
+    {
+        assert(
+            this->first_.GetMargins()
+            == this->second_.GetMargins());
+
+        return this->first_.GetMargins();
+    }
+
+    tau::Margins ComputeRequiredMargins() const
+    {
+        return tau::ComputeMaximumMargins(
+            this->first_.ComputeRequiredMargins(),
+            this->second_.ComputeRequiredMargins());
+    }
+
+    void SetMargins(const tau::Margins &margins)
+    {
+        this->first_.SetMargins(margins);
+        this->second_.SetMargins(margins);
     }
 
     ResultPtr GetResult()

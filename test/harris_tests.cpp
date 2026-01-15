@@ -28,8 +28,13 @@ TEST_CASE("Create Harris vertex detection class", "[harris]")
 
     auto gradient = iris::Gradient<float>(differentiate);
     auto settings = iris::HarrisSettings<float>{};
-    settings.threads = 1;
     settings.sigma = 1.0;
+
+    // TODO: For small inputs, it is possible that the default windowSize of
+    // 6 may be larger than the size of the input as it is in this case.
+    // Add automatic validation to the settings model.
+    settings.window = 4;
+
     auto harris = iris::Harris<float>(settings);
 
     iris::GradientResult<float> gradientResult(255, m.rows(), m.cols());
@@ -37,18 +42,20 @@ TEST_CASE("Create Harris vertex detection class", "[harris]")
     REQUIRE(gradient.Filter(m, gradientResult));
 
     using HarrisResult = typename iris::Harris<float>::Result;
+    using Data = typename HarrisResult::Data;
 
     HarrisResult harrisResult{};
+    harrisResult.data = Data::Zero(m.rows(), m.cols());
 
-    REQUIRE(harris.Filter(gradientResult, harrisResult));
-    REQUIRE(harrisResult.cols() == m.cols());
-    REQUIRE(harrisResult.rows() == m.rows());
+    REQUIRE(harris.Filter(gradientResult, harrisResult, tau::Margins{}));
+    REQUIRE(harrisResult.data.cols() == m.cols());
+    REQUIRE(harrisResult.data.rows() == m.rows());
 }
 
 
 TEST_CASE("Use suppression filter with count = 1", "[harris]")
 {
-    using Matrix = Eigen::MatrixX<float>;
+    using Matrix = tau::RowMajorMatrix<float>;
 
     Matrix m{
         { 1,  0,  0,  0,  0},
@@ -57,8 +64,8 @@ TEST_CASE("Use suppression filter with count = 1", "[harris]")
         { 0,  0,  0,  4,  0},
         { 0,  0,  0,  0,  5}};
 
-    Matrix filtered;
-    iris::Suppression(1, 3, m, filtered);
+    Matrix filtered(5, 5);
+    iris::Suppression<float>(3, m, filtered);
 
     std::cout << "filtered: " << filtered << std::endl;
 }

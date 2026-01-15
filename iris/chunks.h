@@ -88,7 +88,7 @@ Chunks MakeChunks(
 }
 
 
-inline void AwaitThreads(std::vector<jive::Sentry> &sentries)
+inline void WaitForThreads(std::vector<jive::Sentry> &sentries)
 {
     for (auto &sentry: sentries)
     {
@@ -216,9 +216,9 @@ public:
         }
     }
 
-    void Await()
+    void Wait()
     {
-        AwaitThreads(this->threadSentries_);
+        WaitForThreads(this->threadSentries_);
     }
 
 private:

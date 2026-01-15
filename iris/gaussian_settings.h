@@ -61,7 +61,6 @@ struct GaussianFields
         fields::Field(&T::sigma, "sigma"),
         fields::Field(&T::threshold, "threshold"),
         fields::Field(&T::partials, "partials"),
-        fields::Field(&T::threads, "threads"),
         fields::Field(&T::maximum, "maximum"));
 
     static constexpr auto fieldsTypeName = "Gaussian";
@@ -83,7 +82,6 @@ struct GaussianTemplate
         T<pex::MakeRange<double, SigmaLow, SigmaHigh>> sigma;
         T<double> threshold;
         T<pex::MakeSelect<PartialsChoices>> partials;
-        T<size_t> threads;
         T<Value> maximum;
 
         static constexpr auto fields = GaussianFields<Template>::fields;
@@ -102,7 +100,6 @@ struct GaussianSettings:
     static constexpr double defaultSigma = 1.0;
     static constexpr double defaultThreshold = 0.01;
     static constexpr Partials defaultPartials = Partials::both;
-    static constexpr size_t defaultThreads = 4;
 
     GaussianSettings()
         :
@@ -111,7 +108,6 @@ struct GaussianSettings:
             defaultSigma,
             defaultThreshold,
             defaultPartials,
-            defaultThreads,
             defaultMaximum}
     {
 

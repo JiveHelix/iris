@@ -121,9 +121,63 @@ public:
 };
 
 
+struct Nodes
+{
+    using Gaussian = iris::Gaussian<iris::InProcess, 0>;
+    using Gradient = iris::Gradient<iris::InProcess>;
+
+    using GaussianNode =
+        iris::Node
+        <
+            GrayPngSource,
+            Gaussian,
+            iris::GaussianControl<iris::InProcess>
+        >;
+
+    using GradientNode = iris::GradientNode<GaussianNode>;
+
+    using Canny = iris::Canny<float>;
+
+    using CannyNode =
+        iris::Node<GradientNode, Canny, iris::CannyControl<float>>;
+
+    GrayPngSource source;
+    GaussianNode gaussian;
+    GradientNode gradient;
+    CannyNode canny;
+
+    Nodes(
+        const iris::CancelControl &cancelControl,
+        const DemoControl &demoControl)
+        :
+        source(),
+
+        gaussian(
+            "gaussian",
+            this->source,
+            demoControl.gaussian,
+            cancelControl),
+
+        gradient(
+            this->gaussian,
+            demoControl.gradient,
+            cancelControl),
+
+        canny(
+            "canny",
+            this->gradient,
+            demoControl.canny,
+            cancelControl)
+    {
+
+    }
+};
+
+
 class DemoBrain: public GrayPngBrain<DemoBrain>
 {
 public:
+    using Base = GrayPngBrain<DemoBrain>;
     using Gaussian = iris::Gaussian<iris::InProcess, 0>;
     using Gradient = iris::Gradient<iris::InProcess>;
     using Canny = iris::Canny<float>;
@@ -135,14 +189,15 @@ public:
         observer_(this, UserControl(this->user_)),
         demoModel_(),
 
+        nodes_(
+            iris::CancelControl(this->cancel_),
+            DemoControl(this->demoModel_)),
+
         demoEndpoint_(
             this,
             DemoControl(this->demoModel_),
             &DemoBrain::OnSettings_),
 
-        gaussian_(this->demoModel_.gaussian.Get()),
-        gradient_(this->demoModel_.gradient.Get()),
-        canny_(this->demoModel_.canny.Get()),
         color_(this->demoModel_.color.Get()),
 
         displayThread_(
@@ -181,24 +236,9 @@ public:
             DemoControl(this->demoModel_));
     }
 
-    std::shared_ptr<draw::Pixels>
-    MakePixels(const iris::ProcessMatrix &value) const
-    {
-        return this->color_.Filter(value);
-    }
-
     std::shared_ptr<draw::Pixels> Process()
     {
-        bool gaussianEnabled;
-        bool gradientEnabled;
-        bool cannyEnabled;
-        tau::MonoImage<iris::InProcess> sourcePixels;
-        Gaussian gaussian;
-        Gradient gradient;
-        Canny canny;
         Color color;
-        float scale;
-        tau::Margins margins;
 
         {
             std::lock_guard lock(this->sourceMutex_);
@@ -207,77 +247,40 @@ public:
             {
                 return {};
             }
-        }
 
-        {
-            std::lock_guard lock(this->mutex_);
-            gaussianEnabled = this->demoModel_.gaussian.enable.Get();
-            gradientEnabled = this->demoModel_.gradient.enable.Get();
-            cannyEnabled = this->demoModel_.canny.enable.Get();
-            gaussian = this->gaussian_;
-            gradient = this->gradient_;
-            canny = this->canny_;
             color = this->color_;
-
-            scale = static_cast<float>(
-                this->demoModel_.color.range.high.GetMaximum());
         }
 
+        auto cannyResult = this->nodes_.canny.GetResult();
+
+        if (cannyResult)
         {
-            std::lock_guard lock(this->sourceMutex_);
-
-            auto minimumMargins =
-                tau::Margins::Create(
-                    std::max(
-                        gaussian.GetSize(),
-                        gradient.GetSize()) / 2);
-
-            margins = this->source_.GetMargins();
-
-            if (!margins.Contains(minimumMargins))
-            {
-                // Our existing margins do not contain the new requirement.
-                // Create new margins.
-                this->source_.SetMargins(minimumMargins);
-                margins = minimumMargins;
-            }
-
-            sourcePixels = *this->source_.GetResult();
+            return cannyResult->Colorize();
         }
 
-        std::lock_guard lock(this->mutex_);
+        auto gradientResult = this->nodes_.gradient.GetResult();
 
-        tau::MonoImage<iris::InProcess> processed(
-            sourcePixels.rows(),
-            sourcePixels.cols());
-
-        if (gaussianEnabled)
+        if (gradientResult)
         {
-            gaussian.Filter(sourcePixels, processed);
+            return gradientResult->Colorize();
         }
-        else
+
+        auto margins = this->nodes_.source.GetMargins();
+        auto gaussianResult = this->nodes_.gaussian.GetResult();
+
+        if (gaussianResult)
         {
-            processed = sourcePixels;
+            return color.Filter(margins.RemoveMargin(*gaussianResult));
         }
 
-        if (!gradientEnabled)
-        {
-            return this->MakePixels(processed);
-        }
+        auto sourcePixels = this->nodes_.source.GetResult();
 
-        // Gradient is enabled.
-        typename Gradient::Result gradientResult{};
-        gradient.Filter(processed, gradientResult);
+        return color.Filter(margins.RemoveMargin(*sourcePixels));
+    }
 
-        if (!cannyEnabled)
-        {
-            return gradientResult.Colorize(margins);
-        }
-
-        typename Canny::Result cannyResult{};
-        canny.Filter(gradientResult, cannyResult);
-
-        return cannyResult.Colorize(margins);
+    void SetPngData(const SourceType &data)
+    {
+        this->nodes_.source.SetData(data);
     }
 
 private:
@@ -285,9 +288,6 @@ private:
     {
         {
             std::lock_guard lock(this->mutex_);
-            this->gaussian_ = Gaussian(settings.gaussian);
-            this->gradient_ = Gradient(settings.gradient);
-            this->canny_ = Canny(settings.canny);
             this->color_ = Color(settings.color);
         }
 
@@ -297,10 +297,8 @@ private:
 private:
     Observer<DemoBrain> observer_;
     DemoModel demoModel_;
+    Nodes nodes_;
     pex::Endpoint<DemoBrain, DemoControl> demoEndpoint_;
-    Gaussian gaussian_;
-    Gradient gradient_;
-    Canny canny_;
     Color color_;
     DisplayThread displayThread_;
 };

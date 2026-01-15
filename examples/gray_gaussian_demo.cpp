@@ -99,9 +99,43 @@ public:
 };
 
 
+struct Nodes
+{
+    using Gaussian = iris::Gaussian<iris::InProcess, 0>;
+
+    using GaussianNode =
+        iris::Node
+        <
+            GrayPngSource,
+            Gaussian,
+            iris::GaussianControl<iris::InProcess>
+        >;
+
+    GrayPngSource source;
+    GaussianNode gaussian;
+
+    Nodes(
+        const iris::CancelControl &cancelControl,
+        const DemoControl &demoControl)
+        :
+        source(),
+
+        gaussian(
+            "gaussian",
+            this->source,
+            demoControl.gaussian,
+            cancelControl)
+    {
+
+    }
+};
+
+
 class DemoBrain: public GrayPngBrain<DemoBrain>
 {
 public:
+    using Base = GrayPngBrain<DemoBrain>;
+
     using Gaussian = iris::Gaussian<iris::InProcess, 0>;
     using Color = tau::ColorMap<iris::InProcess>;
 
@@ -111,12 +145,15 @@ public:
         observer_(this, UserControl(this->user_)),
         demoModel_(),
 
+        nodes_(
+            iris::CancelControl(this->cancel_),
+            DemoControl(this->demoModel_)),
+
         demoEndpoint_(
             this,
             this->demoModel_,
             &DemoBrain::OnSettings_),
 
-        gaussian_(this->demoModel_.gaussian.Get()),
         color_(this->demoModel_.color.Get()),
 
         displayThread_(
@@ -156,12 +193,6 @@ public:
 
     std::shared_ptr<draw::Pixels> Process()
     {
-        bool enabled;
-        tau::MonoImage<iris::InProcess> sourcePixels;
-        Gaussian gaussian;
-        Color color;
-        tau::Margins margins;
-
         {
             std::lock_guard lock(this->sourceMutex_);
 
@@ -171,44 +202,28 @@ public:
             }
         }
 
+        auto margins = this->nodes_.source.GetMargins();
+        auto gaussianResult = this->nodes_.gaussian.GetResult();
+        Color color;
+
         {
             std::lock_guard lock(this->mutex_);
-            enabled = this->demoModel_.gaussian.enable.Get();
-            gaussian = this->gaussian_;
             color = this->color_;
-
         }
 
+        if (gaussianResult)
         {
-            std::lock_guard lock(this->sourceMutex_);
-            auto minimumMargins = tau::Margins::Create(gaussian.GetSize() / 2);
-            margins = this->source_.GetMargins();
-
-            if (!margins.Contains(minimumMargins))
-            {
-                // Our existing margins do not contain the new requirement.
-                // Create new margins.
-                this->source_.SetMargins(minimumMargins);
-                margins = minimumMargins;
-            }
-
-            sourcePixels = *this->source_.GetResult();
+            return color.Filter(margins.RemoveMargin(*gaussianResult));
         }
 
-        tau::MonoImage<iris::InProcess> processed(
-            sourcePixels.rows(),
-            sourcePixels.cols());
+        auto sourcePixels = this->nodes_.source.GetResult();
 
-        if (enabled)
-        {
-            gaussian.Filter(sourcePixels, processed);
-        }
-        else
-        {
-            processed = sourcePixels;
-        }
+        return color.Filter(margins.RemoveMargin(*sourcePixels));
+    }
 
-        return color.Filter(margins.RemoveMargin(processed));
+    void SetPngData(const SourceType &data)
+    {
+        this->source_.SetData(data);
     }
 
 private:
@@ -221,7 +236,6 @@ private:
             std::lock_guard lock(this->mutex_);
             lockTimer.Report();
 
-            this->gaussian_ = Gaussian(settings.gaussian);
             this->color_ = Color(settings.color);
         }
 
@@ -232,10 +246,11 @@ private:
     }
 
 private:
+    GrayPngSource source_;
     Observer<DemoBrain> observer_;
     DemoModel demoModel_;
+    Nodes nodes_;
     pex::Endpoint<DemoBrain, DemoControl> demoEndpoint_;
-    Gaussian gaussian_;
     Color color_;
     DisplayThread displayThread_;
 };

@@ -61,17 +61,11 @@ public:
             "Depth",
             new wxpex::Field(panel, controls.depth));
 
-        auto threads = wxpex::LabeledWidget(
-            panel,
-            "Threads",
-            new wxpex::Field(panel, controls.threads));
-
         auto sizer = LayoutLabeled(
             layoutOptions,
             enable,
             high,
             low,
-            threads,
             depth);
 
         this->ConfigureSizer(std::move(sizer));

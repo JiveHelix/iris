@@ -14,15 +14,16 @@
 
 #include "../common/about_window.h"
 #include "../common/observer.h"
-#include "../common/brain.h"
+#include "../common/gray_png_brain.h"
 #include "../common/png_settings.h"
+#include "../common/display_thread.h"
 
 #include "./demo_settings.h"
 #include "./demo_controls.h"
 #include "./filters.h"
 
 
-class DemoBrain: public Brain<DemoBrain>
+class DemoBrain: public GrayPngBrain<DemoBrain>
 {
 public:
     DemoBrain();
@@ -69,10 +70,5 @@ private:
     pex::Endpoint<DemoBrain, DemoControl> demoEndpoint_;
     bool pngIsLoaded_;
     Filters filters_;
-    mutable std::mutex mutex_;
-    std::condition_variable condition_;
-    DisplayState displayState_;
-    std::atomic_bool displayRequested_;
-    std::atomic_bool displayLoopIsRunning_;
-    std::thread displayThread_;
+    DisplayThread displayThread_;
 };

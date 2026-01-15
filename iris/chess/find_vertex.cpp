@@ -11,12 +11,12 @@ std::optional<Vertex> FindVertex(
     const Vertices &vertices,
     double maximumDistance)
 {
-    if (vertices.empty())
+    if (vertices.vertices.empty())
     {
         throw std::logic_error("must have vertices");
     }
 
-    for (const auto &vertex: vertices)
+    for (const auto &vertex: vertices.vertices)
     {
         auto distance = candidate.Distance(vertex.point);
 

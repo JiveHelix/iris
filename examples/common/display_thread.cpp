@@ -1,7 +1,6 @@
 #include "display_thread.h"
 
 
-
 DisplayThread::DisplayThread(
     draw::AsyncPixelsControl asyncPixelsControl,
     iris::CancelControl cancelControl,

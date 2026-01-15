@@ -12,6 +12,7 @@
 #include <tau/mono_image.h>
 #include <draw/pixels.h>
 
+#include <iris/filter_result.h>
 #include "iris/error.h"
 #include "iris/derivative.h"
 #include "iris/gaussian_node.h"
@@ -42,11 +43,44 @@ struct Phasor
     {
         return this->phase(point.y, point.x);
     }
+
+    Phasor AddMargin(const tau::Margins &margins) const
+    {
+        Phasor extended{};
+        extended.magnitude = margins.AddMargin(this->magnitude);
+        extended.phase = margins.AddMargin(this->phase);
+
+        return extended;
+    }
+
+    Phasor RemoveMargin(const tau::Margins &margins) const
+    {
+        Phasor trimmed{};
+        trimmed.magnitude = margins.RemoveMargin(this->magnitude);
+        trimmed.phase = margins.RemoveMargin(this->phase);
+
+        return trimmed;
+    }
+
+    tau::Size<Eigen::Index> GetSize() const
+    {
+        assert(
+            tau::Size<Eigen::Index>(this->magnitude)
+                == tau::Size<Eigen::Index>(this->phase));
+
+        return {this->magnitude};
+    }
+
+    void Resize(const tau::Size<Eigen::Index> &size)
+    {
+        this->magnitude = Matrix(size.height, size.width);
+        this->phase = Matrix(size.height, size.width);
+    }
 };
 
 
 template<typename Value>
-struct GradientResult
+struct GradientResult: public FilterResult
 {
     Value maximum;
     tau::MonoImage<Value> dx;
@@ -119,10 +153,9 @@ struct GradientResult
         return {Magnitude(dxFloat, dyFloat), phase};
     }
 
-    std::shared_ptr<draw::Pixels> Colorize(const tau::Margins &margins) const
+    std::shared_ptr<draw::Pixels> Colorize() const
     {
-        auto trimmed = this->RemoveMargin(margins);
-
+        auto trimmed = this->RemoveMargin();
         auto phasor = trimmed.GetPhasor<float>();
 
         tau::HsvPlanes<float> hsv(
@@ -139,14 +172,39 @@ struct GradientResult
         return draw::Pixels::CreateShared(asRgb);
     }
 
-    GradientResult RemoveMargin(const tau::Margins &margins) const
+    GradientResult AddMargin(const tau::Margins &margins) const
+    {
+        GradientResult extended{};
+        extended.maximum = this->maximum;
+        extended.SetMargins(margins);
+        extended.dx = margins.AddMargin(this->dx);
+        extended.dy = margins.AddMargin(this->dy);
+
+        return extended;
+    }
+
+    GradientResult RemoveMargin() const
     {
         GradientResult trimmed{};
         trimmed.maximum = this->maximum;
-        trimmed.dx = margins.RemoveMargin(this->dx);
-        trimmed.dy = margins.RemoveMargin(this->dy);
+        trimmed.dx = this->margins_.RemoveMargin(this->dx);
+        trimmed.dy = this->margins_.RemoveMargin(this->dy);
 
         return trimmed;
+    }
+
+    tau::Size<Eigen::Index> GetSize() const
+    {
+        assert(this->dx.rows() == this->dy.rows());
+        assert(this->dx.cols() == this->dy.cols());
+
+        return {this->dx};
+    }
+
+    void Resize(const tau::Size<Eigen::Index> size)
+    {
+        this->dx.resize(size.height, size.width);
+        this->dy.resize(size.height, size.width);
     }
 };
 
@@ -160,32 +218,32 @@ public:
     using ColumnVector = typename Differentiate_::ColumnVector;
     using Result = GradientResult<Value>;
     using Matrix = tau::MonoImage<Value>;
+    using InputRef = Eigen::Ref<const Matrix>;
 
     AsyncGradient(
         const Differentiate_ &differentiate,
-        const Matrix &input,
-        Result &result,
-        size_t threadCount)
+        const InputRef &input,
+        Result &result)
         :
         rowConvolution_(
             differentiate.horizontal,
             input,
             result.dx,
-            threadCount),
+            jive::GetThreadPool()->GetConcurrency()),
 
         columnConvolution_(
             differentiate.vertical,
             input,
             result.dy,
-            threadCount)
+            jive::GetThreadPool()->GetConcurrency())
     {
 
     }
 
-    void Await()
+    void Wait()
     {
-        this->rowConvolution_.Await();
-        this->columnConvolution_.Await();
+        this->rowConvolution_.Wait();
+        this->columnConvolution_.Wait();
     }
 
 private:
@@ -195,12 +253,12 @@ private:
     // Set normalize to false.
     static constexpr bool normalize = false;
     using RowConvolution =
-        chunk::RowConvolution<normalize, RowVector, Matrix, Matrix>;
+        chunk::RowConvolution<normalize, RowVector, InputRef, Matrix>;
 
     RowConvolution rowConvolution_;
 
     using ColumnConvolution =
-        chunk::ColumnConvolution<normalize, ColumnVector, Matrix, Matrix>;
+        chunk::ColumnConvolution<normalize, ColumnVector, InputRef, Matrix>;
 
     ColumnConvolution columnConvolution_;
 };
@@ -210,9 +268,6 @@ template<typename Value>
 class Gradient
 {
 public:
-    static constexpr size_t defaultThreads =
-        GradientSettings<Value>::defaultThreads;
-
     using Matrix = tau::MonoImage<Value>;
     using Result = GradientResult<Value>;
 
@@ -221,8 +276,7 @@ public:
     Gradient(const Differentiate<Value> &differentiate)
         :
         isEnabled_(true),
-        differentiate_(differentiate),
-        threads_(defaultThreads)
+        differentiate_(differentiate)
     {
 
     }
@@ -230,24 +284,22 @@ public:
     Gradient(const GradientSettings<Value> &settings)
         :
         isEnabled_(settings.enable),
-        differentiate_(settings.maximum, settings.scale, settings.size),
-        threads_(settings.threads)
+        differentiate_(settings.maximum, settings.scale, settings.size)
     {
 
     }
 
     AsyncGradient<Value> FilterAsync(
-        const Matrix &input,
+        Eigen::Ref<const Matrix> input,
         Result &result) const
     {
         return AsyncGradient<Value>(
             this->differentiate_,
             input,
-            result,
-            this->threads_);
+            result);
     }
 
-    bool Filter(const Matrix &input, Result &result) const
+    bool Filter(Eigen::Ref<const Matrix> input, Result &result) const
     {
         if (!this->isEnabled_)
         {
@@ -259,7 +311,7 @@ public:
         result.dy.resize(input.rows(), input.cols());
 
         auto asyncGradient = this->FilterAsync(input, result);
-        asyncGradient.Await();
+        asyncGradient.Wait();
 
         return true;
     }
@@ -269,26 +321,30 @@ public:
         return this->differentiate_.GetSize();
     }
 
+    tau::Margins ComputeRequiredMargins() const
+    {
+        return tau::Margins::Create(this->differentiate_.GetSize() / 2);
+    }
+
 private:
     bool isEnabled_;
     Differentiate<Value> differentiate_;
-    size_t threads_;
 };
 
 
-int32_t DetectGradientScale(
-    const GradientResult<int32_t> &result,
+InProcess DetectGradientScale(
+    const GradientResult<InProcess> &result,
     double percentile);
 
 
 template<typename SourceNode>
 class GradientNode
     :
-    public Node<SourceNode, Gradient<int32_t>, GradientControl<int32_t>>
+    public Node<SourceNode, Gradient<InProcess>, GradientControl<InProcess>>
 {
 public:
-    using Control = GradientControl<int32_t>;
-    using Filter = Gradient<int32_t>;
+    using Control = GradientControl<InProcess>;
+    using Filter = Gradient<InProcess>;
     using Base = Node<SourceNode, Filter, Control>;
 
     GradientNode(
@@ -298,6 +354,7 @@ public:
         :
         Base("Gradient", source, control, cancel),
         control_(control),
+
         detectEndpoint_(
             PEX_THIS("GradientNode"),
             control.autoDetectSettings,
@@ -341,8 +398,8 @@ public:
 };
 
 
-extern template struct GradientResult<int32_t>;
-extern template class Gradient<int32_t>;
+extern template struct GradientResult<InProcess>;
+extern template class Gradient<InProcess>;
 extern template class GradientNode<DefaultGaussianNode>;
 
 using DefaultGradientNode = GradientNode<DefaultGaussianNode>;

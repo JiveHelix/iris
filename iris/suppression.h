@@ -7,6 +7,7 @@
 #include <pex/selectors.h>
 #include <pex/range.h>
 #include <tau/eigen.h>
+#include <tau/mono_image.h>
 
 #include "iris/detail/suppression_detail.h"
 
@@ -15,19 +16,21 @@ namespace iris
 {
 
 
-template<typename Input, typename Output>
+template<typename Scalar>
 class AsyncSuppression
 {
 public:
     using Index = typename Eigen::Index;
 
+    using Input = Eigen::Ref<const tau::MonoImage<Scalar>>;
+    using Image = tau::MonoImage<Scalar>;
+    using Output = Eigen::Ref<Image>;
+
     AsyncSuppression(
-        size_t threadCount,
         Index windowSize,
-        const Eigen::MatrixBase<Input> &input,
-        Eigen::MatrixBase<Output> &output)
+        Input input,
+        Output output)
         :
-        threadCount_(threadCount),
         windowSize_(windowSize),
         rows_(input.rows()),
         columns_(input.cols()),
@@ -36,21 +39,36 @@ public:
     {
         Index maximumThreadCount;
 
-        if constexpr (tau::MatrixTraits<Output>::isColumnMajor)
+        if constexpr (tau::MatrixTraits<Image>::isColumnMajor)
         {
+            if (windowSize > this->columns)
+            {
+                throw std::runtime_error("windowSize is larger than input");
+            }
+
             maximumThreadCount = this->columns_ / windowSize;
         }
         else
         {
+            if (windowSize > this->rows_)
+            {
+                throw std::runtime_error("windowSize is larger than input");
+            }
+
             maximumThreadCount = this->rows_ / windowSize;
         }
 
+        assert(maximumThreadCount >= 1);
+
         // Ensure that output has the right size.
         // Leave the values uninitialized for now.
-        this->output_ = Output(this->rows_, this->columns_);
+        assert(this->output_.rows() == this->rows_);
+        assert(this->output_.cols() == this->columns_);
 
         this->threadCount_ =
-            std::min(static_cast<size_t>(maximumThreadCount), threadCount);
+            std::min(
+                static_cast<size_t>(maximumThreadCount),
+                jive::GetThreadPool()->GetConcurrency());
 
         this->chunks_ = this->MakeChunks_();
 
@@ -61,7 +79,7 @@ public:
 
         this->suppressionChunks_.reserve(this->chunks_.size());
 
-        if constexpr (tau::MatrixTraits<Output>::isColumnMajor)
+        if constexpr (tau::MatrixTraits<Image>::isColumnMajor)
         {
             if (this->rows_ < windowSize)
             {
@@ -106,7 +124,7 @@ public:
 
         if (this->threadCount_ > 1)
         {
-            if constexpr (tau::MatrixTraits<Output>::isColumnMajor)
+            if constexpr (tau::MatrixTraits<Image>::isColumnMajor)
             {
                 this->ZipColumnMajor_();
             }
@@ -120,7 +138,7 @@ public:
 private:
     chunk::Chunks MakeChunks_() const
     {
-        if constexpr (tau::MatrixTraits<Output>::isColumnMajor)
+        if constexpr (tau::MatrixTraits<Image>::isColumnMajor)
         {
             // Create chunks along the columns
             auto chunks =
@@ -247,18 +265,20 @@ private:
     Index columns_;
     std::vector<detail::SuppressionChunk<Input, Output>> suppressionChunks_;
     chunk::Chunks chunks_;
-    Eigen::MatrixBase<Output> &output_;
+    Output output_;
 };
 
 
-template<typename Input, typename Output>
+template<typename Scalar>
 void Suppression(
-    size_t threadCount,
     Eigen::Index windowSize,
-    const Eigen::MatrixBase<Input> &input,
-    Eigen::MatrixBase<Output> &output)
+    Eigen::Ref<const tau::MonoImage<Scalar>> input,
+    Eigen::Ref<tau::MonoImage<Scalar>> output)
 {
-    AsyncSuppression(threadCount, windowSize, input, output).Wait();
+    AsyncSuppression<Scalar>(
+        windowSize,
+        input,
+        output).Wait();
 }
 
 

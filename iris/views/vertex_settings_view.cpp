@@ -46,17 +46,11 @@ VertexSettingsView::VertexSettingsView(
         "Count",
         new RadioBox(panel, controls.count));
 
-    auto threads = wxpex::LabeledWidget(
-        panel,
-        "Threads",
-        new wxpex::Field(panel, controls.threads));
-
     auto sizer = LayoutLabeled(
         layoutOptions,
         enable,
         window,
-        count,
-        threads);
+        count);
 
     this->ConfigureSizer(std::move(sizer));
 }

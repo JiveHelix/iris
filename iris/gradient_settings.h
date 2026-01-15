@@ -20,7 +20,6 @@ struct GradientFields
         fields::Field(&T::maximum, "maximum"),
         fields::Field(&T::size, "size"),
         fields::Field(&T::scale, "scale"),
-        fields::Field(&T::threads, "threads"),
         fields::Field(&T::autoDetectSettings, "autoDetectSettings"),
         fields::Field(&T::percentile, "percentile"));
 
@@ -38,7 +37,6 @@ struct GradientTemplate
         T<Value> maximum;
         T<DerivativeSize::MakeSelect> size;
         T<pex::MakeRange<Value, pex::Limit<1>, pex::Limit<10>>> scale;
-        T<size_t> threads;
         T<pex::MakeSignal> autoDetectSettings;
         T<double> percentile;
 
@@ -57,7 +55,6 @@ struct GradientCustom
             DerivativeSize::Size::three;
 
         static constexpr Value defaultScale = 1;
-        static constexpr size_t defaultThreads = 4;
         static constexpr double defaultPercentile = 0.995;
 
         Plain()
@@ -67,7 +64,6 @@ struct GradientCustom
                 defaultMaximum,
                 defaultSize,
                 defaultScale,
-                defaultThreads,
                 {},
                 defaultPercentile}
         {

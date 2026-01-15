@@ -17,7 +17,6 @@ LinesChainResults::LinesChainResults(int64_t shapesId)
 
 
 std::shared_ptr<draw::Pixels> LinesChainResults::Display(
-    const tau::Margins &margins,
     const draw::AsyncShapesControl &shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
     ThreadsafeColorMap<int32_t> &color,
@@ -30,7 +29,7 @@ std::shared_ptr<draw::Pixels> LinesChainResults::Display(
         return {};
     }
 
-    auto cannyChainPixels = this->cannyChain->Display(margins, color);
+    auto cannyChainPixels = this->cannyChain->Display(color);
 
     if (this->hough)
     {

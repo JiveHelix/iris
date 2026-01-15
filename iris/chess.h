@@ -23,6 +23,11 @@ struct ChessInput
 
     Vertices vertices;
     HoughResult<double> hough;
+
+    tau::Size<Eigen::Index> GetSize() const
+    {
+        return this->hough.GetSize();
+    }
 };
 
 
@@ -36,6 +41,11 @@ public:
     Chess(const ChessSettings &settings);
 
     bool Filter(const ChessInput &input, ChessSolution &result);
+
+    tau::Margins ComputeRequiredMargins() const
+    {
+        return {0, 0};
+    }
 
 private:
     ChessSettings settings_;

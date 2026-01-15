@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <iris/filter_result.h>
 #include "iris/canny_chain_settings.h"
 #include "iris/level_adjust.h"
 #include "iris/gaussian.h"
@@ -22,7 +23,7 @@ struct CannyChainFilters
 };
 
 
-struct CannyChainResults
+struct CannyChainResults: public FilterResult
 {
     using Filters = CannyChainFilters;
     std::shared_ptr<const typename Filters::GaussianFilter::Result> gaussian;
@@ -30,9 +31,7 @@ struct CannyChainResults
     std::shared_ptr<const typename Filters::CannyFilter::Result> canny;
 
     std::shared_ptr<draw::Pixels>
-        Display(
-            const tau::Margins &margins,
-            ThreadsafeColorMap<int32_t> &color) const;
+        Display(ThreadsafeColorMap<int32_t> &color) const;
 };
 
 
@@ -110,6 +109,16 @@ public:
 
     }
 
+    tau::Margins DoComputeRequiredMargins() const
+    {
+        std::lock_guard lock(this->mutex_);
+
+        return tau::ComputeMaximumMargins(
+            this->nodes_.canny.ComputeRequiredMargins(),
+            this->nodes_.gradient.ComputeRequiredMargins(),
+            this->nodes_.gaussian.ComputeRequiredMargins());
+    }
+
     ResultPtr DoGetResult()
     {
         if (!this->settings_.enable)
@@ -133,6 +142,7 @@ public:
         }
 
         auto result = std::make_shared<ChainResults>();
+        result->SetMargins(this->GetMargins());
         result->canny = this->nodes_.canny.GetResult();
         result->gradient = this->nodes_.gradient.GetResult();
         result->gaussian = this->nodes_.gaussian.GetResult();

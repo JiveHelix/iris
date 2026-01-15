@@ -51,7 +51,12 @@ public:
 
     }
 
-    bool Filter(const Matrix &input, Result &result)
+    tau::Margins ComputeRequiredMargins() const
+    {
+        return {0, 0};
+    }
+
+    bool Filter(Eigen::Ref<const Matrix> input, Eigen::Ref<Result> result)
     {
         if (!this->enable_)
         {

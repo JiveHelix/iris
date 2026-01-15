@@ -48,41 +48,14 @@ wxWindow * DemoBrain::CreateControls(wxWindow *parent)
 
 void DemoBrain::Shutdown()
 {
-    if (!this->displayThread_.joinable())
-    {
-        Brain<DemoBrain>::Shutdown();
-        return;
-    }
-
-    {
-        std::lock_guard lock(this->mutex_);
-        this->displayLoopIsRunning_ = false;
-        this->filters_.cancel.Set(true);
-        this->condition_.notify_one();
-    }
-
-    this->displayThread_.join();
-
-    Brain<DemoBrain>::Shutdown();
+    this->displayThread_.Shutdown();
+    this->GrayPngBrain<DemoBrain>::Shutdown();
 }
 
 
 void DemoBrain::Display()
 {
-    if (!this->pngIsLoaded_)
-    {
-        return;
-    }
-
-    std::lock_guard lock(this->mutex_);
-
-    if (this->displayState_ == DisplayState::processing)
-    {
-        this->filters_.cancel.Set(true);
-    }
-
-    this->displayRequested_ = true;
-    this->condition_.notify_one();
+    this->displayThread_.Display();
 }
 
 
@@ -111,59 +84,6 @@ void DemoBrain::LoadGrayPng(const draw::GrayPng<PngPixel> &png)
 }
 
 
-void DemoBrain::DisplayLoop_()
-{
-    while (this->displayLoopIsRunning_)
-    {
-        {
-            std::unique_lock lock(this->mutex_);
-
-            if (!this->displayRequested_)
-            {
-                // Sleep until display is requested
-                this->displayState_ = DisplayState::waiting;
-
-                this->condition_.wait(
-                    lock,
-                    [this]() -> bool
-                    {
-                        return this->displayRequested_
-                            || !this->displayLoopIsRunning_;
-                    });
-            }
-
-            if (!this->displayLoopIsRunning_)
-            {
-                return;
-            }
-
-            this->displayState_ = DisplayState::processing;
-        }
-
-        auto pixels = this->Process();
-
-        {
-            std::lock_guard lock(this->mutex_);
-
-            if (this->filters_.cancel.Get())
-            {
-                this->filters_.cancel.Set(false);
-                continue;
-            }
-            else
-            {
-                this->displayRequested_ = false;
-            }
-        }
-
-        if (pixels)
-        {
-            this->userControl_.pixelView.asyncPixels.Set(pixels);
-        }
-    }
-}
-
-
 std::shared_ptr<draw::Pixels> DemoBrain::Process()
 {
     this->userControl_.pixelView.asyncShapes.Set(
@@ -178,6 +98,8 @@ std::shared_ptr<draw::Pixels> DemoBrain::Process()
         return {};
     }
 
+    auto nodeSettings = this->demoControl_.nodeSettings.Get();
+
     return chainResult->Display(
         this->userControl_.pixelView.asyncShapes,
         this->demoModel_.chess.linesShape.Get(),
@@ -185,5 +107,5 @@ std::shared_ptr<draw::Pixels> DemoBrain::Process()
         this->demoModel_.chessShape.Get(),
         this->filters_.color,
         {},
-        this->demoControl_.nodeSettings.Get());
+        &nodeSettings);
 }

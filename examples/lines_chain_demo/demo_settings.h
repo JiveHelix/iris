@@ -18,7 +18,7 @@ struct DemoFields
         fields::Field(&T::imageSize, "imageSize"),
         fields::Field(&T::mask, "mask"),
         fields::Field(&T::level, "level"),
-        fields::Field(&T::lines, "lines"),
+        fields::Field(&T::linesChain, "linesChain"),
         fields::Field(&T::color, "color"));
 };
 
@@ -30,7 +30,7 @@ struct DemoTemplate
     T<draw::SizeGroup> imageSize;
     T<iris::MaskGroup> mask;
     T<iris::LevelGroup<int32_t>> level;
-    T<iris::LinesChainGroup> lines;
+    T<iris::LinesChainGroup> linesChain;
     T<tau::ColorMapSettingsGroup<int32_t>> color;
 
     static constexpr auto fields = DemoFields<DemoTemplate>::fields;
@@ -62,8 +62,11 @@ struct DemoCustom
             this->color.range.high.Set(maximumValue);
             this->color.maximum.Set(maximumValue);
 
-            this->lines.SetMaximumControl(iris::MaximumControl(this->maximum));
-            this->lines.SetImageSizeControl(draw::SizeControl(this->imageSize));
+            this->linesChain.SetMaximumControl(
+                iris::MaximumControl(this->maximum));
+
+            this->linesChain.SetImageSizeControl(
+                draw::SizeControl(this->imageSize));
 
             this->maximum.Set(maximumValue);
         }

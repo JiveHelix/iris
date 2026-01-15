@@ -83,7 +83,8 @@ target_sources(
     views/lines_chain_settings_view.cpp
     views/mask_brain.cpp
     views/mask_settings_view.cpp
-    views/pixel_info_view.cpp)
+    views/pixel_info_view.cpp
+    views/thread_pool_view.cpp)
 
 install(TARGETS iris DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

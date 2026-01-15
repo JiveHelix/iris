@@ -1,6 +1,5 @@
 #include "iris/mask.h"
 
-
 #include <wxpex/graphics.h>
 #include <draw/polygon_shape.h>
 #include <draw/shapes.h>

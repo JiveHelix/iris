@@ -1,7 +1,4 @@
 #include <iostream>
-#include <mutex>
-#include <condition_variable>
-#include <thread>
 #include <chrono>
 #include <wxpex/app.h>
 #include <wxpex/wxshim_app.h>
@@ -9,13 +6,13 @@
 #include <draw/pixels.h>
 #include <draw/png.h>
 
-
 #include <iris/views/mask_brain.h>
 
 #include "../common/about_window.h"
 #include "../common/observer.h"
-#include "../common/brain.h"
+#include "../common/gray_png_brain.h"
 #include "../common/png_settings.h"
+#include "../common/display_thread.h"
 
 #include "demo_settings.h"
 #include "demo_controls.h"
@@ -43,13 +40,15 @@ using HoughUserControl = typename HoughUserGroup::DefaultControl;
 using HoughUserModel = typename HoughUserGroup::Model;
 
 
-class DemoBrain: public Brain<DemoBrain>
+class DemoBrain: public GrayPngBrain<DemoBrain>
 {
 public:
 
+    using Base = GrayPngBrain<DemoBrain>;
+
     DemoBrain()
         :
-        Brain<DemoBrain>(),
+        Base(),
         observer_(this, UserControl(this->user_)),
         demoModel_(),
         demoControl_(this->demoModel_),
@@ -65,21 +64,20 @@ public:
 
         houghEndpoint_(
             this,
-            this->demoControl_.lines.hough,
+            this->demoControl_.linesChain.hough,
             &DemoBrain::OnHoughSettings_),
 
         houghUser_{},
         houghUserControl_(this->houghUser_),
-        pngIsLoaded_(false),
-        filters_(this->demoControl_),
-        mutex_(),
-        condition_(),
-        displayState_(DisplayState::waiting),
-        displayRequested_(false),
-        displayLoopIsRunning_(true),
+
+        filters_(
+            iris::CancelControl(this->cancel_),
+            DemoControl(this->demoModel_)),
+
         displayThread_(
-            std::bind(&DemoBrain::DisplayLoop_, this)),
-        doDisplay_([this](){this->Display();})
+            this->userControl_.pixelView.asyncPixels,
+            iris::CancelControl(this->cancel_),
+            std::bind(&DemoBrain::Process, this))
     {
 
     }
@@ -94,21 +92,11 @@ public:
         return "Lines Demo";
     }
 
-    void LoadGrayPng(const draw::GrayPng<PngPixel> &png)
+    void SetPngData(const SourceType &data)
     {
-        // Prevent drawing until new dimensions and source data are
-        // synchronized.
-        this->pngIsLoaded_ = false;
-
-        this->demoModel_.imageSize.Set(png.GetSize());
-        this->filters_.source.SetData(png.GetValues().template cast<int32_t>());
-
-        this->pngIsLoaded_ = true;
-
+        this->filters_.source.SetData(data);
         this->filters_.level.AutoDetectSettings();
-        this->filters_.lines.AutoDetectSettings();
-
-        this->Display();
+        this->filters_.linesChain.AutoDetectSettings();
     }
 
     void ExportPng()
@@ -125,7 +113,8 @@ public:
             this->GetUserControls(),
             this->demoControl_);
 
-        this->OnHoughSettings_(this->demoControl_.lines.hough.Get());
+        this->OnHoughSettings_(this->demoControl_.linesChain.hough.Get());
+
         return window;
     }
 
@@ -157,7 +146,7 @@ public:
 
         this->maskBrain_.UpdateDisplay();
 
-        auto linesResult = this->filters_.lines.GetChainResults();
+        auto linesResult = this->filters_.linesChain.GetChainResults();
 
         if (!linesResult)
         {
@@ -173,51 +162,30 @@ public:
 
         return linesResult->Display(
             this->userControl_.pixelView.asyncShapes,
-            this->demoModel_.lines.shape.Get(),
+            this->demoModel_.linesChain.shape.Get(),
             this->filters_.color,
-            this->houghUserControl_.houghView.asyncPixels);
-    }
-
-    void Display()
-    {
-        if (!this->pngIsLoaded_)
-        {
-            return;
-        }
-
-        std::lock_guard lock(this->mutex_);
-
-        if (this->displayState_ == DisplayState::processing)
-        {
-            this->filters_.cancel.Set(true);
-        }
-
-        this->displayRequested_ = true;
-        this->condition_.notify_one();
+            &this->houghUserControl_.houghView.asyncPixels);
     }
 
     void Shutdown()
     {
-        if (this->displayLoopIsRunning_)
-        {
-            {
-                std::lock_guard lock(this->mutex_);
-                this->displayLoopIsRunning_ = false;
-                this->filters_.cancel.Set(true);
-                this->condition_.notify_one();
-            }
-
-            this->displayThread_.join();
-        }
-
+        this->displayThread_.Shutdown();
         this->houghView_.Close();
-        Brain<DemoBrain>::Shutdown();
+        this->GrayPngBrain<DemoBrain>::Shutdown();
+    }
+
+    void Display()
+    {
+        this->displayThread_.Display();
     }
 
 private:
     void OnSettings_(const DemoSettings &)
     {
-        this->doDisplay_();
+        if (this->png_)
+        {
+            this->Display();
+        }
     }
 
     void OnHoughEnable_(bool isEnabled)
@@ -251,64 +219,6 @@ private:
         this->OnHoughEnable_(houghSettings.enable);
     }
 
-    void DisplayLoop_()
-    {
-        while (this->displayLoopIsRunning_)
-        {
-            {
-                std::unique_lock lock(this->mutex_);
-
-                if (!this->displayRequested_)
-                {
-                    // Sleep until display is requested
-                    this->displayState_ = DisplayState::waiting;
-
-                    this->condition_.wait(
-                        lock,
-                        [this]() -> bool
-                        {
-                            return this->displayRequested_
-                                || !this->displayLoopIsRunning_;
-                        });
-                }
-
-                if (!this->displayLoopIsRunning_)
-                {
-                    return;
-                }
-
-                if (this->filters_.cancel.Get())
-                {
-                    this->filters_.cancel.Set(false);
-                }
-
-                this->displayState_ = DisplayState::processing;
-            }
-
-            auto pixels = this->Process();
-
-            {
-                std::lock_guard lock(this->mutex_);
-                if (this->filters_.cancel.Get())
-                {
-                    this->filters_.cancel.Set(false);
-                }
-
-                if (pixels)
-                {
-                    // Processing succeeded.
-                    // Go back to the top of the loop and wait.
-                    this->displayRequested_ = false;
-                }
-            }
-
-            if (pixels)
-            {
-                this->userControl_.pixelView.asyncPixels.Set(pixels);
-            }
-        }
-    }
-
 private:
     Observer<DemoBrain> observer_;
     DemoModel demoModel_;
@@ -319,15 +229,8 @@ private:
     HoughUserModel houghUser_;
     HoughUserControl houghUserControl_;
     wxpex::ShortcutWindow houghView_;
-    bool pngIsLoaded_;
     Filters filters_;
-    mutable std::mutex mutex_;
-    std::condition_variable condition_;
-    DisplayState displayState_;
-    std::atomic_bool displayRequested_;
-    std::atomic_bool displayLoopIsRunning_;
-    std::thread displayThread_;
-    wxpex::CallAfter doDisplay_;
+    DisplayThread displayThread_;
 };
 
 

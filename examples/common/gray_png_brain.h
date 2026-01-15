@@ -1,8 +1,12 @@
 #pragma once
 
-
+#include <iris/node.h>
 #include "brain.h"
 #include "about_window.h"
+
+
+using SourceType = tau::MonoImage<iris::InProcess>;
+using GrayPngSource = iris::Source<SourceType>;
 
 
 template<typename Derived>
@@ -15,7 +19,6 @@ public:
         mutex_(),
         sourceMutex_(),
         png_(),
-        source_(),
         cancel_()
     {
 
@@ -29,7 +32,9 @@ public:
 
         std::lock_guard lock(this->sourceMutex_);
         this->png_ = png;
-        this->source_.SetData(png.GetValues().template cast<iris::InProcess>());
+
+        this->GetDerived()->SetPngData(
+            png.GetValues().template cast<iris::InProcess>());
     }
 
     void SaveSettings() const
@@ -51,6 +56,5 @@ protected:
     mutable std::mutex mutex_;
     mutable std::mutex sourceMutex_;
     std::optional<draw::GrayPng<PngPixel>> png_;
-    iris::Source<tau::MonoImage<iris::InProcess>> source_;
     iris::Cancel cancel_;
 };

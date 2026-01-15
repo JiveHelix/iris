@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <draw/views/pixel_view_settings.h>
 #include <draw/points_shape.h>
+#include <iris/filter_result.h>
 #include "iris/vertex_chain_settings.h"
 #include "iris/level_adjust.h"
 #include "iris/gaussian.h"
@@ -19,7 +20,7 @@ namespace iris
 
 
 template<typename Filter>
-using FilterResult =
+using FilterResultPtr =
     std::shared_ptr<const typename Filter::Result>;
 
 
@@ -30,15 +31,14 @@ struct VertexChainFilters
     using HarrisFilter = Harris<double>;
     using VertexFilter = VertexFinder;
 
-    using GaussianResult = FilterResult<GaussianFilter>;
-    using GradientResult = FilterResult<GradientFilter>;
-    using HarrisResult = FilterResult<HarrisFilter>;
-    using VertexResult = FilterResult<VertexFilter>;
+    using GaussianResult = FilterResultPtr<GaussianFilter>;
+    using GradientResult = FilterResultPtr<GradientFilter>;
+    using HarrisResult = FilterResultPtr<HarrisFilter>;
+    using VertexResult = FilterResultPtr<VertexFilter>;
 };
 
 
-
-struct VertexChainResults
+struct VertexChainResults: public FilterResult
 {
     using Filters = VertexChainFilters;
 
@@ -50,7 +50,6 @@ struct VertexChainResults
     VertexChainResults(int64_t shapesId);
 
     std::shared_ptr<draw::Pixels> Display(
-        const tau::Margins &margins,
         draw::AsyncShapesControl shapesControl,
         const draw::PointsShapeSettings &pointsShapeSettings,
         ThreadsafeColorMap<int32_t> &color) const;
@@ -103,7 +102,6 @@ struct VertexChainNodes
     {
 
     }
-
 };
 
 
@@ -144,6 +142,17 @@ public:
 
     }
 
+    tau::Margins DoComputeRequiredMargins() const
+    {
+        std::lock_guard lock(this->mutex_);
+
+        return tau::ComputeMaximumMargins(
+            this->nodes_.gaussian.ComputeRequiredMargins(),
+            this->nodes_.gradient.ComputeRequiredMargins(),
+            this->nodes_.harris.ComputeRequiredMargins(),
+            this->nodes_.vertex.ComputeRequiredMargins());
+    }
+
     ResultPtr DoGetResult()
     {
         if (!this->settings_.enable)
@@ -167,6 +176,8 @@ public:
         }
 
         auto result = std::make_shared<ChainResults>(this->shapesId_.Get());
+
+        result->SetMargins(this->nodes_.vertex.GetMargins());
         result->vertex = this->nodes_.vertex.GetResult();
         result->harris = this->nodes_.harris.GetResult();
         result->gradient = this->nodes_.gradient.GetResult();

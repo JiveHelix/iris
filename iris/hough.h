@@ -48,6 +48,52 @@ struct HoughResult
 
         return scaled;
     }
+
+    HoughResult<Float> AddMargin(const tau::Margins &margins) const
+    {
+        HoughResult<Float> result;
+
+        // Hough space is not correlated to margins.
+        result.space = this->space;
+
+        result.lines.reserve(this->lines.size());
+
+        for (auto &line: this->lines)
+        {
+            result.lines.push_back(line.AddMargin(margins));
+        }
+
+        return result;
+    }
+
+    HoughResult<Float> RemoveMargin(const tau::Margins &margins) const
+    {
+        HoughResult<Float> result;
+
+        // Hough space is not correlated to margins.
+        result.space = this->space;
+
+        result.lines.reserve(this->lines.size());
+
+        for (auto &line: this->lines)
+        {
+            result.lines.push_back(line.RemoveMargin(margins));
+        }
+
+        return result;
+    }
+
+    tau::Size<Eigen::Index> GetSize() const
+    {
+        return {this->space};
+    }
+
+    // Does not preserve data.
+    void Resize(const tau::Size<Eigen::Index> &size)
+    {
+        this->lines.clear();
+        this->space = Matrix::Zero(size.height, size.width);
+    }
 };
 
 
@@ -71,19 +117,15 @@ template<typename Float>
 using EdgePoints = std::vector<EdgePoint<Float>>;
 
 
-template<typename Data, typename Float>
+template<typename Float>
 class WeightedEdgeMaker
 {
 public:
-    using Phase = typename Phasor<Float>::Matrix;
+    using Matrix = typename Phasor<Float>::Matrix;
 
     WeightedEdgeMaker(
-        Eigen::MatrixBase<Data> &&edges,
-        Phase &&phase) = delete;
-
-    WeightedEdgeMaker(
-        const Eigen::MatrixBase<Data> &edges,
-        const Phase &phase)
+        const Eigen::Ref<const Matrix> &edges,
+        const Eigen::Ref<const Matrix> &phase)
         :
         edges_(edges),
         phase_(phase)
@@ -101,16 +143,16 @@ public:
     }
 
 protected:
-    const Eigen::MatrixBase<Data> & edges_;
-    const Phase & phase_;
+    Eigen::Ref<const Matrix> edges_;
+    Eigen::Ref<const Matrix> phase_;
 };
 
 
-template<typename Data, typename Float>
-class EdgeMaker: public WeightedEdgeMaker<Data, Float>
+template<typename Float>
+class EdgeMaker: public WeightedEdgeMaker<Float>
 {
 public:
-    using Base = WeightedEdgeMaker<Data, Float>;
+    using Base = WeightedEdgeMaker<Float>;
     using Base::Base;
 
     EdgePoint<Float> operator()(Eigen::Index row, Eigen::Index column)
@@ -126,21 +168,21 @@ public:
 
 template
 <
-    template<typename, typename> typename EdgeFunctor,
-    typename Data,
+    template<typename> typename EdgeFunctor,
     typename Float
 >
 EdgePoints<Float> MakeEdgePoints(
-    const Eigen::MatrixBase<Data> &edges,
-    const Phasor<Float> &phasor)
+    const Eigen::Ref<const Eigen::MatrixX<Float>> &edges,
+    const Eigen::Ref<const Eigen::MatrixX<Float>> &phase)
 {
     using Eigen::Index;
+    using Data = Eigen::MatrixX<Float>;
     EdgePoints<Float> result;
 
     result.reserve(
         static_cast<size_t>((edges.array() > 0).count()));
 
-    EdgeFunctor<Data, Float> edgeFunctor(edges, phasor.phase);
+    EdgeFunctor<Float> edgeFunctor(edges, phase);
 
     if constexpr (tau::MatrixTraits<Data>::isColumnMajor)
     {
@@ -528,7 +570,17 @@ public:
 
     }
 
-    bool Filter(const CannyResult<Float> &canny, Result &result) const
+    tau::Margins ComputeRequiredMargins() const
+    {
+        return {0, 0};
+    }
+
+    static constexpr bool wantsMargins = true;
+
+    bool Filter(
+        const CannyResult<Float> &canny,
+        Result &result,
+        const tau::Margins &inputMargins) const
     {
         if (!this->settings_.enable)
         {
@@ -537,15 +589,21 @@ public:
 
         EdgePoints<Float> edgePoints;
 
+        using CannyMatrix = decltype(CannyResult<Float>::matrix);
+
         if (this->settings_.weighted)
         {
             edgePoints =
-                MakeEdgePoints<WeightedEdgeMaker>(canny.matrix, canny.phasor);
+                MakeEdgePoints<WeightedEdgeMaker, Float>(
+                    inputMargins.GetValidView(canny.matrix),
+                    inputMargins.GetValidView(canny.phasor.phase));
         }
         else
         {
             edgePoints =
-                MakeEdgePoints<EdgeMaker>(canny.matrix, canny.phasor);
+                MakeEdgePoints<EdgeMaker, Float>(
+                    inputMargins.GetValidView(canny.matrix),
+                    inputMargins.GetValidView(canny.phasor.phase));
         }
 
         Index maximumColumn = 0;
@@ -557,12 +615,13 @@ public:
             maximumRow = std::max(maximumRow, edgePoint.row);
         }
 
+        auto threadPool = jive::GetThreadPool();
+
         auto chunks = chunk::MakeChunks(
-            this->settings_.threads,
+            threadPool->GetConcurrency(),
             static_cast<Index>(edgePoints.size()));
 
         std::vector<jive::Sentry> threadSentries;
-        auto threadPool = jive::GetThreadPool();
 
         std::vector<Accumulator> accumulators(chunks.size());
 
@@ -576,7 +635,7 @@ public:
 
             threadSentries.emplace_back(
                 threadPool->AddJob(
-                    [&]()
+                    [&, begin, end]()
                     {
                         accumulator.Accumulate(
                             this->settings_,
@@ -598,8 +657,9 @@ public:
         {
             auto windowSize = this->settings_.window;
 
-            Suppression(
-                this->settings_.threads,
+            result.space.resize(combined.rows(), combined.cols());
+
+            Suppression<Float>(
                 windowSize,
                 combined,
                 result.space);
@@ -615,10 +675,9 @@ public:
 
             using Space = std::remove_cvref_t<decltype(result.space)>;
 
-            Space suppressedSeam;
+            Space suppressedSeam(seam.rows(), seam.cols());
 
-            Suppression(
-                this->settings_.threads,
+            Suppression<Float>(
                 windowSize,
                 seam,
                 suppressedSeam);

@@ -7,7 +7,6 @@ namespace iris
 
 
 std::shared_ptr<draw::Pixels> CannyChainResults::Display(
-    const tau::Margins &margins,
     ThreadsafeColorMap<int32_t> &color) const
 {
     if (!this->gaussian)
@@ -19,16 +18,16 @@ std::shared_ptr<draw::Pixels> CannyChainResults::Display(
 
     if (this->canny)
     {
-        return this->canny->Colorize(margins);
+        return this->canny->Colorize();
     }
 
     // Canny didn't return a result.
     if (this->gradient)
     {
-        return this->gradient->Colorize(margins);
+        return this->gradient->Colorize();
     }
 
-    return color.Filter(*this->gaussian);
+    return color.Filter(this->margins_.RemoveMargin(*this->gaussian));
 }
 
 

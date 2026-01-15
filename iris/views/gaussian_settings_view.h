@@ -59,18 +59,12 @@ public:
                 panel,
                 controls.partials));
 
-        auto threads = wxpex::LabeledWidget(
-            panel,
-            "Threads",
-            new wxpex::Field(panel, controls.threads));
-
         auto sizer = wxpex::LayoutLabeled(
             layoutOptions,
             enable,
             sigma,
             threshold,
-            partials,
-            threads);
+            partials);
 
         this->ConfigureSizer(std::move(sizer));
     }

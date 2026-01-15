@@ -9,8 +9,11 @@
 #include <tau/percentile.h>
 #include <draw/point.h>
 #include <tau/mono_image.h>
-#include "iris/vertex_settings.h"
-#include "iris/threadsafe_filter.h"
+#include <tau/margins.h>
+#include <iris/filter_result.h>
+#include <iris/vertex_settings.h>
+#include <iris/threadsafe_filter.h>
+#include <iris/harris.h>
 
 
 namespace iris
@@ -35,10 +38,102 @@ struct Vertex
     // For the purpose of determining unique vertices, vertices with the same
     // point compare equal, even if their counts differ.
     bool operator==(const Vertex &other) const;
+
+    static ValuePoints AddMargin(
+        const tau::Margins &margins,
+        const ValuePoints &valuePoints)
+    {
+        ValuePoints result;
+        result.reserve(valuePoints.size());
+
+        for (auto &point: valuePoints)
+        {
+            result.emplace_back(
+                point.x + margins.horizontalMargin,
+                point.y + margins.verticalMargin,
+                point.value);
+        }
+
+        return result;
+    }
+
+    static ValuePoints RemoveMargin(
+        const tau::Margins &margins,
+        const ValuePoints &valuePoints)
+    {
+        ValuePoints result;
+        result.reserve(valuePoints.size());
+
+        for (auto &point: valuePoints)
+        {
+            result.emplace_back(
+                point.x - margins.horizontalMargin,
+                point.y - margins.verticalMargin,
+                point.value);
+        }
+
+        return result;
+    }
+
+    Vertex AddMargin(const tau::Margins &margins) const
+    {
+        return Vertex(
+            this->point.x + margins.horizontalMargin,
+            this->point.y + margins.verticalMargin,
+            AddMargin(margins, this->valuePoints));
+    }
+
+    Vertex RemoveMargin(const tau::Margins &margins) const
+    {
+        return Vertex(
+            this->point.x - margins.horizontalMargin,
+            this->point.y - margins.verticalMargin,
+            RemoveMargin(margins, this->valuePoints));
+    }
 };
 
 
-using Vertices = std::vector<Vertex>;
+struct Vertices: public FilterResult
+{
+    std::vector<Vertex> vertices;
+
+    Vertices AddMargin(const tau::Margins &margins) const
+    {
+        Vertices result{};
+        result.SetMargins(margins);
+        result.vertices.reserve(this->vertices.size());
+
+        for (auto &vertex: this->vertices)
+        {
+            result.vertices.push_back(vertex.AddMargin(margins));
+        }
+
+        return result;
+    }
+
+    Vertices RemoveMargin(const tau::Margins &margins) const
+    {
+        Vertices result{};
+        result.vertices.reserve(this->vertices.size());
+
+        for (auto &vertex: this->vertices)
+        {
+            result.vertices.push_back(vertex.RemoveMargin(margins));
+        }
+
+        return result;
+    }
+
+    tau::Size<Eigen::Index> GetSize() const
+    {
+        return {0, 0};
+    }
+
+    void Resize(const tau::Size<Eigen::Index> &)
+    {
+
+    }
+};
 
 
 std::vector<tau::Point2d<double>> VerticesToPoints(const Vertices &);
@@ -68,7 +163,7 @@ public:
     }
 
     template<typename T>
-    void AddMatrix(const tau::MonoImage<T> &input)
+    void AddMatrix(const Eigen::Ref<const tau::MonoImage<T>> &input)
     {
         // Create a vector of all of the non-zero values.
         ValuePoints points;
@@ -147,6 +242,8 @@ private:
 class VertexFinder
 {
 public:
+    static constexpr bool wantsMargins = true;
+
     using Result = Vertices;
 
     VertexFinder() = default;
@@ -164,7 +261,15 @@ public:
         assert(settings.count > 0);
     }
 
-    bool Filter(const tau::MonoImage<double> &input, Result &result)
+    tau::Margins ComputeRequiredMargins() const
+    {
+        return {0, 0};
+    }
+
+    bool Filter(
+        const HarrisResult<double> &input,
+        Result &result,
+        const tau::Margins &inputMargins)
     {
         if (!this->isEnabled_)
         {
@@ -175,7 +280,7 @@ public:
             this->windowSize_ / 2,
             this->count_);
 
-        pointGroups.AddMatrix(input);
+        pointGroups.AddMatrix<double>(inputMargins.GetValidView(input.data));
         result = Result(pointGroups.GetVertices());
 
         return true;

@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <draw/views/pixel_view_settings.h>
+#include <iris/filter_result.h>
 #include "iris/lines_chain_settings.h"
 #include "iris/canny_chain.h"
 #include "iris/hough.h"
@@ -20,7 +21,7 @@ struct LinesChainFilters
 };
 
 
-struct LinesChainResults
+struct LinesChainResults: public FilterResult
 {
     using Filters = LinesChainFilters;
     std::shared_ptr<const CannyChainResults> cannyChain;
@@ -32,7 +33,6 @@ struct LinesChainResults
     LinesChainResults(int64_t shapesId);
 
     std::shared_ptr<draw::Pixels> Display(
-        const tau::Margins &margins,
         const draw::AsyncShapesControl &shapesControl,
         const draw::LinesShapeSettings &linesShapeSettings,
         ThreadsafeColorMap<int32_t> &color,
@@ -108,6 +108,15 @@ public:
         nodes_(sourceNode, controls, cancel)
     {
 
+    }
+
+    tau::Margins DoComputeRequiredMargins() const
+    {
+        std::lock_guard lock(this->mutex_);
+
+        return tau::ComputeMaximumMargins(
+            this->nodes_.cannyChain.ComputeRequiredMargins(),
+            this->nodes_.hough.ComputeRequiredMargins());
     }
 
     ResultPtr DoGetResult()

@@ -41,7 +41,6 @@ void ChessChainResults::ClearShapes_(
 
 
 std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
-    const tau::Margins &margins,
     const ChessChainNodeSettings &nodeSettings,
     const draw::AsyncShapesControl &shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
@@ -52,11 +51,11 @@ std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
 {
     this->ClearShapes_(shapesControl);
 
-    auto pixels = this->GetNodePixels_(margins, nodeSettings, color);
+    auto pixels = this->GetNodePixels_(nodeSettings, color);
 
     if (!pixels)
     {
-        pixels = this->GetPreprocessedPixels_(margins, color);
+        pixels = this->GetPreprocessedPixels_(color);
     }
 
     if (nodeSettings.vertices.isSelected && this->vertices)
@@ -98,7 +97,6 @@ std::shared_ptr<draw::Pixels> ChessChainResults::DisplayNode(
 
 
 std::shared_ptr<draw::Pixels> ChessChainResults::Display(
-    const tau::Margins &margins,
     const draw::AsyncShapesControl &shapesControl,
     const draw::LinesShapeSettings &linesShapeSettings,
     const draw::PointsShapeSettings &pointsShapeSettings,
@@ -112,7 +110,6 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
         if (HasSelectedNode(*nodeSettings))
         {
             return this->DisplayNode(
-                margins,
                 *nodeSettings,
                 shapesControl,
                 linesShapeSettings,
@@ -125,7 +122,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
 
     this->ClearShapes_(shapesControl);
 
-    auto pixels = this->GetPreprocessedPixels_(margins, color);
+    auto pixels = this->GetPreprocessedPixels_(color);
 
     if (!this->level)
     {
@@ -171,48 +168,47 @@ std::shared_ptr<draw::Pixels> ChessChainResults::Display(
 
 
 std::shared_ptr<draw::Pixels> ChessChainResults::GetPreprocessedPixels_(
-    const tau::Margins &margins,
     ThreadsafeColorMap<int32_t> &color) const
 {
     if (this->chess && this->level)
     {
-        return color.Filter(*this->level);
+        return color.Filter(this->margins_.RemoveMargin(*this->level));
     }
 
     if (this->canny)
     {
-        return this->canny->Colorize(margins);
+        return this->canny->Colorize();
     }
 
     if (this->vertices && this->gaussian)
     {
         // Display the gaussian output behind the vertices.
-        return color.Filter(*this->gaussian);
+        return color.Filter(this->margins_.RemoveMargin(*this->gaussian));
     }
 
     if (this->harris)
     {
-        return iris::ColorizeHarris(margins, *this->harris);
+        return this->harris->Colorize();
     }
 
     if (this->gradient)
     {
-        return this->gradient->Colorize(margins);
+        return this->gradient->Colorize();
     }
 
     if (this->gaussian)
     {
-        return color.Filter(*this->gaussian);
+        return color.Filter(this->margins_.RemoveMargin(*this->gaussian));
     }
 
     if (this->level)
     {
-        return color.Filter(*this->level);
+        return color.Filter(this->margins_.RemoveMargin(*this->level));
     }
 
     if (this->mask)
     {
-        return color.Filter(*this->mask);
+        return color.Filter(this->margins_.RemoveMargin(*this->mask));
     }
 
     return {};
@@ -220,7 +216,6 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetPreprocessedPixels_(
 
 
 std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
-    const tau::Margins &margins,
     const ChessChainNodeSettings &nodeSettings,
     ThreadsafeColorMap<int32_t> &color) const
 {
@@ -232,7 +227,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
-        return color.Filter(*this->mask);
+        return color.Filter(this->margins_.RemoveMargin(*this->mask));
     }
 
     if (nodeSettings.level.isSelected)
@@ -243,7 +238,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
-        return color.Filter(*this->level);
+        return color.Filter(this->margins_.RemoveMargin(*this->level));
     }
 
     if (nodeSettings.gaussian.isSelected)
@@ -254,7 +249,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
-        return color.Filter(*this->gaussian);
+        return color.Filter(this->margins_.RemoveMargin(*this->gaussian));
     }
 
     if (nodeSettings.gradient.isSelected)
@@ -265,7 +260,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
-        return this->gradient->Colorize(margins);
+        return this->gradient->Colorize();
     }
 
     if (nodeSettings.harris.isSelected)
@@ -276,7 +271,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
-        return iris::ColorizeHarris(margins, *this->harris);
+        return this->harris->Colorize();
     }
 
     if (nodeSettings.vertices.isSelected)
@@ -288,7 +283,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
         }
 
         // Display the gaussian output behind the vertices.
-        return color.Filter(*this->gaussian);
+        return color.Filter(this->margins_.RemoveMargin(*this->gaussian));
     }
 
     if (nodeSettings.canny.isSelected)
@@ -299,7 +294,7 @@ std::shared_ptr<draw::Pixels> ChessChainResults::GetNodePixels_(
             return {};
         }
 
-        return this->canny->Colorize(margins);
+        return this->canny->Colorize();
     }
 
     return {};

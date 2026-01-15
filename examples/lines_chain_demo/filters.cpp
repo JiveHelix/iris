@@ -1,26 +1,27 @@
 #include "filters.h"
 
 
-Filters::Filters(const DemoControl &controls)
+Filters::Filters(
+    const iris::CancelControl &cancelControl,
+    const DemoControl &controls)
     :
-    cancel(false),
     source(),
 
     mask(
         "Mask",
         this->source,
         controls.mask,
-        iris::CancelControl(this->cancel)),
+        cancelControl),
 
     level(
         this->mask,
         controls.level,
-        iris::CancelControl(this->cancel)),
+        cancelControl),
 
-    lines(
+    linesChain(
         this->level,
-        controls.lines,
-        iris::CancelControl(this->cancel)),
+        controls.linesChain,
+        cancelControl),
 
     color(controls.color)
 {

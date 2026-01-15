@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <cassert>
 #include <future>
 #include <vector>
 #include <deque>
@@ -9,6 +10,7 @@
 #include <tau/color.h>
 #include <tau/color_maps/rgb.h>
 
+#include <iris/filter_result.h>
 #include "iris/canny_settings.h"
 #include "iris/gradient.h"
 #include "iris/chunks.h"
@@ -23,7 +25,7 @@ namespace iris
 
 
 template<typename Float>
-struct CannyResult
+struct CannyResult: public FilterResult
 {
     using Matrix =
         Eigen::Matrix<Float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
@@ -33,9 +35,38 @@ struct CannyResult
     Float rangeHigh;
     Float rangeLow;
 
-    std::shared_ptr<draw::Pixels> Colorize(const tau::Margins &margins) const
+    CannyResult AddMargin(const tau::Margins &margins) const
     {
-        auto trimmed = margins.RemoveMargin(this->matrix);
+        CannyResult extended{};
+        extended.SetMargins(margins);
+        extended.phasor = this->phasor.AddMargin(margins);
+        extended.matrix = margins_.AddMargin(this->matrix);
+        extended.rangeHigh = this->rangeHigh;
+        extended.rangeLow = this->rangeLow;
+
+        return extended;
+    }
+
+    CannyResult RemoveMargin() const
+    {
+        CannyResult trimmed{};
+        trimmed.phasor = this->phasor.RemoveMargin(this->margins_);
+        trimmed.matrix = this->margins_.RemoveMargin(this->matrix);
+        trimmed.rangeHigh = this->rangeHigh;
+        trimmed.rangeLow = this->rangeLow;
+
+        return trimmed;
+    }
+
+    void Resize(const tau::Size<Eigen::Index> &size)
+    {
+        this->phasor.Resize(size);
+        this->matrix = Matrix(size.height, size.width);
+    }
+
+    std::shared_ptr<draw::Pixels> Colorize() const
+    {
+        auto trimmed = this->margins_.RemoveMargin(this->matrix);
         tau::HsvPlanes<Float> hsv(trimmed.rows(), trimmed.cols());
 
         GetSaturation(hsv).array() = Float(1);
@@ -56,6 +87,15 @@ struct CannyResult
         auto asRgb = tau::HsvToRgb<uint8_t>(hsv);
 
         return draw::Pixels::CreateShared(asRgb);
+    }
+
+    tau::Size<Eigen::Index> GetSize() const
+    {
+        assert(
+            this->phasor.GetSize()
+                == tau::Size<Eigen::Index>(this->matrix));
+
+        return {this->matrix};
     }
 };
 
@@ -471,7 +511,8 @@ public:
             << std::endl;
 #endif
 
-        auto chunks = chunk::MakeChunks(this->settings_.threads, rows);
+        auto chunks =
+            chunk::MakeChunks(jive::GetThreadPool()->GetConcurrency(), rows);
 
         std::vector<jive::Sentry> threadSentries;
         threadSentries.reserve(chunks.size());
@@ -509,6 +550,11 @@ public:
         }
 
         return true;
+    }
+
+    tau::Margins ComputeRequiredMargins() const
+    {
+        return {0, 0};
     }
 
 private:

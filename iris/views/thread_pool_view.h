@@ -1,25 +1,23 @@
 #pragma once
 
 
-#include <wxpex/wxshim.h>
 #include <wxpex/static_box.h>
 #include <wxpex/labeled_widget.h>
-#include <tau/intrinsics.h>
+#include <iris/thread_pool.h>
 
 
 namespace iris
 {
 
 
-class IntrinsicsView: public wxpex::StaticBox
+class ThreadPoolView: public wxpex::StaticBox
 {
 public:
     using LayoutOptions = wxpex::LayoutOptions;
 
-    IntrinsicsView(
+    ThreadPoolView(
         wxWindow *parent,
-        const std::string &name,
-        const tau::IntrinsicsControl<double> &control,
+        const iris::ThreadPoolControl &control,
         const LayoutOptions &layoutOptions = LayoutOptions{});
 };
 

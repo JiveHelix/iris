@@ -18,7 +18,6 @@ VertexChainResults::VertexChainResults(int64_t shapesId)
 
 
 std::shared_ptr<draw::Pixels> VertexChainResults::Display(
-    const tau::Margins &margins,
     draw::AsyncShapesControl shapesControl,
     const draw::PointsShapeSettings &pointsShapeSettings,
     ThreadsafeColorMap<int32_t> &color) const
@@ -30,7 +29,8 @@ std::shared_ptr<draw::Pixels> VertexChainResults::Display(
         return {};
     }
 
-    auto gaussianPixels = color.Filter(*this->gaussian);
+    auto gaussianPixels = color.Filter(
+        this->margins_.RemoveMargin(*this->gaussian));
 
     if (this->vertex)
     {
@@ -47,13 +47,13 @@ std::shared_ptr<draw::Pixels> VertexChainResults::Display(
 
     if (this->harris)
     {
-        return iris::ColorizeHarris(margins, *this->harris);
+        return this->harris->Colorize();
     }
 
     // Harris didn't return a result.
     if (this->gradient)
     {
-        return this->gradient->Colorize(margins);
+        return this->gradient->Colorize();
     }
 
     // Gradient has no result.

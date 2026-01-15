@@ -52,6 +52,7 @@ struct DemoCustom
         void OnMaximum_(iris::InProcess maximumValue)
         {
             this->level.maximum.Set(maximumValue);
+            this->color.maximum.Set(maximumValue);
         }
 
     private:

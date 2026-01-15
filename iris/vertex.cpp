@@ -58,7 +58,7 @@ Vertices PointGroups::GetVertices() const
 
         if (centroid)
         {
-            result.push_back(*centroid);
+            result.vertices.push_back(*centroid);
         }
     }
 
@@ -89,11 +89,11 @@ std::vector<tau::Point2d<double>> VerticesToPoints(
     const Vertices &vertices)
 {
     std::vector<tau::Point2d<double>> result;
-    result.reserve(vertices.size());
+    result.reserve(vertices.vertices.size());
 
     std::transform(
-        std::begin(vertices),
-        std::end(vertices),
+        std::begin(vertices.vertices),
+        std::end(vertices.vertices),
         std::back_inserter(result),
         [](const Vertex &vertex)
         {
@@ -108,7 +108,7 @@ ValuePoints VerticesToValuePoints(const Vertices &vertices)
 {
     ValuePoints valuePoints;
 
-    for (const auto &vertex: vertices)
+    for (const auto &vertex: vertices.vertices)
     {
         valuePoints.insert(
             std::end(valuePoints),
