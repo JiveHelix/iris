@@ -40,7 +40,7 @@ iris::NamedVertices CreateNamedVertices(
                 startingY - static_cast<double>(i) * squareSize_m,
                 startingZ - static_cast<double>(j) * squareSize_m);
 
-            tau::Vector3<double> sensor = projection.WorldToCamera(world);
+            tau::Vector3<double> sensor = projection.WorldToImage(world);
             current.pixel.x = sensor(0);
             current.pixel.y = sensor(1);
 

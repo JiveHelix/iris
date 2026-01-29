@@ -34,10 +34,11 @@ using Chunks = std::vector<Chunk>;
 inline
 Chunks MakeChunks(
     size_t threadCount,
-    Eigen::Index processCount,
+    Eigen::Index itemCount,
     std::optional<Eigen::Index> minimumChunkCount = std::nullopt)
 {
-    assert(processCount >= static_cast<Eigen::Index>(threadCount));
+    assert(itemCount > 0);
+    threadCount = std::min(threadCount, static_cast<size_t>(itemCount));
 
     if (threadCount == 0)
     {
@@ -47,11 +48,11 @@ Chunks MakeChunks(
     using Eigen::Index;
 
     Index chunkCount =
-        processCount / static_cast<Index>(threadCount);
+        itemCount / static_cast<Index>(threadCount);
 
     if (minimumChunkCount)
     {
-        if (processCount < *minimumChunkCount)
+        if (itemCount < *minimumChunkCount)
         {
             throw std::logic_error("Inconsistent constraint");
         }
@@ -59,10 +60,10 @@ Chunks MakeChunks(
         while (chunkCount < minimumChunkCount && threadCount > 1)
         {
             --threadCount;
-            chunkCount = processCount / static_cast<Index>(threadCount);
+            chunkCount = itemCount / static_cast<Index>(threadCount);
         }
 
-        // The check and throw above guarantees that processCount >=
+        // The check and throw above guarantees that itemCount >=
         // minimumChunkCount; therefore, this condition is guaranteed.
         assert(chunkCount >= *minimumChunkCount);
     }
@@ -75,7 +76,7 @@ Chunks MakeChunks(
     }
 
     Index remainder =
-        processCount
+        itemCount
         - (static_cast<Index>(threadCount) * chunkCount);
 
     if (remainder)
