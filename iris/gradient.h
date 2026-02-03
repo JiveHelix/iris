@@ -156,7 +156,7 @@ struct GradientResult: public FilterResult
     std::shared_ptr<draw::Pixels> Colorize() const
     {
         auto trimmed = this->RemoveMargin();
-        auto phasor = trimmed.GetPhasor<float>();
+        auto phasor = trimmed.template GetPhasor<float>();
 
         tau::HsvPlanes<float> hsv(
             phasor.magnitude.rows(),

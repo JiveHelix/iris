@@ -174,7 +174,7 @@ void SuppressColumnMajor(
         // Zero the column
         columnVector.array() = 0;
 
-        suppressor.ResetLocalMaximum<false>(column);
+        suppressor.template ResetLocalMaximum<false>(column);
         suppressor.UpdateLocalMaximum();
     }
 
@@ -212,7 +212,7 @@ void SuppressColumnMajor(
 
             columnVector.array() = 0;
 
-            suppressor.ResetLocalMaximum<false>(column);
+            suppressor.template ResetLocalMaximum<false>(column);
             suppressor.UpdateLocalMaximum();
         }
     }
@@ -253,7 +253,7 @@ void SuppressRowMajor(
         // Zero the row
         rowVector.array() = 0;
 
-        suppressor.ResetLocalMaximum<true>(row);
+        suppressor.template ResetLocalMaximum<true>(row);
         suppressor.UpdateLocalMaximum();
     }
 
@@ -300,7 +300,7 @@ void SuppressRowMajor(
 
             rowVector.array() = 0;
 
-            suppressor.ResetLocalMaximum<true>(row);
+            suppressor.template ResetLocalMaximum<true>(row);
             suppressor.UpdateLocalMaximum();
         }
     }
