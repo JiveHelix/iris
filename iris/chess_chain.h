@@ -59,14 +59,14 @@ struct ChessChainNodes
     using VertexNode =
         iris::Node<HarrisNode, VertexFilter, VertexControl>;
 
-    using Result = ChessSolution;
-    using ResultPtr = std::shared_ptr<const ChessSolution>;
-
     using MixNode =
         typename ChessNodes<VertexNode, HoughNode>::MixNode;
 
     using ChessNode =
         typename ChessNodes<VertexNode, HoughNode>::FilterNode;
+
+    using Result = typename ChessNode::Result;
+    using ResultPtr = typename ChessNode::ResultPtr;
 
     MaskNode mask;
     LevelNode level;

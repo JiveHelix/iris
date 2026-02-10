@@ -24,6 +24,14 @@ struct ChessInput
     Vertices vertices;
     HoughResult<double> hough;
 
+    ChessInput(const Vertices &vertices_, const HoughResult<double> &hough_)
+        :
+        vertices(vertices_),
+        hough(hough_)
+    {
+
+    }
+
     tau::Size<Eigen::Index> GetSize() const
     {
         return this->hough.GetSize();

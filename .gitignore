@@ -10,3 +10,4 @@ CMakeSettings.json
 CMakeUserPresets.json
 bin/
 lib/
+__pycache__
