@@ -589,8 +589,6 @@ public:
 
         EdgePoints<Float> edgePoints;
 
-        using CannyMatrix = decltype(CannyResult<Float>::matrix);
-
         if (this->settings_.weighted)
         {
             edgePoints =

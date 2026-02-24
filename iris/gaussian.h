@@ -385,8 +385,10 @@ void ThreadedKernelConvolve(
 {
     using Eigen::Index;
 
+#ifdef GAUSSIAN_LOG_TIMERS
     using namespace std::chrono;
     using Clock = steady_clock;
+#endif
 
     if (partials == Partials::both)
     {

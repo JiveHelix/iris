@@ -75,8 +75,8 @@ public:
             this,
             iris::GaussianControl<iris::InProcess>(this->gaussianModel_),
             &DemoBrain::OnSettings_),
-        png_{},
         cancel_(),
+        png_{},
         source_(),
         gaussian_(this->gaussianModel_.Get()),
 

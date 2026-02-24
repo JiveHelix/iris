@@ -387,7 +387,7 @@ public:
 
         bool repeated = false;
 
-        if (suppressed(keeper.y, keeper.x) > 0.0)
+        if (suppressed(keeper.y, keeper.x) > 0)
         {
             repeated = true;
         }

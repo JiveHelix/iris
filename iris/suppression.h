@@ -41,7 +41,7 @@ public:
 
         if constexpr (tau::MatrixTraits<Image>::isColumnMajor)
         {
-            if (windowSize > this->columns)
+            if (windowSize > this->columns_)
             {
                 throw std::runtime_error("windowSize is larger than input");
             }
