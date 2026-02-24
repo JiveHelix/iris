@@ -349,8 +349,8 @@ public:
 
     GradientNode(
         SourceNode &source,
-        Control control,
-        CancelControl cancel)
+        const Control &control,
+        const CancelControl &cancel)
         :
         Base("Gradient", source, control, cancel),
         control_(control),

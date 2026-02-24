@@ -483,7 +483,7 @@ public:
         return resultPtr;
     }
 
-private:
+protected:
     FilterClass filter_;
 };
 
