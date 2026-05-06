@@ -139,7 +139,6 @@ Homography::Intrinsics Homography::ComputeIntrinsics(
             this->GetHomographyMatrix(solution.vertices));
     }
 
-
     Eigen::Vector<double, 6> solution = tau::SvdSolve(factors);
 
     using Beta = Eigen::Matrix<double, 3, 3>;

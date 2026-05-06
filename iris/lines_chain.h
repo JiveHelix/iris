@@ -28,7 +28,7 @@ struct LinesChainResults: public FilterResult
     std::shared_ptr<const typename Filters::HoughFilter::Result> hough;
 
     using HoughPixelsControl =
-        typename draw::PixelViewControl::AsyncPixelsControl;
+        typename draw::AsyncPixelsControl;
 
     LinesChainResults(int64_t shapesId);
 

@@ -60,7 +60,7 @@ struct ChessChainResults: public FilterResult
     std::shared_ptr<const typename Chess::Result> chess;
 
     using HoughPixelsControl =
-        typename draw::PixelViewControl::AsyncPixelsControl;
+        typename draw::AsyncPixelsControl;
 
     ChessChainResults(
         int64_t chessShapesId,
