@@ -1,10 +1,304 @@
 #include "iris/homography.h"
 #include "iris/error.h"
 #include <tau/svd.h>
+#include <cmath>
 
 
 namespace iris
 {
+
+
+namespace
+{
+
+
+struct ReprojectionParameters
+{
+    double fx;
+    double fy;
+    double cx;
+    double cy;
+    double k1;
+    double k2;
+    double p1;
+    double p2;
+    double k3;
+};
+
+
+using ParameterVector = Eigen::Vector<double, Eigen::Dynamic>;
+
+
+double GetRmsResidual_pixels(
+    const Eigen::Vector<double, Eigen::Dynamic> &residuals)
+{
+    if (residuals.size() == 0)
+    {
+        return 0.0;
+    }
+
+    return std::sqrt(residuals.squaredNorm() / (residuals.size() / 2));
+}
+
+
+ParameterVector ToVector(const ReprojectionParameters &parameters)
+{
+    ParameterVector result(9);
+    result << parameters.fx,
+        parameters.fy,
+        parameters.cx,
+        parameters.cy,
+        parameters.k1,
+        parameters.k2,
+        parameters.p1,
+        parameters.p2,
+        parameters.k3;
+
+    return result;
+}
+
+
+ReprojectionParameters ToParameters(const ParameterVector &parameters)
+{
+    return {
+        parameters(0),
+        parameters(1),
+        parameters(2),
+        parameters(3),
+        parameters(4),
+        parameters(5),
+        parameters(6),
+        parameters(7),
+        parameters(8)};
+}
+
+
+ReprojectionParameters ToParameters(const IntrinsicsMatrix &intrinsics)
+{
+    return {
+        intrinsics(0, 0),
+        intrinsics(1, 1),
+        intrinsics(0, 2),
+        intrinsics(1, 2),
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0};
+}
+
+
+IntrinsicsMatrix ToIntrinsics(const ReprojectionParameters &parameters)
+{
+    IntrinsicsMatrix result = IntrinsicsMatrix::Identity();
+    result(0, 0) = parameters.fx;
+    result(1, 1) = parameters.fy;
+    result(0, 2) = parameters.cx;
+    result(1, 2) = parameters.cy;
+    result(0, 1) = 0.0;
+
+    return result;
+}
+
+
+Distortion<double> ToDistortion(const ReprojectionParameters &parameters)
+{
+    return {
+        parameters.k1,
+        parameters.k2,
+        parameters.p1,
+        parameters.p2,
+        parameters.k3};
+}
+
+
+HomographyMatrix ToPixelHomography(
+    const HomographyMatrix &normalizedHomography,
+    const tau::Size<double> &sensorSize)
+{
+    HomographyMatrix result = normalizedHomography;
+    double xScale = sensorSize.width / 2.0;
+    double yScale = sensorSize.height / 2.0;
+
+    result.row(0) =
+        xScale * (normalizedHomography.row(0) + normalizedHomography.row(2));
+
+    result.row(1) =
+        yScale * (normalizedHomography.row(1) + normalizedHomography.row(2));
+
+    return result;
+}
+
+
+Eigen::Matrix<double, 3, 4> GetExtrinsics(
+    const HomographyMatrix &pixelHomography,
+    const ReprojectionParameters &parameters)
+{
+    auto intrinsicsInverse = ToIntrinsics(parameters).inverse();
+
+    Eigen::Vector3<double> first =
+        intrinsicsInverse * pixelHomography.col(0);
+
+    Eigen::Vector3<double> second =
+        intrinsicsInverse * pixelHomography.col(1);
+
+    double scale = 2.0 / (first.norm() + second.norm());
+
+    Eigen::Matrix<double, 3, 3> rotationEstimate;
+    rotationEstimate.col(0) = scale * first;
+    rotationEstimate.col(1) = scale * second;
+    rotationEstimate.col(2) =
+        rotationEstimate.col(0).cross(rotationEstimate.col(1));
+
+    Eigen::JacobiSVD<Eigen::Matrix<double, 3, 3>> svd(
+        rotationEstimate,
+        Eigen::ComputeFullU | Eigen::ComputeFullV);
+
+    Eigen::Matrix<double, 3, 3> rotation =
+        svd.matrixU() * svd.matrixV().transpose();
+
+    if (rotation.determinant() < 0.0)
+    {
+        rotation.col(2) *= -1.0;
+    }
+
+    Eigen::Matrix<double, 3, 4> result;
+    result.block<3, 3>(0, 0) = rotation;
+    result.col(3) = scale * intrinsicsInverse * pixelHomography.col(2);
+
+    return result;
+}
+
+
+Eigen::Vector3<double> GetRotationVector(
+    const Eigen::Matrix<double, 3, 3> &rotation)
+{
+    Eigen::AngleAxis<double> angleAxis(rotation);
+
+    return angleAxis.axis() * angleAxis.angle();
+}
+
+
+Eigen::Matrix<double, 3, 3> GetRotation(
+    const Eigen::Vector3<double> &rotationVector)
+{
+    double angle = rotationVector.norm();
+
+    if (angle < 1e-12)
+    {
+        return Eigen::Matrix<double, 3, 3>::Identity();
+    }
+
+    return Eigen::AngleAxis<double>(angle, rotationVector / angle)
+        .toRotationMatrix();
+}
+
+
+ParameterVector GetInitialParameters(
+    const std::vector<HomographyMatrix> &pixelHomographies,
+    const IntrinsicsMatrix &intrinsics)
+{
+    // The first nine parameters are shared camera parameters. Each board adds
+    // one rotation-vector and translation pair.
+    ParameterVector result(9 + 6 * static_cast<Eigen::Index>(
+        pixelHomographies.size()));
+
+    result.head(9) = ToVector(ToParameters(intrinsics));
+    auto cameraParameters = ToParameters(result);
+
+    for (size_t i = 0; i < pixelHomographies.size(); ++i)
+    {
+        // Zhang's closed-form K gives a good first estimate for each board
+        // pose, then the nonlinear pass lets those poses move with K and D.
+        auto extrinsics = GetExtrinsics(pixelHomographies[i], cameraParameters);
+        Eigen::Index offset = 9 + 6 * static_cast<Eigen::Index>(i);
+
+        result.segment<3>(offset) =
+            GetRotationVector(extrinsics.block<3, 3>(0, 0));
+
+        result.segment<3>(offset + 3) = extrinsics.col(3);
+    }
+
+    return result;
+}
+
+
+Eigen::Vector<double, Eigen::Dynamic> GetReprojectionResiduals(
+    const std::vector<ChessSolution> &chessSolutions,
+    const World &world,
+    const ParameterVector &parameters)
+{
+    using Index = Eigen::Index;
+    ReprojectionParameters cameraParameters = ToParameters(parameters);
+
+    Index pointCount{};
+
+    for (const auto &solution: chessSolutions)
+    {
+        pointCount += static_cast<Index>(solution.vertices.size());
+    }
+
+    Eigen::Vector<double, Eigen::Dynamic> result(2 * pointCount);
+    Index row{};
+
+    for (size_t i = 0; i < chessSolutions.size(); ++i)
+    {
+        Index offset = 9 + 6 * static_cast<Index>(i);
+        auto rotation = GetRotation(parameters.segment<3>(offset));
+        auto translation = parameters.segment<3>(offset + 3);
+        const auto &solution = chessSolutions[i];
+
+        for (const auto &vertex: solution.vertices)
+        {
+            auto worldPoint = world(vertex.logical);
+
+            Eigen::Vector3<double> planarWorld(
+                worldPoint.x,
+                worldPoint.y,
+                0.0);
+
+            Eigen::Vector3<double> camera =
+                rotation * planarWorld + translation;
+
+            // Residuals are measured in pixels after perspective projection
+            // and lens distortion.
+            camera.array() /= camera(2);
+            auto distorted = DistortPoint(cameraParameters, camera);
+
+            double predictedX =
+                cameraParameters.fx * distorted.x + cameraParameters.cx;
+
+            double predictedY =
+                cameraParameters.fy * distorted.y + cameraParameters.cy;
+
+            result(row) = predictedX - vertex.pixel.x;
+            ++row;
+            result(row) = predictedY - vertex.pixel.y;
+            ++row;
+        }
+    }
+
+    return result;
+}
+
+
+double GetStep(double value, size_t index)
+{
+    if (index < 4)
+    {
+        return std::max(1e-3, std::abs(value) * 1e-6);
+    }
+
+    if (index < 9)
+    {
+        return std::max(1e-8, std::abs(value) * 1e-4);
+    }
+
+    return std::max(1e-8, std::abs(value) * 1e-4);
+}
+
+
+} // end anonymous namespace
 
 
 ConstrainedElements GetConstrainedElements(
@@ -50,6 +344,7 @@ ConstrainedFactors GetConstrainedFactors(const HomographyMatrix &homography)
 Homography::Homography(const HomographySettings &settings)
     :
     world_(settings.squareSize_mm),
+    sensorSize_(settings.sensorSize_pixels),
     normalize_(settings.sensorSize_pixels)
 {
 
@@ -116,7 +411,7 @@ HomographyMatrix Homography::GetHomographyMatrix(
 }
 
 
-Homography::Intrinsics Homography::ComputeIntrinsics(
+IntrinsicsMatrix Homography::ComputeIntrinsics(
     const std::vector<ChessSolution> &chessSolutions)
 {
     if (chessSolutions.size() < 3)
@@ -166,7 +461,7 @@ Homography::Intrinsics Homography::ComputeIntrinsics(
 
     Eigen::Matrix<double, 3, 3> kInverseTranspose = cholesky.matrixL();
 
-    Homography::Intrinsics intrinsics
+    IntrinsicsMatrix intrinsics
         = kInverseTranspose.transpose().inverse();
 
     intrinsics.array() /= intrinsics(2, 2);
@@ -182,12 +477,10 @@ Homography::Intrinsics Homography::ComputeIntrinsics(
 }
 
 
-Distortion<double> Homography::ComputeDistortion(
-    const Intrinsics &intrinsics,
+ReprojectionErrorMinimum Homography::MinimizeReprojectionError(
+    const IntrinsicsMatrix &intrinsics,
     const std::vector<ChessSolution> &chessSolutions)
 {
-    Intrinsics intrinsicsInverse = intrinsics.inverse();
-
     using Index = Eigen::Index;
 
     Index pointCount{};
@@ -197,78 +490,123 @@ Distortion<double> Homography::ComputeDistortion(
         pointCount += static_cast<Index>(solution.vertices.size());
     }
 
-    if (pointCount < 3)
+    Index parameterCount =
+        9 + 6 * static_cast<Index>(chessSolutions.size());
+
+    if (2 * pointCount <= parameterCount)
     {
-        throw ChessError("Underdetermined distortion solution");
+        throw ChessError("Underdetermined reprojection solution");
     }
 
-    Eigen::Matrix<double, Eigen::Dynamic, 5> factors(2 * pointCount, 5);
-    Eigen::Vector<double, Eigen::Dynamic> residuals(2 * pointCount);
-
-    Index row{};
+    std::vector<HomographyMatrix> pixelHomographies;
+    pixelHomographies.reserve(chessSolutions.size());
 
     for (const auto &solution: chessSolutions)
     {
-        HomographyMatrix homographyMatrix =
-            this->GetHomographyMatrix(solution.vertices);
+        pixelHomographies.push_back(
+            ToPixelHomography(
+                this->GetHomographyMatrix(solution.vertices),
+                this->sensorSize_));
+    }
 
-        for (const auto &vertex: solution.vertices)
+    ParameterVector parameters =
+        GetInitialParameters(pixelHomographies, intrinsics);
+    double damping = 1e-3;
+
+    auto residuals = GetReprojectionResiduals(
+        chessSolutions,
+        this->world_,
+        parameters);
+
+    double error = residuals.squaredNorm();
+
+    // Levenberg-Marquardt style refinement over K, distortion, and every board
+    // pose. Skew is excluded from the parameter vector, so it remains zero.
+    for (size_t iteration = 0; iteration < 60; ++iteration)
+    {
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> jacobian(
+            residuals.size(),
+            parameters.size());
+
+        // Numerical derivatives keep the optimizer local to this translation
+        // unit without adding a dependency on a larger optimization library.
+        for (Index parameterIndex = 0; parameterIndex < parameters.size();
+            ++parameterIndex)
         {
-            auto worldPoint = this->world_(vertex.logical);
+            double step =
+                GetStep(
+                    parameters(parameterIndex),
+                    static_cast<size_t>(parameterIndex));
 
-            Eigen::Vector3<double> worldH(worldPoint.x, worldPoint.y, 1);
-            Eigen::Vector3<double> idealSensor = homographyMatrix * worldH;
-            idealSensor.array() /= idealSensor(2);
+            ParameterVector trial = parameters;
+            trial(parameterIndex) += step;
 
-            auto idealPixel = this->normalize_.ToPixel(
-                tau::Point2d<double>(idealSensor(0), idealSensor(1)));
+            auto trialResiduals = GetReprojectionResiduals(
+                chessSolutions,
+                this->world_,
+                trial);
 
-            Eigen::Vector3<double> idealCamera =
-                intrinsicsInverse
-                * Eigen::Vector3<double>(idealPixel.x, idealPixel.y, 1);
+            jacobian.col(parameterIndex) = (trialResiduals - residuals) / step;
+        }
 
-            idealCamera.array() /= idealCamera(2);
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> normal =
+            jacobian.transpose() * jacobian;
 
-            Eigen::Vector3<double> observedCamera =
-                intrinsicsInverse
-                * Eigen::Vector3<double>(vertex.pixel.x, vertex.pixel.y, 1);
+        Eigen::Vector<double, Eigen::Dynamic> gradient =
+            jacobian.transpose() * residuals;
 
-            observedCamera.array() /= observedCamera(2);
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> damped = normal;
+        damped.diagonal().array() +=
+            damping * normal.diagonal().cwiseAbs().array().max(1.0);
 
-            double x = idealCamera(0);
-            double y = idealCamera(1);
-            double radius2 = x * x + y * y;
-            double radius4 = radius2 * radius2;
-            double radius6 = radius4 * radius2;
-            double xy = x * y;
+        Eigen::Vector<double, Eigen::Dynamic> update =
+            damped.colPivHouseholderQr().solve(-gradient);
 
-            factors(row, 0) = x * radius2;
-            factors(row, 1) = x * radius4;
-            factors(row, 2) = 2 * xy;
-            factors(row, 3) = radius2 + 2 * x * x;
-            factors(row, 4) = x * radius6;
-            residuals(row) = observedCamera(0) - x;
-            ++row;
+        if (!update.allFinite())
+        {
+            break;
+        }
 
-            factors(row, 0) = y * radius2;
-            factors(row, 1) = y * radius4;
-            factors(row, 2) = radius2 + 2 * y * y;
-            factors(row, 3) = 2 * xy;
-            factors(row, 4) = y * radius6;
-            residuals(row) = observedCamera(1) - y;
-            ++row;
+        ParameterVector trial = parameters + update;
+        trial(1) = std::max(trial(1), 1.0);
+        trial(0) = std::max(trial(0), 1.0);
+
+        auto trialResiduals = GetReprojectionResiduals(
+            chessSolutions,
+            this->world_,
+            trial);
+
+        double trialError = trialResiduals.squaredNorm();
+
+        // Accept only downhill steps. Rejected steps increase damping, accepted
+        // steps relax it so the solve moves back toward Gauss-Newton.
+        if (trialError < error)
+        {
+            parameters = trial;
+            residuals = trialResiduals;
+
+            if (std::abs(error - trialError) < 1e-10)
+            {
+                error = trialError;
+                break;
+            }
+
+            error = trialError;
+            damping = std::max(damping * 0.5, 1e-12);
+        }
+        else
+        {
+            damping = std::min(damping * 4.0, 1e12);
         }
     }
 
-    Eigen::Vector<double, 5> coefficients =
-        factors.colPivHouseholderQr().solve(residuals);
+    auto result = ToParameters(parameters);
 
     return {
-        coefficients(0),
-        coefficients(1),
-        coefficients(2),
-        coefficients(3),
-        coefficients(4)};
+        ToIntrinsics(result),
+        ToDistortion(result),
+        residuals,
+        GetRmsResidual_pixels(residuals)};
 }
 
 
