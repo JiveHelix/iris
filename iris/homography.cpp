@@ -158,6 +158,12 @@ Homography::Intrinsics Homography::ComputeIntrinsics(
 
     using Cholesky = Eigen::LLT<Beta, Eigen::Upper>;
     Cholesky cholesky(beta);
+
+    if (cholesky.info() != Eigen::Success)
+    {
+        throw ChessError("Degenerate intrinsics solution");
+    }
+
     Eigen::Matrix<double, 3, 3> kInverseTranspose = cholesky.matrixL();
 
     Homography::Intrinsics intrinsics
@@ -173,6 +179,96 @@ Homography::Intrinsics Homography::ComputeIntrinsics(
     intrinsics(1, 2) = n.ToPixel(intrinsics(1, 2), false);
 
     return intrinsics;
+}
+
+
+Distortion<double> Homography::ComputeDistortion(
+    const Intrinsics &intrinsics,
+    const std::vector<ChessSolution> &chessSolutions)
+{
+    Intrinsics intrinsicsInverse = intrinsics.inverse();
+
+    using Index = Eigen::Index;
+
+    Index pointCount{};
+
+    for (const auto &solution: chessSolutions)
+    {
+        pointCount += static_cast<Index>(solution.vertices.size());
+    }
+
+    if (pointCount < 3)
+    {
+        throw ChessError("Underdetermined distortion solution");
+    }
+
+    Eigen::Matrix<double, Eigen::Dynamic, 5> factors(2 * pointCount, 5);
+    Eigen::Vector<double, Eigen::Dynamic> residuals(2 * pointCount);
+
+    Index row{};
+
+    for (const auto &solution: chessSolutions)
+    {
+        HomographyMatrix homographyMatrix =
+            this->GetHomographyMatrix(solution.vertices);
+
+        for (const auto &vertex: solution.vertices)
+        {
+            auto worldPoint = this->world_(vertex.logical);
+
+            Eigen::Vector3<double> worldH(worldPoint.x, worldPoint.y, 1);
+            Eigen::Vector3<double> idealSensor = homographyMatrix * worldH;
+            idealSensor.array() /= idealSensor(2);
+
+            auto idealPixel = this->normalize_.ToPixel(
+                tau::Point2d<double>(idealSensor(0), idealSensor(1)));
+
+            Eigen::Vector3<double> idealCamera =
+                intrinsicsInverse
+                * Eigen::Vector3<double>(idealPixel.x, idealPixel.y, 1);
+
+            idealCamera.array() /= idealCamera(2);
+
+            Eigen::Vector3<double> observedCamera =
+                intrinsicsInverse
+                * Eigen::Vector3<double>(vertex.pixel.x, vertex.pixel.y, 1);
+
+            observedCamera.array() /= observedCamera(2);
+
+            double x = idealCamera(0);
+            double y = idealCamera(1);
+            double radius2 = x * x + y * y;
+            double radius4 = radius2 * radius2;
+            double radius6 = radius4 * radius2;
+            double xy = x * y;
+
+            factors(row, 0) = x * radius2;
+            factors(row, 1) = x * radius4;
+            factors(row, 2) = 2 * xy;
+            factors(row, 3) = radius2 + 2 * x * x;
+            factors(row, 4) = x * radius6;
+            residuals(row) = observedCamera(0) - x;
+            ++row;
+
+            factors(row, 0) = y * radius2;
+            factors(row, 1) = y * radius4;
+            factors(row, 2) = radius2 + 2 * y * y;
+            factors(row, 3) = 2 * xy;
+            factors(row, 4) = y * radius6;
+            residuals(row) = observedCamera(1) - y;
+            ++row;
+        }
+    }
+
+    Eigen::Vector<double, 5> coefficients =
+        factors.colPivHouseholderQr().solve(residuals);
+
+    return {
+        coefficients(0),
+        coefficients(1),
+        coefficients(2),
+        coefficients(3),
+        coefficients(4)};
 }
 
 

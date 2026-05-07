@@ -112,7 +112,7 @@ public:
 };
 
 
-Solutions CreateSolutions(
+Solutions CreateDegenerateSolutions(
     double squareSize_mm,
     const tau::Intrinsics<double> &intrinsics)
 {
@@ -134,6 +134,33 @@ Solutions CreateSolutions(
 
     solutions.push_back(
         creator.CreateSolution(0, 0, 11, 1.95));
+
+    return solutions;
+}
+
+
+Solutions CreateSolutions(
+    double squareSize_mm,
+    const tau::Intrinsics<double> &intrinsics)
+{
+    Solutions solutions;
+
+    SolutionCreator creator(squareSize_mm, intrinsics);
+
+    solutions.push_back(
+        creator.CreateSolution(0, 0, 0, 2));
+
+    solutions.push_back(
+        creator.CreateSolution(8, -6, 15, 1.9));
+
+    solutions.push_back(
+        creator.CreateSolution(-7, 9, -17, 2.1));
+
+    solutions.push_back(
+        creator.CreateSolution(5, 11, -10, 2.05));
+
+    solutions.push_back(
+        creator.CreateSolution(-6, -8, 11, 1.95));
 
     return solutions;
 }
@@ -184,7 +211,7 @@ TEST_CASE("HomographyMatrix round trip", "[homography]")
 }
 
 
-TEST_CASE("Solve for intrinsics", "[homography]")
+TEST_CASE("Test intrinsics solver for degenate case", "[homography]")
 {
     tau::Intrinsics<double> intrinsics{{
         10_d,
@@ -197,16 +224,75 @@ TEST_CASE("Solve for intrinsics", "[homography]")
     auto homographySettings = iris::HomographySettings{};
 
     auto solutions =
-        CreateSolutions(homographySettings.squareSize_mm, intrinsics);
+        CreateDegenerateSolutions(homographySettings.squareSize_mm, intrinsics);
+
+    auto homography = iris::Homography(homographySettings);
+
+    iris::Homography::Intrinsics result;
+
+    REQUIRE_THROWS(homography.ComputeIntrinsics(solutions));
+}
+
+
+TEST_CASE("Solve for intrinsics", "[homography]")
+{
+    tau::Intrinsics<double> expected{{
+        10_d,
+        25_d,
+        25_d,
+        1920.0_d / 2.0_d,
+        1080.0_d / 2.0_d,
+        0_d}};
+
+    auto homographySettings = iris::HomographySettings{};
+
+    auto solutions =
+        CreateSolutions(homographySettings.squareSize_mm, expected);
 
     auto homography = iris::Homography(homographySettings);
 
     iris::Homography::Intrinsics result =
         homography.ComputeIntrinsics(solutions);
 
-    std::cout << "Invented:\n" << intrinsics << std::endl;
+    std::cout << "Invented:\n" << expected << std::endl;
     std::cout << "\nComputed:\n" << result << std::endl;
 
-    std::cout << tau::Intrinsics<double>::FromArray_pixels(10_d, result)
-        << std::endl;
+    auto intrinsics = tau::Intrinsics<double>::FromArray_pixels(10_d, result);
+    std::cout << intrinsics << std::endl;
+
+    REQUIRE(intrinsics.focalLengthX_mm == Approx(25_d));
+}
+
+
+TEST_CASE("Solve for zero distortion", "[homography]")
+{
+    tau::Intrinsics<double> intrinsics{{
+        10_d,
+        25_d,
+        25_d,
+        1920.0_d / 2.0_d,
+        1080.0_d / 2.0_d,
+        0_d}};
+
+    auto homographySettings = iris::HomographySettings{};
+
+    Solutions solutions;
+    SolutionCreator creator(homographySettings.squareSize_mm, intrinsics);
+
+    solutions.push_back(creator.CreateSolution(0, 0, 0, 2));
+    solutions.push_back(creator.CreateSolution(8, -6, 15, 1.9));
+    solutions.push_back(creator.CreateSolution(-7, 9, -17, 2.1));
+    solutions.push_back(creator.CreateSolution(5, 11, -10, 2.05));
+    solutions.push_back(creator.CreateSolution(-6, -8, 11, 1.95));
+
+    auto homography = iris::Homography(homographySettings);
+
+    iris::Distortion<double> distortion =
+        homography.ComputeDistortion(intrinsics.GetArray_pixels(), solutions);
+
+    REQUIRE(distortion.k1 == Approx(0.0).margin(1e-7));
+    REQUIRE(distortion.k2 == Approx(0.0).margin(1e-7));
+    REQUIRE(distortion.p1 == Approx(0.0).margin(1e-7));
+    REQUIRE(distortion.p2 == Approx(0.0).margin(1e-7));
+    REQUIRE(distortion.k3 == Approx(0.0).margin(1e-7));
 }
