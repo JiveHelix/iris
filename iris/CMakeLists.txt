@@ -74,6 +74,7 @@ target_sources(
     views/chess_settings_view.cpp
     views/chess_shape.cpp
     views/chess_shape_view.cpp
+    views/distortion_view.cpp
     views/vertex_chain_settings_view.cpp
     views/vertex_settings_view.cpp
     views/gaussian_settings_view.cpp
