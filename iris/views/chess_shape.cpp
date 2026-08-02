@@ -46,7 +46,7 @@ void ChessShape::Draw(draw::DrawContext &context)
         if (this->settings_.displayVertices)
         {
             auto pixels =
-                NamedVerticesToPixels(this->chessSolution_.vertices);
+                ray::PlanarVerticesToPixels(this->chessSolution_.vertices);
 
             auto verticesShape = draw::PointsShape(
                 this->settings_.verticesShape,

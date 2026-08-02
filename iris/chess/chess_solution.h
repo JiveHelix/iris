@@ -1,13 +1,13 @@
 #pragma once
 
 #include <tau/vector2d.h>
+#include <ray/named_vertex.h>
 #include <iris/filter_result.h>
-#include "iris/vertex.h"
-#include "iris/chess_settings.h"
-#include "iris/chess/line_group.h"
-#include "iris/chess/groups.h"
-#include "iris/chess/named_vertex.h"
-#include "iris/chess/axis_groups.h"
+#include <iris/vertex.h>
+#include <iris/chess_settings.h>
+#include <iris/chess/line_group.h>
+#include <iris/chess/groups.h>
+#include <iris/chess/axis_groups.h>
 
 
 namespace iris
@@ -31,11 +31,11 @@ struct ChessOutput
     Groups groups;
     LineGroup horizontal;
     LineGroup vertical;
-    NamedVertices vertices;
+    ray::PlanarVertices vertices;
 };
 
 
-NamedVertices FormVertices(
+ray::PlanarVertices FormVertices(
     const AxisGroups &axisGroups,
     const Vertices &vertices,
     double maximumVertexDistance);
@@ -53,7 +53,7 @@ public:
     std::vector<tau::Line2d<double>> lines;
     std::vector<tau::Line2d<double>> horizontal;
     std::vector<tau::Line2d<double>> vertical;
-    NamedVertices vertices;
+    ray::PlanarVertices vertices;
 
     tau::Size<Eigen::Index> GetSize() const
     {

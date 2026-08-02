@@ -18,11 +18,4 @@ using ThreadsafeColorMap =
     >;
 
 
-extern template class ThreadsafeFilter
-<
-    tau::ColorMapSettingsGroup<int32_t>,
-    tau::ColorMap<int32_t>
->;
-
-
 } // end namespace iris

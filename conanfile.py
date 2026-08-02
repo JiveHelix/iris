@@ -5,7 +5,7 @@ class IrisConan(ConanFile):
     name = "iris"
     version = "0.3.0"
 
-    python_requires = "boiler/0.1"
+    python_requires = "boiler/0.2"
     python_requires_extend = "boiler.LibraryConanFile"
 
     license = "MIT"
@@ -22,6 +22,6 @@ class IrisConan(ConanFile):
         self.requires("tau/[>=1.13 <2]")
         self.requires("pex/[>=1.1 <2]")
         self.requires("wxpex/[>=1.0 <2]")
+        self.requires("ray/[~1.0]")
         self.requires("draw/[~0.3]")
         self.requires("fmt/[~10]")
-        self.requires("nlohmann_json/[~3]")

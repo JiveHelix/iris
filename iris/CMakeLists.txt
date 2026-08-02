@@ -4,14 +4,15 @@ if (${fPIC})
     set_property(TARGET iris PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif ()
 
-find_package(Jive REQUIRED)
-find_package(Fields REQUIRED)
-find_package(Pex REQUIRED)
-find_package(Tau REQUIRED)
-find_package(Wxpex REQUIRED)
-find_package(Draw REQUIRED)
-find_package(Fmt REQUIRED)
-find_package(Nlohmann_json REQUIRED)
+FindPackages(
+    jive
+    fields
+    pex
+    tau
+    wxpex
+    ray
+    draw
+    fmt)
 
 # Projects that include this project must #include "iris/<header-name>"
 target_include_directories(iris PUBLIC ${PROJECT_SOURCE_DIR})
@@ -21,13 +22,14 @@ target_link_libraries(
     iris
     PUBLIC
     draw::draw
+    ray::ray
     wxpex::wxpex
     tau::tau
     pex::pex
     fields::fields
     jive::jive
-    fmt::fmt
-    nlohmann_json::nlohmann_json)
+    fmt::fmt)
+
 
 target_sources(
     iris
@@ -40,7 +42,6 @@ target_sources(
     chess/chess_solution.cpp
     chess/find_vertex.cpp
     chess/group_functions.cpp
-    chess/named_vertex.cpp
     chess/line_group.cpp
     chess.cpp
     chess_chain.cpp
@@ -58,8 +59,6 @@ target_sources(
     gradient.cpp
     gradient_settings.cpp
     harris_settings.cpp
-    homography.cpp
-    homography_settings.cpp
     hough_settings.cpp
     level_adjust.cpp
     level_settings.cpp
@@ -74,13 +73,10 @@ target_sources(
     views/chess_settings_view.cpp
     views/chess_shape.cpp
     views/chess_shape_view.cpp
-    views/distortion_view.cpp
     views/vertex_chain_settings_view.cpp
     views/vertex_settings_view.cpp
     views/gaussian_settings_view.cpp
     views/gradient_settings_view.cpp
-    views/homography_settings_view.cpp
-    views/intrinsics_view.cpp
     views/level_settings_view.cpp
     views/lines_chain_settings_view.cpp
     views/mask_brain.cpp

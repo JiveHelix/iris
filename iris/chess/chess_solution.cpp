@@ -106,7 +106,7 @@ ChessOutput::ChessOutput(
 }
 
 
-NamedVertices FormVertices(
+ray::PlanarVertices FormVertices(
     const AxisGroups &axisGroups,
     const Vertices &vertices,
     double maximumVertexDistance)
@@ -118,7 +118,7 @@ NamedVertices FormVertices(
         return {};
     }
 
-    auto result = NamedVertices{};
+    auto result = ray::PlanarVertices{};
 
     size_t verticalCount = axisGroups.vertical.lines.size();
     size_t horizontalCount = axisGroups.horizontal.lines.size();
