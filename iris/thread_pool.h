@@ -158,8 +158,7 @@ struct ThreadPoolCustom
 };
 
 
-using ThreadPoolGroup =
-    pex::Group<ThreadPoolFields, ThreadPoolTemplate, ThreadPoolCustom>;
+using ThreadPoolGroup = pex::Group<ThreadPoolTemplate, ThreadPoolCustom>;
 
 using ThreadPool = typename ThreadPoolGroup::Plain;
 using ThreadPoolModel = typename ThreadPoolGroup::Model;

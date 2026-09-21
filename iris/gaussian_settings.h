@@ -122,7 +122,6 @@ TEMPLATE_EQUALITY_OPERATORS(GaussianSettings)
 template<typename Value>
 using GaussianGroup = pex::Group
 <
-    GaussianFields,
     GaussianTemplate<Value>::template Template,
     pex::PlainT<GaussianSettings<Value>>
 >;
@@ -143,7 +142,6 @@ extern template struct GaussianSettings<int32_t>;
 
 extern template struct pex::Group
 <
-    iris::GaussianFields,
     iris::GaussianTemplate<int32_t>::template Template,
     pex::PlainT<iris::GaussianSettings<int32_t>>
 >;

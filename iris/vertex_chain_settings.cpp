@@ -3,7 +3,6 @@
 
 template struct pex::Group
     <
-        iris::VertexChainFields,
         iris::VertexChainTemplate,
         iris::VertexChainCustom
     >;

@@ -77,7 +77,6 @@ DECLARE_EQUALITY_OPERATORS(SuppressionSettings)
 using SuppressionGroup =
     pex::Group
     <
-        SuppressionFields,
         SuppressionTemplate<>::template Template,
         pex::PlainT<SuppressionSettings>
     >;

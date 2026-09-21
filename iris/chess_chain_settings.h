@@ -153,7 +153,7 @@ struct ChessChainCustom
 
 
 using ChessChainGroup =
-    pex::Group<ChessChainFields, ChessChainTemplate, ChessChainCustom>;
+    pex::Group<ChessChainTemplate, ChessChainCustom>;
 
 using ChessChainSettings = typename ChessChainGroup::Plain;
 using ChessChainControl = typename ChessChainGroup::DefaultControl;
@@ -170,7 +170,6 @@ DECLARE_OUTPUT_STREAM_OPERATOR(ChessChainSettings)
 
 extern template struct pex::Group
     <
-        iris::ChessChainFields,
         iris::ChessChainTemplate,
         iris::ChessChainCustom
     >;

@@ -142,7 +142,6 @@ template<typename Value>
 using LevelGroup =
     pex::Group
     <
-        LevelFields,
         LevelTemplate<Value>::template Template,
         LevelCustom<Value>
     >;
@@ -163,7 +162,6 @@ extern template struct LevelSettings<int32_t>;
 
 extern template struct pex::Group
     <
-        iris::LevelFields,
         iris::LevelTemplate<int32_t>::template Template,
         iris::LevelCustom<int32_t>
     >;

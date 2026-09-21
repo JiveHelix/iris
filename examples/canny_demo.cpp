@@ -44,10 +44,12 @@ struct DemoTemplate
     T<iris::GradientGroup<iris::InProcess>> gradient;
     T<iris::CannyGroup<float>> canny;
     T<tau::ColorMapSettingsGroup<iris::InProcess>> color;
+
+    static constexpr auto fields = DemoFields<DemoTemplate>::fields;
 };
 
 
-using DemoGroup = pex::Group<DemoFields, DemoTemplate>;
+using DemoGroup = pex::Group<DemoTemplate>;
 using DemoSettings = typename DemoGroup::Plain;
 using DemoModel = typename DemoGroup::Model;
 using DemoControl = typename DemoGroup::DefaultControl;

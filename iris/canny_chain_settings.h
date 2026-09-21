@@ -30,15 +30,14 @@ struct CannyChainNodeSettingsTemplate
     T<draw::NodeSettingsGroup> gaussian;
     T<draw::NodeSettingsGroup> gradient;
     T<draw::NodeSettingsGroup> canny;
+
+    static constexpr auto fields =
+        CannyChainNodeSettingsFields<CannyChainNodeSettingsTemplate>::fields;
 };
 
 
 using CannyChainNodeSettingsGroup =
-    pex::Group
-    <
-        CannyChainNodeSettingsFields,
-        CannyChainNodeSettingsTemplate
-    >;
+    pex::Group<CannyChainNodeSettingsTemplate>;
 
 
 using CannyChainNodeSettingsModel =
@@ -126,7 +125,6 @@ struct CannyChainCustom
 
 using CannyChainGroup = pex::Group
     <
-        CannyChainFields,
         CannyChainTemplate,
         CannyChainCustom
     >;
@@ -145,7 +143,6 @@ DECLARE_EQUALITY_OPERATORS(CannyChainSettings)
 
 extern template struct pex::Group
     <
-        iris::CannyChainFields,
         iris::CannyChainTemplate,
         iris::CannyChainCustom
     >;

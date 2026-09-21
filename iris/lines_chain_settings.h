@@ -27,15 +27,14 @@ struct LinesChainNodeSettingsTemplate
 {
     T<CannyChainNodeSettingsGroup> cannyChain;
     T<draw::NodeSettingsGroup> hough;
+
+    static constexpr auto fields =
+        LinesChainNodeSettingsFields<LinesChainNodeSettingsTemplate>::fields;
 };
 
 
 using LinesChainNodeSettingsGroup =
-    pex::Group
-    <
-        LinesChainNodeSettingsFields,
-        LinesChainNodeSettingsTemplate
-    >;
+    pex::Group<LinesChainNodeSettingsTemplate>;
 
 
 using LinesChainNodeSettingsModel =
@@ -122,7 +121,6 @@ struct LinesChainCustom
 
 using LinesChainGroup = pex::Group
     <
-        LinesChainFields,
         LinesChainTemplate,
         LinesChainCustom
     >;
@@ -141,7 +139,6 @@ DECLARE_OUTPUT_STREAM_OPERATOR(LinesChainSettings)
 
 extern template struct pex::Group
     <
-        iris::LinesChainFields,
         iris::LinesChainTemplate,
         iris::LinesChainCustom
     >;

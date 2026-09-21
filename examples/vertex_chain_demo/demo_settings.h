@@ -61,7 +61,7 @@ struct DemoCustom
 };
 
 
-using DemoGroup = pex::Group<DemoFields, DemoTemplate, DemoCustom>;
+using DemoGroup = pex::Group<DemoTemplate, DemoCustom>;
 
 using DemoSettings = typename DemoGroup::Plain;
 using DemoModel = typename DemoGroup::Model;

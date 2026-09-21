@@ -128,7 +128,6 @@ TEMPLATE_EQUALITY_OPERATORS(HarrisSettings)
 template<typename Float, typename Ranges = HarrisRanges>
 using HarrisGroup = pex::Group
     <
-        HarrisFields,
         HarrisTemplate<Float, Ranges>::template Template,
         pex::PlainT<HarrisSettings<Float>>
     >;
@@ -146,14 +145,12 @@ using HarrisControl =
 
 extern template struct pex::Group
     <
-        iris::HarrisFields,
         iris::HarrisTemplate<float, iris::HarrisRanges>::template Template,
         pex::PlainT<iris::HarrisSettings<float>>
     >;
 
 extern template struct pex::Group
     <
-        iris::HarrisFields,
         iris::HarrisTemplate<double, iris::HarrisRanges>::template Template,
         pex::PlainT<iris::HarrisSettings<double>>
     >;

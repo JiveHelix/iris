@@ -32,15 +32,14 @@ struct VertexChainNodeSettingsTemplate
     T<draw::NodeSettingsGroup> gradient;
     T<draw::NodeSettingsGroup> harris;
     T<draw::NodeSettingsGroup> vertex;
+
+    static constexpr auto fields =
+        VertexChainNodeSettingsFields<VertexChainNodeSettingsTemplate>::fields;
 };
 
 
 using VertexChainNodeSettingsGroup =
-    pex::Group
-    <
-        VertexChainNodeSettingsFields,
-        VertexChainNodeSettingsTemplate
-    >;
+    pex::Group<VertexChainNodeSettingsTemplate>;
 
 
 using VertexChainNodeSettingsModel =
@@ -134,7 +133,6 @@ struct VertexChainCustom
 
 using VertexChainGroup = pex::Group
     <
-        VertexChainFields,
         VertexChainTemplate,
         VertexChainCustom
     >;
@@ -153,7 +151,6 @@ DECLARE_OUTPUT_STREAM_OPERATOR(VertexChainSettings)
 
 extern template struct pex::Group
     <
-        iris::VertexChainFields,
         iris::VertexChainTemplate,
         iris::VertexChainCustom
     >;

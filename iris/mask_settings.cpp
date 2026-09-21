@@ -3,7 +3,6 @@
 
 template struct pex::Group
 <
-    iris::MaskFields,
     iris::MaskTemplate,
     pex::PlainT<iris::MaskSettings>
 >;

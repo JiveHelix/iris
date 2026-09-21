@@ -67,7 +67,6 @@ DECLARE_EQUALITY_OPERATORS(MaskSettings)
 
 using MaskGroup = pex::Group
 <
-    MaskFields,
     MaskTemplate,
     pex::PlainT<MaskSettings>
 >;
@@ -82,7 +81,6 @@ using MaskControl = typename MaskGroup::DefaultControl;
 
 extern template struct pex::Group
 <
-    iris::MaskFields,
     iris::MaskTemplate,
     pex::PlainT<iris::MaskSettings>
 >;

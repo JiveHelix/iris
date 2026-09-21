@@ -86,7 +86,6 @@ struct ChessCustom
 using ChessGroup =
     pex::Group
     <
-        ChessFields,
         ChessTemplate::template Template,
         ChessCustom
     >;
@@ -104,7 +103,6 @@ DECLARE_EQUALITY_OPERATORS(ChessSettings)
 
 extern template struct pex::Group
     <
-        iris::ChessFields,
         iris::ChessTemplate::template Template,
         iris::ChessCustom
     >;

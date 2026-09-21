@@ -31,10 +31,12 @@ template<template<typename> typename T>
 struct HoughUserTemplate
 {
     T<draw::PixelViewGroup> houghView;
+
+    static constexpr auto fields = HoughUserFields<HoughUserTemplate>::fields;
 };
 
 
-using HoughUserGroup = pex::Group<HoughUserFields, HoughUserTemplate>;
+using HoughUserGroup = pex::Group<HoughUserTemplate>;
 
 using HoughUserControl = typename HoughUserGroup::DefaultControl;
 using HoughUserModel = typename HoughUserGroup::Model;

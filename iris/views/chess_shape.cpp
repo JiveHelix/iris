@@ -96,7 +96,6 @@ void ChessShape::Draw(draw::DrawContext &context)
 
 template struct pex::Group
 <
-    iris::ChessShapeFields,
     iris::ChessShapeTemplate,
     pex::PlainT<iris::ChessShapeSettings>
 >;

@@ -78,7 +78,6 @@ public:
 
 using ChessShapeGroup = pex::Group
 <
-    ChessShapeFields,
     ChessShapeTemplate,
     pex::PlainT<ChessShapeSettings>
 >;
@@ -93,7 +92,6 @@ using ChessShapeControl = typename ChessShapeGroup::DefaultControl;
 
 extern template struct pex::Group
 <
-    iris::ChessShapeFields,
     iris::ChessShapeTemplate,
     pex::PlainT<iris::ChessShapeSettings>
 >;

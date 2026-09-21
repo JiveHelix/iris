@@ -191,7 +191,6 @@ struct ChessChainNodeSettingsCustom
 using ChessChainNodeSettingsGroup =
     pex::Group
     <
-        ChessChainNodeSettingsFields,
         ChessChainNodeSettingsTemplate,
         ChessChainNodeSettingsCustom
     >;

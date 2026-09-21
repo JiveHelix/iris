@@ -75,7 +75,6 @@ struct VertexCustom
 
 using VertexGroup = pex::Group
     <
-        VertexFields,
         VertexTemplate,
         VertexCustom
     >;
@@ -95,7 +94,6 @@ DECLARE_EQUALITY_OPERATORS(VertexSettings)
 
 extern template struct pex::Group
     <
-        iris::VertexFields,
         iris::VertexTemplate,
         iris::VertexCustom
     >;

@@ -13,7 +13,6 @@ template struct iris::LevelSettings<int32_t>;
 
 template struct pex::Group
     <
-        iris::LevelFields,
         iris::LevelTemplate<int32_t>::template Template,
         iris::LevelCustom<int32_t>
     >;

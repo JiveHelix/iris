@@ -82,7 +82,6 @@ template<typename Float>
 using CannyGroup =
     pex::Group
     <
-        CannyFields,
         CannyTemplate<Float>::template Template,
         pex::PlainT<CannySettings<Float>>
     >;
@@ -124,7 +123,6 @@ extern template struct pex::LinkedRanges
 
 extern template struct pex::Group
     <
-        iris::CannyFields,
         iris::CannyTemplate<float>::template Template,
         pex::PlainT<iris::CannySettings<float>>
     >;
@@ -132,7 +130,6 @@ extern template struct pex::Group
 
 extern template struct pex::Group
     <
-        iris::CannyFields,
         iris::CannyTemplate<double>::template Template,
         pex::PlainT<iris::CannySettings<double>>
     >;

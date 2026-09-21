@@ -191,7 +191,6 @@ template<typename Float>
 using HoughGroup =
     pex::Group
     <
-        HoughFields,
         HoughTemplate<Float>::template Template,
         HoughCustom<Float>
     >;
@@ -219,7 +218,6 @@ DECLARE_OUTPUT_STREAM_OPERATOR(HoughSettings<double>)
 
 extern template struct pex::Group
     <
-        iris::HoughFields,
         iris::HoughTemplate<float>::template Template,
         iris::HoughCustom<float>
     >;
@@ -227,7 +225,6 @@ extern template struct pex::Group
 
 extern template struct pex::Group
     <
-        iris::HoughFields,
         iris::HoughTemplate<double>::template Template,
         iris::HoughCustom<double>
     >;
