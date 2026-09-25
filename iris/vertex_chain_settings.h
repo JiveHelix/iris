@@ -14,32 +14,18 @@ namespace iris
 {
 
 
-template<typename T>
-struct VertexChainNodeSettingsFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::gaussian, "gaussian"),
-        fields::Field(&T::gradient, "gradient"),
-        fields::Field(&T::harris, "harris"),
-        fields::Field(&T::vertex, "vertex"));
-};
-
-
 template<template<typename> typename T>
-struct VertexChainNodeSettingsTemplate
+struct VertexChainNodeSettingsSchema
 {
     T<draw::NodeSettingsGroup> gaussian;
     T<draw::NodeSettingsGroup> gradient;
     T<draw::NodeSettingsGroup> harris;
     T<draw::NodeSettingsGroup> vertex;
-
-    static constexpr auto fields =
-        VertexChainNodeSettingsFields<VertexChainNodeSettingsTemplate>::fields;
 };
 
 
 using VertexChainNodeSettingsGroup =
-    pex::Group<VertexChainNodeSettingsTemplate>;
+    pex::Group<VertexChainNodeSettingsSchema>;
 
 
 using VertexChainNodeSettingsModel =
@@ -49,21 +35,8 @@ using VertexChainNodeSettingsControl =
     typename VertexChainNodeSettingsGroup::DefaultControl;
 
 
-template<typename T>
-struct VertexChainFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::enable, "enable"),
-        fields::Field(&T::gaussian, "gaussian"),
-        fields::Field(&T::gradient, "gradient"),
-        fields::Field(&T::harris, "harris"),
-        fields::Field(&T::vertex, "vertex"),
-        fields::Field(&T::shape, "shape"));
-};
-
-
 template<template<typename> typename T>
-struct VertexChainTemplate
+struct VertexChainSchema
 {
     T<bool> enable;
     T<GaussianGroup<int32_t>> gaussian;
@@ -72,14 +45,11 @@ struct VertexChainTemplate
     T<VertexGroup> vertex;
     T<draw::PointsShapeGroup> shape;
 
-    static constexpr auto fields =
-        VertexChainFields<VertexChainTemplate>::fields;
-
     static constexpr auto fieldsTypeName = "VertexChain";
 };
 
 
-struct VertexChainCustom
+struct VertexChainFinisher
 {
     template<typename Base>
     struct Plain: public Base
@@ -133,8 +103,8 @@ struct VertexChainCustom
 
 using VertexChainGroup = pex::Group
     <
-        VertexChainTemplate,
-        VertexChainCustom
+        VertexChainSchema,
+        VertexChainFinisher
     >;
 
 
@@ -151,6 +121,6 @@ DECLARE_OUTPUT_STREAM_OPERATOR(VertexChainSettings)
 
 extern template struct pex::Group
     <
-        iris::VertexChainTemplate,
-        iris::VertexChainCustom
+        iris::VertexChainSchema,
+        iris::VertexChainFinisher
     >;

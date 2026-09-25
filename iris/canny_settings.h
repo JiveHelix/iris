@@ -11,18 +11,6 @@ namespace iris
 {
 
 
-template<typename T>
-struct CannyFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::enable, "enable"),
-        fields::Field(&T::range, "range"),
-        fields::Field(&T::depth, "depth"));
-
-    static constexpr auto fieldsTypeName = "Canny";
-};
-
-
 // Canny hysteresis ranges from 0 to 1.
 using CannyLowerBound = pex::Limit<0>;
 using CannyUpperBound = pex::Limit<1>;
@@ -42,29 +30,27 @@ using CannyRanges =
 
 
 template<typename Float>
-struct CannyTemplate
+struct CannySchema
 {
     template<template<typename> typename T>
-    struct Template
+    struct Schema
     {
         T<bool> enable;
         T<typename CannyRanges<Float>::Group> range;
         T<size_t> depth;
-
-        static constexpr auto fields = CannyFields<Template>::fields;
     };
 };
 
 
 template<typename Float>
 struct CannySettings:
-    public CannyTemplate<Float>::template Template<pex::Identity>
+    public CannySchema<Float>::template Schema<pex::Identity>
 {
     static constexpr size_t defaultDepth = 32;
 
     CannySettings()
         :
-        CannyTemplate<Float>::template Template<pex::Identity>{
+        CannySchema<Float>::template Schema<pex::Identity>{
             true,
             typename CannyRanges<Float>::Settings{},
             defaultDepth}
@@ -82,7 +68,7 @@ template<typename Float>
 using CannyGroup =
     pex::Group
     <
-        CannyTemplate<Float>::template Template,
+        CannySchema<Float>::template Schema,
         pex::PlainT<CannySettings<Float>>
     >;
 
@@ -123,13 +109,13 @@ extern template struct pex::LinkedRanges
 
 extern template struct pex::Group
     <
-        iris::CannyTemplate<float>::template Template,
+        iris::CannySchema<float>::template Schema,
         pex::PlainT<iris::CannySettings<float>>
     >;
 
 
 extern template struct pex::Group
     <
-        iris::CannyTemplate<double>::template Template,
+        iris::CannySchema<double>::template Schema,
         pex::PlainT<iris::CannySettings<double>>
     >;

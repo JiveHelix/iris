@@ -3,6 +3,6 @@
 
 template struct pex::Group
 <
-    iris::MaskTemplate,
+    iris::MaskSchema,
     pex::PlainT<iris::MaskSettings>
 >;

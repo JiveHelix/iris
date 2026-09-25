@@ -14,7 +14,7 @@ namespace detail
 
 
 template<typename Scalar>
-struct LocalMaximumTemplate
+struct LocalMaximumSchema
 {
     using Index = Eigen::Index;
 
@@ -27,7 +27,7 @@ struct LocalMaximumTemplate
 template<typename Scalar>
 std::ostream & operator<<(
     std::ostream &output,
-    const LocalMaximumTemplate<Scalar> &localMaximum)
+    const LocalMaximumSchema<Scalar> &localMaximum)
 {
     return output << "LocalMaximum "
         << localMaximum.value
@@ -46,7 +46,7 @@ auto GetInitialMaximum(
 {
     using Eigen::Index;
 
-    using LocalMaximum = LocalMaximumTemplate<tau::RefScalar<InOut>>;
+    using LocalMaximum = LocalMaximumSchema<tau::RefScalar<InOut>>;
 
     LocalMaximum maximum;
 
@@ -67,7 +67,7 @@ struct Suppressor
 {
     using Index = Eigen::Index;
 
-    using LocalMaximum = LocalMaximumTemplate<tau::RefScalar<InOut>>;
+    using LocalMaximum = LocalMaximumSchema<tau::RefScalar<InOut>>;
 
     Suppressor(Index windowSize, InOut inOut_)
         :

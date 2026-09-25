@@ -34,7 +34,7 @@ struct DerivativeSize
     };
 
     using MakeSelect = pex::MakeSelect<SizeChoices>;
-    using Control = pex::ControlSelector<MakeSelect>;
+    using Control = pex::ControlTailor<MakeSelect>;
 
     static Index GetSize(Size size)
     {

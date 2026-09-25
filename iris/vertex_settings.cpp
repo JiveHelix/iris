@@ -4,6 +4,6 @@
 
 template struct pex::Group
     <
-        iris::VertexTemplate,
-        iris::VertexCustom
+        iris::VertexSchema,
+        iris::VertexFinisher
     >;

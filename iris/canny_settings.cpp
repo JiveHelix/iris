@@ -34,13 +34,13 @@ template struct pex::LinkedRanges
 
 template struct pex::Group
     <
-        iris::CannyTemplate<float>::template Template,
+        iris::CannySchema<float>::template Schema,
         pex::PlainT<iris::CannySettings<float>>
     >;
 
 
 template struct pex::Group
     <
-        iris::CannyTemplate<double>::template Template,
+        iris::CannySchema<double>::template Schema,
         pex::PlainT<iris::CannySettings<double>>
     >;

@@ -4,12 +4,12 @@
 
 template struct pex::Group
     <
-        iris::HarrisTemplate<float, iris::HarrisRanges>::template Template,
+        iris::HarrisSchema<float, iris::HarrisRanges>::template Schema,
         pex::PlainT<iris::HarrisSettings<float>>
     >;
 
 template struct pex::Group
     <
-        iris::HarrisTemplate<double, iris::HarrisRanges>::template Template,
+        iris::HarrisSchema<double, iris::HarrisRanges>::template Schema,
         pex::PlainT<iris::HarrisSettings<double>>
     >;

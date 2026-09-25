@@ -15,20 +15,8 @@ namespace iris
 {
 
 
-template<typename T>
-struct MaskFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::imageSize, "imageSize"),
-        fields::Field(&T::enable, "enable"),
-        fields::Field(&T::showOutline, "showOutline"),
-        fields::Field(&T::polygons, "polygons"),
-        fields::Field(&T::feather, "feather"));
-};
-
-
 template<template<typename> typename T>
-class MaskTemplate
+class MaskSchema
 {
 public:
     T<draw::SizeGroup> imageSize;
@@ -37,19 +25,16 @@ public:
     T<draw::OrderedShapes> polygons;
     T<GaussianGroup<double>> feather;
 
-    static constexpr auto fields =
-        MaskFields<MaskTemplate>::fields;
-
     static constexpr auto fieldsTypeName = "Mask";
 };
 
 
-class MaskSettings: public MaskTemplate<pex::Identity>
+class MaskSettings: public MaskSchema<pex::Identity>
 {
 public:
     MaskSettings()
         :
-        MaskTemplate<pex::Identity>{
+        MaskSchema<pex::Identity>{
             defaultImageSize,
             true,
             true,
@@ -67,7 +52,7 @@ DECLARE_EQUALITY_OPERATORS(MaskSettings)
 
 using MaskGroup = pex::Group
 <
-    MaskTemplate,
+    MaskSchema,
     pex::PlainT<MaskSettings>
 >;
 
@@ -81,6 +66,6 @@ using MaskControl = typename MaskGroup::DefaultControl;
 
 extern template struct pex::Group
 <
-    iris::MaskTemplate,
+    iris::MaskSchema,
     pex::PlainT<iris::MaskSettings>
 >;

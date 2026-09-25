@@ -3,6 +3,6 @@
 
 template struct pex::Group
     <
-        iris::ChessTemplate::template Template,
-        iris::ChessCustom
+        iris::ChessSchema::template Schema,
+        iris::ChessFinisher
     >;

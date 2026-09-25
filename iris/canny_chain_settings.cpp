@@ -3,6 +3,6 @@
 
 template struct pex::Group
     <
-        iris::CannyChainTemplate,
-        iris::CannyChainCustom
+        iris::CannyChainSchema,
+        iris::CannyChainFinisher
     >;

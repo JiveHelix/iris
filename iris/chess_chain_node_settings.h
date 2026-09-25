@@ -10,24 +10,8 @@ namespace iris
 {
 
 
-template<typename T>
-struct ChessChainNodeSettingsFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::mask, "mask"),
-        fields::Field(&T::level, "level"),
-        fields::Field(&T::gaussian, "gaussian"),
-        fields::Field(&T::gradient, "gradient"),
-        fields::Field(&T::canny, "canny"),
-        fields::Field(&T::hough, "hough"),
-        fields::Field(&T::harris, "harris"),
-        fields::Field(&T::vertices, "vertices"),
-        fields::Field(&T::chess, "chess"));
-};
-
-
 template<template<typename> typename T>
-struct ChessChainNodeSettingsTemplate
+struct ChessChainNodeSettingsSchema
 {
     T<draw::NodeSettingsGroup> mask;
     T<draw::NodeSettingsGroup> level;
@@ -38,13 +22,10 @@ struct ChessChainNodeSettingsTemplate
     T<draw::NodeSettingsGroup> harris;
     T<draw::NodeSettingsGroup> vertices;
     T<draw::NodeSettingsGroup> chess;
-
-    static constexpr auto fields =
-        ChessChainNodeSettingsFields<ChessChainNodeSettingsTemplate>::fields;
 };
 
 
-struct ChessChainNodeSettingsCustom
+struct ChessChainNodeSettingsFinisher
 {
     template<typename Base>
     class Model: public Base
@@ -191,8 +172,8 @@ struct ChessChainNodeSettingsCustom
 using ChessChainNodeSettingsGroup =
     pex::Group
     <
-        ChessChainNodeSettingsTemplate,
-        ChessChainNodeSettingsCustom
+        ChessChainNodeSettingsSchema,
+        ChessChainNodeSettingsFinisher
     >;
 
 

@@ -14,26 +14,6 @@ namespace iris
 {
 
 
-template<typename T>
-struct HoughFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::enable, "enable"),
-        fields::Field(&T::imageSize, "imageSize"),
-        fields::Field(&T::rhoCount, "rhoCount"),
-        fields::Field(&T::thetaCount, "thetaCount"),
-        fields::Field(&T::angleRange, "angleRange"),
-        fields::Field(&T::weighted, "weighted"),
-        fields::Field(&T::suppress, "suppress"),
-        fields::Field(&T::window, "window"),
-        fields::Field(&T::threshold, "threshold"),
-        fields::Field(&T::includeEdges, "includeEdges"),
-        fields::Field(&T::edgeTolerance, "edgeTolerance"));
-
-    static constexpr auto fieldsTypeName = "Hough";
-};
-
-
 using AngleRangeLow = pex::Limit<0>;
 using AngleRangeHigh = pex::Limit<180>;
 
@@ -46,10 +26,10 @@ using ThresholdRange = pex::MakeRange<T, pex::Limit<0>, pex::Limit<256>>;
 using FakeRange = pex::MakeRange<size_t, pex::Limit<2>, pex::Limit<32>>;
 
 template<typename Float>
-struct HoughTemplate
+struct HoughSchema
 {
     template<template<typename> typename T>
-    struct Template
+    struct Schema
     {
         T<bool> enable;
         T<draw::SizeGroup> imageSize;
@@ -62,14 +42,12 @@ struct HoughTemplate
         T<ThresholdRange<Float>> threshold;
         T<bool> includeEdges;
         T<Float> edgeTolerance;
-
-        static constexpr auto fields = HoughFields<Template>::fields;
     };
 };
 
 
 template<typename Float>
-struct HoughCustom
+struct HoughFinisher
 {
     template<typename Base>
     struct Plain: public Base
@@ -191,8 +169,8 @@ template<typename Float>
 using HoughGroup =
     pex::Group
     <
-        HoughTemplate<Float>::template Template,
-        HoughCustom<Float>
+        HoughSchema<Float>::template Schema,
+        HoughFinisher<Float>
     >;
 
 
@@ -218,13 +196,13 @@ DECLARE_OUTPUT_STREAM_OPERATOR(HoughSettings<double>)
 
 extern template struct pex::Group
     <
-        iris::HoughTemplate<float>::template Template,
-        iris::HoughCustom<float>
+        iris::HoughSchema<float>::template Schema,
+        iris::HoughFinisher<float>
     >;
 
 
 extern template struct pex::Group
     <
-        iris::HoughTemplate<double>::template Template,
-        iris::HoughCustom<double>
+        iris::HoughSchema<double>::template Schema,
+        iris::HoughFinisher<double>
     >;

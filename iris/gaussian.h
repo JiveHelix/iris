@@ -24,21 +24,6 @@ namespace iris
 {
 
 
-template<typename T>
-struct GaussianKernelFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::sigma, "sigma"),
-        fields::Field(&T::threshold, "threshold"),
-        fields::Field(&T::size, "size"),
-        fields::Field(&T::rowKernel, "rowKernel"),
-        fields::Field(&T::columnKernel, "columnKernel"),
-        fields::Field(&T::rowKernelSum, "rowKernelSum"),
-        fields::Field(&T::columnKernelSum, "columnKernelSum"),
-        fields::Field(&T::sum, "sum"));
-};
-
-
 template<typename T, size_t order>
 Eigen::VectorX<T> Sample(T sigma, Eigen::Index size)
 {
@@ -649,8 +634,6 @@ struct GaussianKernel
     T rowKernelSum;
     T columnKernelSum;
     T sum;
-
-    static constexpr auto fields = GaussianKernelFields<GaussianKernel>::fields;
 };
 
 
@@ -773,8 +756,6 @@ struct GaussianKernel<T, S, order, std::enable_if_t<std::is_integral_v<T>>>
     T rowKernelSum;
     T columnKernelSum;
     T sum;
-
-    static constexpr auto fields = GaussianKernelFields<GaussianKernel>::fields;
 };
 
 

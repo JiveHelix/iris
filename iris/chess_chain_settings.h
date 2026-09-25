@@ -14,32 +14,8 @@ namespace iris
 {
 
 
-template<typename T>
-struct ChessChainFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::enable, "enable"),
-        fields::Field(&T::mask, "mask"),
-        fields::Field(&T::level, "level"),
-
-        fields::Field(&T::gaussian, "gaussian"),
-        fields::Field(&T::gradient, "gradient"),
-
-        fields::Field(&T::canny, "canny"),
-        fields::Field(&T::hough, "hough"),
-        fields::Field(&T::linesShape, "linesShape"),
-
-        fields::Field(&T::harris, "harris"),
-        fields::Field(&T::vertices, "vertices"),
-        fields::Field(&T::verticesShape, "verticesShape"),
-
-        fields::Field(&T::chess, "chess"),
-        fields::Field(&T::autoDetectSettings, "autoDetectSettings"));
-};
-
-
 template<template<typename> typename T>
-struct ChessChainTemplate
+struct ChessChainSchema
 {
     T<bool> enable;
     T<MaskGroup> mask;
@@ -59,12 +35,11 @@ struct ChessChainTemplate
     T<ChessGroup> chess;
     T<pex::MakeSignal> autoDetectSettings;
 
-    static constexpr auto fields = ChessChainFields<ChessChainTemplate>::fields;
     static constexpr auto fieldsTypeName = "ChessChainSettings";
 };
 
 
-struct ChessChainCustom
+struct ChessChainFinisher
 {
     template<typename Base>
     struct Plain: public Base
@@ -153,7 +128,7 @@ struct ChessChainCustom
 
 
 using ChessChainGroup =
-    pex::Group<ChessChainTemplate, ChessChainCustom>;
+    pex::Group<ChessChainSchema, ChessChainFinisher>;
 
 using ChessChainSettings = typename ChessChainGroup::Plain;
 using ChessChainControl = typename ChessChainGroup::DefaultControl;
@@ -170,6 +145,6 @@ DECLARE_OUTPUT_STREAM_OPERATOR(ChessChainSettings)
 
 extern template struct pex::Group
     <
-        iris::ChessChainTemplate,
-        iris::ChessChainCustom
+        iris::ChessChainSchema,
+        iris::ChessChainFinisher
     >;

@@ -11,20 +11,8 @@ namespace iris
 {
 
 
-template<typename T>
-struct ThreadPoolFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::loadFactor, "loadFactor"),
-        fields::Field(&T::concurrency, "concurrency"),
-        fields::Field(&T::queuedCount, "queuedCount"),
-        fields::Field(&T::activeCount, "activeCount"),
-        fields::Field(&T::pressure, "pressure"));
-};
-
-
 template<template<typename> typename T>
-struct ThreadPoolTemplate
+struct ThreadPoolSchema
 {
     using LoadFactor =
         wxpex::AsyncRange<double, pex::Limit<0, 1, 100>, pex::Limit<1>>;
@@ -35,12 +23,10 @@ struct ThreadPoolTemplate
     T<wxpex::ReadOnlyAsync<size_t>> queuedCount;
     T<wxpex::ReadOnlyAsync<int64_t>> activeCount;
     T<wxpex::ReadOnlyAsync<double>> pressure;
-
-    static constexpr auto fields = ThreadPoolFields<ThreadPoolTemplate>::fields;
 };
 
 
-struct ThreadPoolCustom
+struct ThreadPoolFinisher
 {
     template<typename Base>
     struct Plain: public Base
@@ -158,7 +144,7 @@ struct ThreadPoolCustom
 };
 
 
-using ThreadPoolGroup = pex::Group<ThreadPoolTemplate, ThreadPoolCustom>;
+using ThreadPoolGroup = pex::Group<ThreadPoolSchema, ThreadPoolFinisher>;
 
 using ThreadPool = typename ThreadPoolGroup::Plain;
 using ThreadPoolModel = typename ThreadPoolGroup::Model;

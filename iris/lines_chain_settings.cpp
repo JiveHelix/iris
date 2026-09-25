@@ -3,6 +3,6 @@
 
 template struct pex::Group
     <
-        iris::LinesChainTemplate,
-        iris::LinesChainCustom
+        iris::LinesChainSchema,
+        iris::LinesChainFinisher
     >;

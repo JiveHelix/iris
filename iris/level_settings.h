@@ -15,18 +15,6 @@ namespace iris
 {
 
 
-template<typename T>
-struct LevelFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::enable, "enable"),
-        fields::Field(&T::range, "range"),
-        fields::Field(&T::maximum, "maximum"),
-        fields::Field(&T::autoDetectSettings, "autoDetectSettings"),
-        fields::Field(&T::detectMargin, "detectMargin"));
-};
-
-
 using LowLevel = pex::Limit<0>;
 using HighLevel = pex::Limit<255>;
 
@@ -55,10 +43,10 @@ struct MaximumFilter
 
 
 template<typename Value>
-struct LevelTemplate
+struct LevelSchema
 {
     template<template<typename> typename T>
-    struct Template
+    struct Schema
     {
         T<bool> enable;
         T<typename LevelRanges<Value>::Group> range;
@@ -70,7 +58,6 @@ struct LevelTemplate
 
         T<DetectRange> detectMargin;
 
-        static constexpr auto fields = LevelFields<Template>::fields;
         static constexpr auto fieldsTypeName = "Level";
     };
 };
@@ -78,11 +65,11 @@ struct LevelTemplate
 
 template<typename Value>
 struct LevelSettings:
-    public LevelTemplate<Value>::template Template<pex::Identity>
+    public LevelSchema<Value>::template Schema<pex::Identity>
 {
     LevelSettings()
         :
-        LevelTemplate<Value>::template Template<pex::Identity>{
+        LevelSchema<Value>::template Schema<pex::Identity>{
             true,
             typename LevelRanges<Value>::Settings{},
             defaultMaximum,
@@ -99,7 +86,7 @@ TEMPLATE_EQUALITY_OPERATORS(LevelSettings)
 
 
 template<typename Value>
-struct LevelCustom
+struct LevelFinisher
 {
     using Plain = LevelSettings<Value>;
 
@@ -142,8 +129,8 @@ template<typename Value>
 using LevelGroup =
     pex::Group
     <
-        LevelTemplate<Value>::template Template,
-        LevelCustom<Value>
+        LevelSchema<Value>::template Schema,
+        LevelFinisher<Value>
     >;
 
 
@@ -162,6 +149,6 @@ extern template struct LevelSettings<int32_t>;
 
 extern template struct pex::Group
     <
-        iris::LevelTemplate<int32_t>::template Template,
-        iris::LevelCustom<int32_t>
+        iris::LevelSchema<int32_t>::template Schema,
+        iris::LevelFinisher<int32_t>
     >;

@@ -12,26 +12,11 @@ namespace iris
 {
 
 
-template<typename T>
-struct GradientFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::enable, "enable"),
-        fields::Field(&T::maximum, "maximum"),
-        fields::Field(&T::size, "size"),
-        fields::Field(&T::scale, "scale"),
-        fields::Field(&T::autoDetectSettings, "autoDetectSettings"),
-        fields::Field(&T::percentile, "percentile"));
-
-    static constexpr auto fieldsTypeName = "Gradient";
-};
-
-
 template<typename Value>
-struct GradientTemplate
+struct GradientSchema
 {
     template<template<typename> typename T>
-    struct Template
+    struct Schema
     {
         T<bool> enable;
         T<Value> maximum;
@@ -39,14 +24,12 @@ struct GradientTemplate
         T<pex::MakeRange<Value, pex::Limit<1>, pex::Limit<10>>> scale;
         T<pex::MakeSignal> autoDetectSettings;
         T<double> percentile;
-
-        static constexpr auto fields = GradientFields<Template>::fields;
     };
 };
 
 
 template<typename Value>
-struct GradientCustom
+struct GradientFinisher
 {
     template<typename Base>
     struct Plain: public Base
@@ -77,8 +60,8 @@ template<typename Value>
 using GradientGroup =
     pex::Group
     <
-        GradientTemplate<Value>::template Template,
-        GradientCustom<Value>
+        GradientSchema<Value>::template Schema,
+        GradientFinisher<Value>
     >;
 
 template<typename Value>
@@ -100,6 +83,6 @@ DECLARE_EQUALITY_OPERATORS(GradientSettings<int32_t>)
 
 extern template struct pex::Group
     <
-        iris::GradientTemplate<int32_t>::template Template,
-        iris::GradientCustom<int32_t>
+        iris::GradientSchema<int32_t>::template Schema,
+        iris::GradientFinisher<int32_t>
     >;

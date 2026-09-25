@@ -10,16 +10,6 @@ namespace iris
 {
 
 
-template<typename T>
-struct VertexFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::enable, "enable"),
-        fields::Field(&T::window, "window"),
-        fields::Field(&T::count, "count"));
-};
-
-
 struct VertexChoices
 {
     using Type = Eigen::Index;
@@ -32,7 +22,7 @@ struct VertexChoices
 
 
 template<template<typename> typename T>
-struct VertexTemplate
+struct VertexSchema
 {
     using WindowLow = pex::Limit<3>;
     using WindowHigh = pex::Limit<64>;
@@ -44,14 +34,11 @@ struct VertexTemplate
     T<pex::MakeRange<double, WindowLow, WindowHigh>> window;
     T<pex::MakeSelect<VertexChoices>> count;
 
-    static constexpr auto fields =
-        VertexFields<VertexTemplate>::fields;
-
     static constexpr auto fieldsTypeName = "Vertex";
 };
 
 
-struct VertexCustom
+struct VertexFinisher
 {
     template<typename Base>
     struct Plain: public Base
@@ -75,8 +62,8 @@ struct VertexCustom
 
 using VertexGroup = pex::Group
     <
-        VertexTemplate,
-        VertexCustom
+        VertexSchema,
+        VertexFinisher
     >;
 
 
@@ -94,6 +81,6 @@ DECLARE_EQUALITY_OPERATORS(VertexSettings)
 
 extern template struct pex::Group
     <
-        iris::VertexTemplate,
-        iris::VertexCustom
+        iris::VertexSchema,
+        iris::VertexFinisher
     >;

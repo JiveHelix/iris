@@ -14,30 +14,17 @@ namespace iris
 {
 
 
-template<typename T>
-struct CannyChainNodeSettingsFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::gaussian, "gaussian"),
-        fields::Field(&T::gradient, "gradient"),
-        fields::Field(&T::canny, "canny"));
-};
-
-
 template<template<typename> typename T>
-struct CannyChainNodeSettingsTemplate
+struct CannyChainNodeSettingsSchema
 {
     T<draw::NodeSettingsGroup> gaussian;
     T<draw::NodeSettingsGroup> gradient;
     T<draw::NodeSettingsGroup> canny;
-
-    static constexpr auto fields =
-        CannyChainNodeSettingsFields<CannyChainNodeSettingsTemplate>::fields;
 };
 
 
 using CannyChainNodeSettingsGroup =
-    pex::Group<CannyChainNodeSettingsTemplate>;
+    pex::Group<CannyChainNodeSettingsSchema>;
 
 
 using CannyChainNodeSettingsModel =
@@ -60,19 +47,19 @@ struct CannyChainFields
 
 
 template<template<typename> typename T>
-struct CannyChainTemplate
+struct CannyChainSchema
 {
     T<bool> enable;
     T<GaussianGroup<int32_t>> gaussian;
     T<GradientGroup<int32_t>> gradient;
     T<CannyGroup<double>> canny;
 
-    static constexpr auto fields = CannyChainFields<CannyChainTemplate>::fields;
+    static constexpr auto fields = CannyChainFields<CannyChainSchema>::fields;
     static constexpr auto fieldsTypeName = "CannyChain";
 };
 
 
-struct CannyChainCustom
+struct CannyChainFinisher
 {
     template<typename PlainBase>
     struct Plain: public PlainBase
@@ -125,8 +112,8 @@ struct CannyChainCustom
 
 using CannyChainGroup = pex::Group
     <
-        CannyChainTemplate,
-        CannyChainCustom
+        CannyChainSchema,
+        CannyChainFinisher
     >;
 
 using CannyChainSettings = typename CannyChainGroup::Plain;
@@ -143,6 +130,6 @@ DECLARE_EQUALITY_OPERATORS(CannyChainSettings)
 
 extern template struct pex::Group
     <
-        iris::CannyChainTemplate,
-        iris::CannyChainCustom
+        iris::CannyChainSchema,
+        iris::CannyChainFinisher
     >;

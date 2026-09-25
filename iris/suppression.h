@@ -4,7 +4,7 @@
 #include <fields/fields.h>
 #include <pex/interface.h>
 #include <pex/group.h>
-#include <pex/selectors.h>
+#include <pex/tailors.h>
 #include <pex/range.h>
 #include <tau/eigen.h>
 #include <tau/mono_image.h>

@@ -19,24 +19,14 @@
 #include "filters.h"
 
 
-template<typename T>
-struct HoughUserFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::houghView, "houghView"));
-};
-
-
 template<template<typename> typename T>
-struct HoughUserTemplate
+struct HoughUserSchema
 {
     T<draw::PixelViewGroup> houghView;
-
-    static constexpr auto fields = HoughUserFields<HoughUserTemplate>::fields;
 };
 
 
-using HoughUserGroup = pex::Group<HoughUserTemplate>;
+using HoughUserGroup = pex::Group<HoughUserSchema>;
 
 using HoughUserControl = typename HoughUserGroup::DefaultControl;
 using HoughUserModel = typename HoughUserGroup::Model;

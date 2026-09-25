@@ -14,23 +14,8 @@ namespace iris
 {
 
 
-template<typename T>
-struct ChessShapeFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::displayVertices, "displayVertices"),
-        fields::Field(&T::labelVertices, "labelVertices"),
-        fields::Field(&T::displayHorizontals, "displayHorizontals"),
-        fields::Field(&T::displayVerticals, "displayVerticals"),
-        fields::Field(&T::verticesShape, "verticesShape"),
-        fields::Field(&T::labelsLook, "labelsLook"),
-        fields::Field(&T::horizontalsShape, "horizontalsShape"),
-        fields::Field(&T::verticalsShape, "verticalsShape"));
-};
-
-
 template<template<typename> typename T>
-struct ChessShapeTemplate
+struct ChessShapeSchema
 {
     T<bool> displayVertices;
     T<bool> labelVertices;
@@ -41,14 +26,11 @@ struct ChessShapeTemplate
     T<draw::LinesShapeGroup> horizontalsShape;
     T<draw::LinesShapeGroup> verticalsShape;
 
-    static constexpr auto fields =
-        ChessShapeFields<ChessShapeTemplate>::fields;
-
     static constexpr auto fieldsTypeName = "ChessShape";
 };
 
 
-struct ChessShapeSettings: public ChessShapeTemplate<pex::Identity>
+struct ChessShapeSettings: public ChessShapeSchema<pex::Identity>
 {
     ChessShapeSettings();
 };
@@ -78,7 +60,7 @@ public:
 
 using ChessShapeGroup = pex::Group
 <
-    ChessShapeTemplate,
+    ChessShapeSchema,
     pex::PlainT<ChessShapeSettings>
 >;
 
@@ -92,6 +74,6 @@ using ChessShapeControl = typename ChessShapeGroup::DefaultControl;
 
 extern template struct pex::Group
 <
-    iris::ChessShapeTemplate,
+    iris::ChessShapeSchema,
     pex::PlainT<iris::ChessShapeSettings>
 >;

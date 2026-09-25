@@ -7,7 +7,7 @@ namespace iris
 
 ChessShapeSettings::ChessShapeSettings()
     :
-    ChessShapeTemplate<pex::Identity>{
+    ChessShapeSchema<pex::Identity>{
         true,
         true,
         true,
@@ -96,6 +96,6 @@ void ChessShape::Draw(draw::DrawContext &context)
 
 template struct pex::Group
 <
-    iris::ChessShapeTemplate,
+    iris::ChessShapeSchema,
     pex::PlainT<iris::ChessShapeSettings>
 >;

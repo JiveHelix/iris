@@ -23,27 +23,15 @@
 #include "common/timer.h"
 
 
-
-template<typename T>
-struct DemoFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::gaussian, "gaussian"),
-        fields::Field(&T::color, "color"));
-};
-
-
 template<template<typename> typename T>
-struct DemoTemplate
+struct DemoSchema
 {
     T<iris::GaussianGroup<iris::InProcess>> gaussian;
     T<tau::ColorMapSettingsGroup<iris::InProcess>> color;
-
-    static constexpr auto fields = DemoFields<DemoTemplate>::fields;
 };
 
 
-using DemoGroup = pex::Group<DemoTemplate>;
+using DemoGroup = pex::Group<DemoSchema>;
 using DemoSettings = typename DemoGroup::Plain;
 using DemoModel = typename DemoGroup::Model;
 using DemoControl = typename DemoGroup::DefaultControl;

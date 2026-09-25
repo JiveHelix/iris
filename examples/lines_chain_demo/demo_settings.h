@@ -10,21 +10,8 @@
 #include "../common/png_settings.h"
 
 
-template<typename T>
-struct DemoFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::maximum, "maximum"),
-        fields::Field(&T::imageSize, "imageSize"),
-        fields::Field(&T::mask, "mask"),
-        fields::Field(&T::level, "level"),
-        fields::Field(&T::linesChain, "linesChain"),
-        fields::Field(&T::color, "color"));
-};
-
-
 template<template<typename> typename T>
-struct DemoTemplate
+struct DemoSchema
 {
     T<iris::InProcess> maximum;
     T<draw::SizeGroup> imageSize;
@@ -32,12 +19,10 @@ struct DemoTemplate
     T<iris::LevelGroup<int32_t>> level;
     T<iris::LinesChainGroup> linesChain;
     T<tau::ColorMapSettingsGroup<int32_t>> color;
-
-    static constexpr auto fields = DemoFields<DemoTemplate>::fields;
 };
 
 
-struct DemoCustom
+struct DemoFinisher
 {
     template<typename Base>
     struct Model: public Base
@@ -88,7 +73,7 @@ struct DemoCustom
 };
 
 
-using DemoGroup = pex::Group<DemoTemplate, DemoCustom>;
+using DemoGroup = pex::Group<DemoSchema, DemoFinisher>;
 using DemoSettings = typename DemoGroup::Plain;
 using DemoModel = typename DemoGroup::Model;
 using DemoControl = typename DemoGroup::DefaultControl;

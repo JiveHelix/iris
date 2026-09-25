@@ -3,6 +3,6 @@
 
 template struct pex::Group
     <
-        iris::GradientTemplate<int32_t>::template Template,
-        iris::GradientCustom<int32_t>
+        iris::GradientSchema<int32_t>::template Schema,
+        iris::GradientFinisher<int32_t>
     >;

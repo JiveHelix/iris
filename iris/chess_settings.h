@@ -11,26 +11,10 @@ namespace iris
 {
 
 
-template<typename T>
-struct ChessFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::enable, "enable"),
-        fields::Field(&T::minimumSpacing, "minimumSpacing"),
-        fields::Field(&T::groupSeparationDegrees, "groupSeparationDegrees"),
-        fields::Field(&T::minimumLinesPerGroup, "minimumLinesPerGroup"),
-        fields::Field(&T::maximumSpacing, "maximumSpacing"),
-        fields::Field(&T::ratioLimit, "ratioLimit"),
-        fields::Field(&T::rowCount, "rowCount"),
-        fields::Field(&T::columnCount, "columnCount"),
-        fields::Field(&T::maximumVertexDistance, "maximumVertexDistance"));
-};
-
-
-struct ChessTemplate
+struct ChessSchema
 {
     template<template<typename> typename T>
-    struct Template
+    struct Schema
     {
         T<bool> enable;
         T<double> minimumSpacing;
@@ -42,13 +26,12 @@ struct ChessTemplate
         T<size_t> columnCount;
         T<double> maximumVertexDistance;
 
-        static constexpr auto fields = ChessFields<Template>::fields;
         static constexpr auto fieldsTypeName = "Chess";
     };
 };
 
 
-struct ChessCustom
+struct ChessFinisher
 {
     template<typename Base>
     struct Plain
@@ -86,8 +69,8 @@ struct ChessCustom
 using ChessGroup =
     pex::Group
     <
-        ChessTemplate::template Template,
-        ChessCustom
+        ChessSchema::template Schema,
+        ChessFinisher
     >;
 
 using ChessSettings = typename ChessGroup::Plain;
@@ -103,6 +86,6 @@ DECLARE_EQUALITY_OPERATORS(ChessSettings)
 
 extern template struct pex::Group
     <
-        iris::ChessTemplate::template Template,
-        iris::ChessCustom
+        iris::ChessSchema::template Schema,
+        iris::ChessFinisher
     >;

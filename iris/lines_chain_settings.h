@@ -13,28 +13,16 @@ namespace iris
 {
 
 
-template<typename T>
-struct LinesChainNodeSettingsFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::cannyChain, "cannyChain"),
-        fields::Field(&T::hough, "hough"));
-};
-
-
 template<template<typename> typename T>
-struct LinesChainNodeSettingsTemplate
+struct LinesChainNodeSettingsSchema
 {
     T<CannyChainNodeSettingsGroup> cannyChain;
     T<draw::NodeSettingsGroup> hough;
-
-    static constexpr auto fields =
-        LinesChainNodeSettingsFields<LinesChainNodeSettingsTemplate>::fields;
 };
 
 
 using LinesChainNodeSettingsGroup =
-    pex::Group<LinesChainNodeSettingsTemplate>;
+    pex::Group<LinesChainNodeSettingsSchema>;
 
 
 using LinesChainNodeSettingsModel =
@@ -44,31 +32,19 @@ using LinesChainNodeSettingsControl =
     typename LinesChainNodeSettingsGroup::DefaultControl;
 
 
-template<typename T>
-struct LinesChainFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::enable, "enable"),
-        fields::Field(&T::cannyChain, "cannyChain"),
-        fields::Field(&T::hough, "hough"),
-        fields::Field(&T::shape, "shape"));
-};
-
-
 template<template<typename> typename T>
-struct LinesChainTemplate
+struct LinesChainSchema
 {
     T<bool> enable;
     T<CannyChainGroup> cannyChain;
     T<HoughGroup<double>> hough;
     T<draw::LinesShapeGroup> shape;
 
-    static constexpr auto fields = LinesChainFields<LinesChainTemplate>::fields;
     static constexpr auto fieldsTypeName = "LineChain";
 };
 
 
-struct LinesChainCustom
+struct LinesChainFinisher
 {
     template<typename Base>
     struct Plain: public Base
@@ -121,8 +97,8 @@ struct LinesChainCustom
 
 using LinesChainGroup = pex::Group
     <
-        LinesChainTemplate,
-        LinesChainCustom
+        LinesChainSchema,
+        LinesChainFinisher
     >;
 
 
@@ -139,6 +115,6 @@ DECLARE_OUTPUT_STREAM_OPERATOR(LinesChainSettings)
 
 extern template struct pex::Group
     <
-        iris::LinesChainTemplate,
-        iris::LinesChainCustom
+        iris::LinesChainSchema,
+        iris::LinesChainFinisher
     >;

@@ -3,15 +3,15 @@
 
 template struct pex::Group
     <
-        iris::HoughTemplate<float>::template Template,
-        iris::HoughCustom<float>
+        iris::HoughSchema<float>::template Schema,
+        iris::HoughFinisher<float>
     >;
 
 
 template struct pex::Group
     <
-        iris::HoughTemplate<double>::template Template,
-        iris::HoughCustom<double>
+        iris::HoughSchema<double>::template Schema,
+        iris::HoughFinisher<double>
     >;
 
 

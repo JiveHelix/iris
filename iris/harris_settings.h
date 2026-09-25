@@ -10,19 +10,6 @@ namespace iris
 {
 
 
-template<typename T>
-struct HarrisFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::enable, "enable"),
-        fields::Field(&T::alpha, "alpha"),
-        fields::Field(&T::sigma, "sigma"),
-        fields::Field(&T::threshold, "threshold"),
-        fields::Field(&T::suppress, "suppress"),
-        fields::Field(&T::window, "window"));
-};
-
-
 struct HarrisRanges
 {
     using AlphaLow = pex::Limit<0>;
@@ -40,12 +27,12 @@ struct HarrisRanges
 
 
 template<typename Float, typename Ranges = HarrisRanges>
-struct HarrisTemplate
+struct HarrisSchema
 {
     static_assert(std::is_floating_point_v<Float>);
 
     template<template<typename> typename T>
-    struct Template
+    struct Schema
     {
         T<bool> enable;
 
@@ -91,7 +78,6 @@ struct HarrisTemplate
             >
         > window;
 
-        static constexpr auto fields = HarrisFields<Template>::fields;
         static constexpr auto fieldsTypeName = "Harris";
     };
 };
@@ -100,7 +86,7 @@ struct HarrisTemplate
 template<typename Float>
 struct HarrisSettings
     :
-    public HarrisTemplate<Float>::template Template<pex::Identity>
+    public HarrisSchema<Float>::template Schema<pex::Identity>
 {
     static constexpr Float defaultAlpha = static_cast<Float>(0.21);
     static constexpr Float defaultSigma = static_cast<Float>(3.85);
@@ -109,7 +95,7 @@ struct HarrisSettings
 
     HarrisSettings()
         :
-        HarrisTemplate<Float>::template Template<pex::Identity>{
+        HarrisSchema<Float>::template Schema<pex::Identity>{
             true,
             defaultAlpha,
             defaultSigma,
@@ -128,7 +114,7 @@ TEMPLATE_EQUALITY_OPERATORS(HarrisSettings)
 template<typename Float, typename Ranges = HarrisRanges>
 using HarrisGroup = pex::Group
     <
-        HarrisTemplate<Float, Ranges>::template Template,
+        HarrisSchema<Float, Ranges>::template Schema,
         pex::PlainT<HarrisSettings<Float>>
     >;
 
@@ -145,12 +131,12 @@ using HarrisControl =
 
 extern template struct pex::Group
     <
-        iris::HarrisTemplate<float, iris::HarrisRanges>::template Template,
+        iris::HarrisSchema<float, iris::HarrisRanges>::template Schema,
         pex::PlainT<iris::HarrisSettings<float>>
     >;
 
 extern template struct pex::Group
     <
-        iris::HarrisTemplate<double, iris::HarrisRanges>::template Template,
+        iris::HarrisSchema<double, iris::HarrisRanges>::template Schema,
         pex::PlainT<iris::HarrisSettings<double>>
     >;

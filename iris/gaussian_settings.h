@@ -44,47 +44,22 @@ struct PartialsChoices
 std::ostream & operator<<(std::ostream &, Partials);
 
 
-
-
-
-
-
-
-
-
-
-template<typename T>
-struct GaussianFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::enable, "enable"),
-        fields::Field(&T::sigma, "sigma"),
-        fields::Field(&T::threshold, "threshold"),
-        fields::Field(&T::partials, "partials"),
-        fields::Field(&T::maximum, "maximum"));
-
-    static constexpr auto fieldsTypeName = "Gaussian";
-};
-
-
 template
 <
     typename Value,
     typename SigmaLow = pex::Limit<1>,
     typename SigmaHigh = pex::Limit<10>
 >
-struct GaussianTemplate
+struct GaussianSchema
 {
     template<template<typename> typename T>
-    struct Template
+    struct Schema
     {
         T<bool> enable;
         T<pex::MakeRange<double, SigmaLow, SigmaHigh>> sigma;
         T<double> threshold;
         T<pex::MakeSelect<PartialsChoices>> partials;
         T<Value> maximum;
-
-        static constexpr auto fields = GaussianFields<Template>::fields;
     };
 
 };
@@ -92,10 +67,10 @@ struct GaussianTemplate
 
 template<typename Value>
 struct GaussianSettings:
-    public GaussianTemplate<Value>::template Template<pex::Identity>
+    public GaussianSchema<Value>::template Schema<pex::Identity>
 {
     using Base =
-        typename GaussianTemplate<Value>::template Template<pex::Identity>;
+        typename GaussianSchema<Value>::template Schema<pex::Identity>;
 
     static constexpr double defaultSigma = 1.0;
     static constexpr double defaultThreshold = 0.01;
@@ -122,7 +97,7 @@ TEMPLATE_EQUALITY_OPERATORS(GaussianSettings)
 template<typename Value>
 using GaussianGroup = pex::Group
 <
-    GaussianTemplate<Value>::template Template,
+    GaussianSchema<Value>::template Schema,
     pex::PlainT<GaussianSettings<Value>>
 >;
 
@@ -142,6 +117,6 @@ extern template struct GaussianSettings<int32_t>;
 
 extern template struct pex::Group
 <
-    iris::GaussianTemplate<int32_t>::template Template,
+    iris::GaussianSchema<int32_t>::template Schema,
     pex::PlainT<iris::GaussianSettings<int32_t>>
 >;

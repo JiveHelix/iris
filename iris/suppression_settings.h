@@ -10,15 +10,6 @@ namespace iris
 {
 
 
-template<typename T>
-struct SuppressionFields
-{
-    static constexpr auto fields = std::make_tuple(
-        fields::Field(&T::window, "window"),
-        fields::Field(&T::count, "count"));
-};
-
-
 struct SuppressionRanges
 {
     using WindowLow = pex::Limit<2>;
@@ -30,7 +21,7 @@ struct SuppressionRanges
 
 
 template<typename Ranges = SuppressionRanges>
-struct SuppressionTemplate
+struct SuppressionSchema
 {
     using WindowLow = typename Ranges::WindowLow;
     using WindowHigh = typename Ranges::WindowHigh;
@@ -39,12 +30,11 @@ struct SuppressionTemplate
     using CountHigh = typename Ranges::CountHigh;
 
     template<template<typename> typename T>
-    struct Template
+    struct Schema
     {
         T<pex::MakeRange<Eigen::Index, WindowLow, WindowHigh>> window;
         T<pex::MakeRange<Eigen::Index, CountLow, CountHigh>> count;
 
-        static constexpr auto fields = SuppressionFields<Template>::fields;
         static constexpr auto fieldsTypeName = "Suppression";
     };
 };
@@ -52,12 +42,12 @@ struct SuppressionTemplate
 
 struct SuppressionSettings
     :
-    public SuppressionTemplate<SuppressionRanges>
-        ::template Template<pex::Identity>
+    public SuppressionSchema<SuppressionRanges>
+        ::template Schema<pex::Identity>
 {
     using Base =
-        SuppressionTemplate<SuppressionRanges>
-            ::template Template<pex::Identity>;
+        SuppressionSchema<SuppressionRanges>
+            ::template Schema<pex::Identity>;
 
     static constexpr Eigen::Index defaultWindow = 3;
     static constexpr Eigen::Index defaultCount = 1;
@@ -77,7 +67,7 @@ DECLARE_EQUALITY_OPERATORS(SuppressionSettings)
 using SuppressionGroup =
     pex::Group
     <
-        SuppressionTemplate<>::template Template,
+        SuppressionSchema<>::template Schema,
         pex::PlainT<SuppressionSettings>
     >;
 

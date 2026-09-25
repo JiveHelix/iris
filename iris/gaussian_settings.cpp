@@ -75,6 +75,6 @@ template struct GaussianSettings<int32_t>;
 
 template struct pex::Group
 <
-    iris::GaussianTemplate<int32_t>::template Template,
+    iris::GaussianSchema<int32_t>::template Schema,
     pex::PlainT<iris::GaussianSettings<int32_t>>
 >;
