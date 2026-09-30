@@ -118,14 +118,22 @@ struct RowFunctors
     {
         assert(kernel.rows() == 1);
 
-        auto outputView = tau::MakeView(
-            output.block(chunk.index, 0, chunk.count, output.cols()));
+        auto outputView = tau::MakeBlockView(
+            output,
+            chunk.index,
+            0,
+            chunk.count,
+            output.cols());
 
         tau::CorrelateRows(
             tau::ViewTag{},
             kernel,
-            tau::MakeView(
-                input.block(chunk.index, 0, chunk.count, input.cols())),
+            tau::MakeBlockView(
+                input,
+                chunk.index,
+                0,
+                chunk.count,
+                input.cols()),
             outputView);
 
         if constexpr (normalize)
@@ -155,14 +163,22 @@ struct ColumnFunctors
         Eigen::MatrixBase<Output> &output,
         const Chunk &chunk)
     {
-        auto outputView = tau::MakeView(
-            output.block(0, chunk.index, output.rows(), chunk.count));
+        auto outputView = tau::MakeBlockView(
+            output,
+            0,
+            chunk.index,
+            output.rows(),
+            chunk.count);
 
         tau::CorrelateColumns(
             tau::ViewTag{},
             kernel,
-            tau::MakeView(
-                input.block(0, chunk.index, input.rows(), chunk.count)),
+            tau::MakeBlockView(
+                input,
+                0,
+                chunk.index,
+                input.rows(),
+                chunk.count),
             outputView);
 
         if constexpr (normalize)

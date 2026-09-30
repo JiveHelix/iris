@@ -374,19 +374,19 @@ public:
                         limitColumn,
                         windowSize,
 
-                        tau::MakeView(
-                            input.block(
-                                rows.index,
-                                columns.index,
-                                rows.count,
-                                columns.count)),
+                        tau::MakeBlockView(
+                            input,
+                            rows.index,
+                            columns.index,
+                            rows.count,
+                            columns.count),
 
-                        tau::MakeView(
-                            output.block(
-                                rows.index,
-                                columns.index,
-                                rows.count,
-                                columns.count)));
+                        tau::MakeBlockView(
+                            output,
+                            rows.index,
+                            columns.index,
+                            rows.count,
+                            columns.count));
                 }))
     {
 

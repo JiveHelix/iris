@@ -192,17 +192,16 @@ private:
                         Index zipBegin = chunk.index - this->windowSize_ + 1;
                         Index zipSize = 2 * (this->windowSize_ - 1);
 
-                        auto block = this->output_.block(
-                            zipBegin,
-                            0,
-                            zipSize,
-                            this->columns_);
-
                         detail::Suppress(
                             zipSize - this->windowSize_ + 1,
                             this->columns_ - this->windowSize_ + 1,
                             this->windowSize_,
-                            tau::MakeView(block));
+                            tau::MakeBlockView(
+                                this->output_,
+                                zipBegin,
+                                0,
+                                zipSize,
+                                this->columns_));
                     }));
         }
 
@@ -238,17 +237,16 @@ private:
                         Index zipBegin = chunk.index - this->windowSize_ + 1;
                         Index zipSize = 2 * (this->windowSize_ - 1);
 
-                        auto block = this->output_.block(
-                            0,
-                            zipBegin,
-                            this->rows_,
-                            zipSize);
-
                         detail::Suppress(
                             this->rows_ - this->windowSize_ + 1,
                             zipSize - this->windowSize_ + 1,
                             this->windowSize_,
-                            tau::MakeView(block));
+                            tau::MakeBlockView(
+                                this->output_,
+                                0,
+                                zipBegin,
+                                this->rows_,
+                                zipSize));
                     }));
         }
 
